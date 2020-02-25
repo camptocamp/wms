@@ -229,6 +229,9 @@ export var GenericStatesMixin = {
                 },
                 'wait_validation': {
                     success: (result) => {
+                        if (!_.isUndefined(result.data)){
+                            this.set_erp_data('data', result.data)
+                        }
                         this.go_state(result.next_state)
                     },
                     error: (result) => {
@@ -244,14 +247,21 @@ export var GenericStatesMixin = {
                     },
                 },
                 'confirm_location': {
+                    enter: () => {
+                        this.need_confirmation = true
+                    },
+                    exit: () => {
+                        this.need_confirmation = false
+                    },
                     on_user_confirm: (answer) => {
-                        // TODO: check if this used
-                        //-> no flag is set to enable the confirmation dialog,
-                        // we only display a message, unlike `confirm_start`
                         if (answer == 'yes'){
-                            // reuse data from scan_location
+                            // Reuse data from scan_location and
+                            // simulate the event that on_scan expects
                             let scan_data = this.state_get_data('scan_location')
-                            this.state.on_scan(scan_data.location_barcode, true)
+                            let mimic_searchbar_data = {
+                                'text': scan_data.location_barcode
+                            }
+                            this.state.on_scan(mimic_searchbar_data, true)
                         } else {
                             this.go_state('scan_location')
                         }
