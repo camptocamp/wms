@@ -196,7 +196,7 @@ class SinglePackPutaway(Component):
         return self._response(
             next_state="confirm_location",
             message=message.confirm_location_changed(
-                move_line.location_dest_id.name, to_location
+                move_line.location_dest_id, to_location
             ),
             data=self._data_after_package_scanned(move_line, pack),
         )
@@ -233,7 +233,7 @@ class SinglePackPutaway(Component):
                     move.location_dest_id = scanned_location.id
             else:
                 return self._response_for_location_need_confirm(
-                    move_line, package.package_id, scanned_location.name
+                    move_line, package.package_id, scanned_location
                 )
 
         pack_transfer.set_destination_and_done(move, scanned_location)

@@ -414,7 +414,7 @@ class SinglePackPutawayCase(CommonCase):
             },
         )
         message = self.service.actions_for("message").confirm_location_changed(
-            self.shelf1.name, self.shelf2.name
+            self.shelf1, self.shelf2
         )
 
         self.assert_response(
