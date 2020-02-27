@@ -32,6 +32,8 @@ export var ScanAnything = Vue.component('scan-anything', {
     beforeRouteUpdate (to, from, next) {
         if (to.params["codebar"]){
             this.getData(to.params["codebar"])
+        } else {
+            this.dataReceived = {}
         }
         next()
     },
@@ -49,7 +51,7 @@ export var ScanAnything = Vue.component('scan-anything', {
             this.$router.push({ name: "scananything", params: {codebar: codebar}, query: query})
         },
         getData: function(codebar){
-            this.odoo.scan_anything(codebar).then((result) => {this.dataReceived = result.start.data.show_detail_info})
+            this.odoo.scan_anything(codebar).then((result) => {this.dataReceived = result.data || {}})
         },
         on_scan: function(scanned) {
             this.$router.push({
