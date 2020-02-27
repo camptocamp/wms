@@ -42,6 +42,27 @@ var DEMO_SCAN_ANYTHING_PRODUCT = {
             },
     "message": undefined,
 };
+var DEMO_SCAN_ANYTHING_PRODUCT_PACK = {
+        "data": {
+                "type": "product",
+                "barcode": "009932424",
+                "detail_info": {
+                    "id": 424,
+                    "name": "Sun Glasses Cat 4 High Alititude",
+                    "image": "http://localhost/web/image?model=product.template&id=16&field=image_128&unique=04022020111236",
+                    "lot": "AA8122F41",
+                    "expiry_date": "2020-12-01",
+                    "default_code": "266009083",
+                    "supplier_code": "SUP28342",
+                    "packaging": [
+                        {"id": 98234, "name": "Box", "qty": 8, "qty_unit": "Unit"},
+                        {"id": 98235, "name": "Big Box", "qty": 6, "qty_unit": "Box"},
+                        {"id": 98236, "name": "Palette", "qty": 27, "qty_unit": "Big Box"},
+                    ],
+                },
+            },
+    "message": undefined,
+};
 var DEMO_SCAN_ANYTHING_LOCATION_1 = {
         "data": {
                 "type": "location",
