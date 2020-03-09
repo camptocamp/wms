@@ -265,10 +265,6 @@ class ClusterPicking(Component):
         message = self.actions_for("message")
         return self._response(next_state="start", message=message.record_not_found())
 
-    def _data_for_next_move_line(self, picking_batch):
-        remaining_lines = self._lines_to_pick(picking_batch)
-        return self._data_move_line(remaining_lines[0])
-
     def _data_move_line(self, line):
         picking = line.picking_id
         batch = picking.batch_id
