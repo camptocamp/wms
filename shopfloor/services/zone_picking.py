@@ -205,11 +205,13 @@ class ZonePicking(Component, ChangePackLotMixin):
     def _picking_type_zone_lines(self, zone_location, picking_type):
         return self.env["stock.move.line"].search(
             [
-                ("location_id", "=", zone_location.id),
                 # we have auto_join on picking_id
                 ("picking_id.picking_type_id", "=", picking_type.id),
                 ("qty_done", "=", 0),
                 ("state", "in", ("assigned", "partially_available")),
+                "|",
+                ("location_id", "=", zone_location.id),
+                ("location_id", "child_of", zone_location.id),
             ]
         )
 
