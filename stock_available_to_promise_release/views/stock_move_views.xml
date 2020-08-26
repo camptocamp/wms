@@ -7,9 +7,34 @@
         <field name="inherit_id" ref="stock.view_move_tree" />
         <field eval="900" name="priority" />
         <field name="arch" type="xml">
+            <field name="reference" position="after">
+                <field name="partner_id" string="Customer" />
+                <field name="carrier_id" string="Delivery Method" />
+                <field name="origin" optional="show" />
+                <field name="group_id" optional="show" />
+                <field name="priority" optional="show" />
+                <field name="zip_code" optional="show" string="Postcode" />
+                <field name="city" optional="show" />
+            </field>
             <field name="product_uom_qty" position="after">
+                <field name="weight" optional="show" sum="Weight" />
                 <field name="ordered_available_to_promise" />
                 <field name="date_priority" />
+            </field>
+            <field name="date" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="date" position="after">
+                <field name="sale_date_expected" />
+            </field>
+            <field name="location_id" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="location_dest_id" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="state" position="attributes">
+                <attribute name="optional">hide</attribute>
             </field>
         </field>
     </record>
@@ -20,18 +45,63 @@
         <field name="inherit_id" ref="stock.view_move_form" />
         <field eval="900" name="priority" />
         <field name="arch" type="xml">
+            <field name="date_expected" position="attributes">
+                <attribute name="string">Shipment date</attribute>
+            </field>
+            <field name="date" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="date" position="after">
+                <field name="sale_date_expected" />
+            </field>
             <group name="main_grp_col2" position="inside">
                 <field name="ordered_available_to_promise" />
                 <field name="date_priority" />
             </group>
         </field>
     </record>
+    <record id="view_move_release_search" model="ir.ui.view">
+        <field name="name">stock.move.release.search</field>
+        <field name="model">stock.move</field>
+        <field name="mode">primary</field>
+        <field name="inherit_id" ref="stock.view_move_search" />
+        <field eval="900" name="priority" />
+        <field name="arch" type="xml">
+            <filter name="outgoing" position="after">
+                <separator />
+                <filter
+                    string="Late Shipment"
+                    name="late"
+                    domain="[('sale_date_expected', '&lt;=', (context_today() + relativedelta(days=-1)).strftime('%Y-%m-%d'))]"
+                />
+                <filter
+                    string="Today Shipment"
+                    name="today"
+                    domain="['&amp;', ('sale_date_expected', '&gt;', (context_today() + relativedelta(days=-1)).strftime('%Y-%m-%d')),
+                    ('sale_date_expected', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d'))]"
+                />
+                <filter
+                    string="Further Shipment"
+                    name="further"
+                    domain="[('sale_date_expected', '&gt;=', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d'))]"
+                />
+            </filter>
+            <filter name="groupby_date" position="after">
+                <filter
+                    string="Delivery Date"
+                    name="groupby_sale_date_expected"
+                    domain="[]"
+                    context="{'group_by': 'sale_date_expected'}"
+                />
+            </filter>
+        </field>
+    </record>
     <record id="stock_move_release_action" model="ir.actions.act_window">
-        <field name="name">Stock Moves To Release</field>
+        <field name="name">Stock Allocation</field>
         <field name="res_model">stock.move</field>
         <field name="type">ir.actions.act_window</field>
         <field name="view_mode">tree,kanban,form</field>
-        <field name="search_view_id" ref="stock.view_move_search" />
+        <field name="search_view_id" ref="view_move_release_search" />
         <field
             name="view_ids"
             eval="[(5, 0, 0),
