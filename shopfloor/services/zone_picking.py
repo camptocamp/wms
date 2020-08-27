@@ -1048,14 +1048,18 @@ class ZonePicking(Component, ChangePackLotMixin):
                     zone_location, picking_type, buffer_lines, message=error
                 )
             # check if the destination location is not the expected one
-            if location != picking_type.default_location_dest_id:
+            #   - OK if the scanned destination is a child of the current
+            #     destination set on buffer lines
+            #   - To confirm if the scanned destination is not a child of the
+            #     current destination set on buffer lines
+            if not location.is_sublocation_of(buffer_lines.location_dest_id):
                 if not confirmation:
                     return self._response_for_unload_all(
                         zone_location,
                         picking_type,
                         buffer_lines,
                         message=self.msg_store.confirm_location_changed(
-                            picking_type.default_location_dest_id, location
+                            buffer_lines.location_dest_id, location
                         ),
                         confirmation_required=True,
                     )
