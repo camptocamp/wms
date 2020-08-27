@@ -7,7 +7,7 @@
     "summary": "Release Operations based on available to promise",
     "author": "Camptocamp,Odoo Community Association (OCA)",
     "category": "Stock Management",
-    "depends": ["stock", "delivery"],
+    "depends": ["stock"],
     "data": [
         "views/stock_move_views.xml",
         "views/stock_picking_views.xml",
