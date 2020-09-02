@@ -58,20 +58,6 @@ export var ScanAnything = Vue.component("scan-anything", {
             this.scan_data = {};
             this.$router.push({name: "scan_anything", params: {identifier: undefined}});
         },
-        // TODO: this was used to handle click on details inside detail components.
-        // It's probably useless now since we handle the event in detail mixin.
-        on_url_change: function(identifier) {
-            // Change the route on when more info clicked in children
-            const query = {};
-            if ("identifier" in this.$route.params) {
-                query.childOf = this.$route.params.identifier;
-            }
-            this.$router.push({
-                name: "scan_anything",
-                params: {identifier: identifier},
-                query: query,
-            });
-        },
         getData: function(identifier) {
             this.odoo.call("scan", {identifier: identifier}).then(result => {
                 this.scan_full_data = result || {};
@@ -80,10 +66,15 @@ export var ScanAnything = Vue.component("scan-anything", {
             });
         },
         on_scan: function(scanned) {
-            this.$router.push({
-                name: "scan_anything",
-                params: {identifier: scanned.text},
-            });
+            if (this.$route.params.identifier == scanned.text) {
+                // scanned same resource, just reload
+                this.getData(scanned.text);
+            } else {
+                this.$router.push({
+                    name: "scan_anything",
+                    params: {identifier: scanned.text},
+                });
+            }
         },
         detail_component_name() {
             if (_.isEmpty(this.scan_data)) {
