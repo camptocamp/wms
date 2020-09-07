@@ -137,3 +137,7 @@ class StockMoveLine(models.Model):
             self.with_context(bypass_reservation_update=True).product_uom_qty = qty_done
             return (new_line, "lesser")
         return (new_line, "full")
+
+    def replace_package(self, new_package):
+        """Replace a package on assigned move lines and package level"""
+        raise NotImplementedError()

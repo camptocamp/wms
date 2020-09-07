@@ -83,18 +83,14 @@ class ChangePackageLot(Component):
 
         return response_ok_func(move_line, message=message)
 
-    def _package_identical_move_lines_qty(self, package, move_lines):
-        grouped_quants = {}
-        for quant in package.quant_ids:
-            grouped_quants.setdefault(quant.product_id, 0)
-            grouped_quants[quant.product_id] += quant.quantity
-
-        grouped_lines = {}
-        for move_line in move_lines:
-            grouped_lines.setdefault(move_line.product_id, 0)
-            grouped_lines[move_line.product_id] += move_line.product_uom_qty
-
-        return grouped_quants == grouped_lines
+    def _package_replacement_allowed(self, package, move_lines):
+        package_products = package.quant_ids.product_id
+        line_products = move_lines.product_id
+        # If some products of the lines are not in the replacement
+        # package, we can't allow the replacement.
+        # If the package has *more* products though, we can do it
+        # and the operator will have to move them out of the package.
+        return not (line_products - package_products)
 
     def change_package(self, move_line, package, response_ok_func, response_error_func):
         inventory = self.actions_for("inventory")
@@ -104,9 +100,10 @@ class ChangePackageLot(Component):
         # to update all of them
         move_lines = package_level.move_line_ids
 
-        # prevent to replace a package by a package with a different content
-        identical_content = self._package_identical_move_lines_qty(package, move_lines)
-        if not identical_content:
+        # prevent to replace a package by a package that would not satisfy the
+        # move (different product)
+        replacement_allowed = self._package_replacement_allowed(package, move_lines)
+        if not replacement_allowed:
             return response_error_func(
                 move_line, message=self.msg_store.package_different_content(package)
             )
@@ -118,30 +115,37 @@ class ChangePackageLot(Component):
             # a mistake in the data... fix the quant to move the package here
             inventory.move_package_quants_to_location(package, move_line.location_id)
 
+        import ipdb; ipdb.set_trace()
+
         # search a package level which would already move the scanned package
-        reserved_level = (
-            self.env["stock.package_level"].search([("package_id", "=", package.id)])
-            # not possible to search on state
-            .filtered(lambda level: level.state in ("new", "assigned"))
+        other_reserved_lines = (
+            self.env["stock.move.line"].search(
+                [
+                    ("package_id", "=", package.id),
+                    ("state", "in", ("partially_available", "assigned")),
+                ])
         )
-        if reserved_level:
-            reserved_level.ensure_one()
-        if reserved_level.is_done:
-            # Not really supposed to happen: if someone sets is_done, the package
-            # should no longer be here! But we have to check this and inform the
-            # user in any case.
+        # think better! we can have another line using with a qty_done IF
+        # the sum of qty_done + needed qty here is not > package qty
+        # but in this case, we can't swap, we only have to use the package
+        # we can't have another package level done because it moves everything
+        # we can't have another line using it if the sum would be different
+        # we can swap the packages, unless we have a qty_done already...
+        # but if we swap and the other becomes unreserved?
+
+        if any(line.qty_done > 0 for line in other_reserved_lines):
             return response_error_func(
                 move_line,
                 message=self.msg_store.package_already_picked_by(
-                    package, reserved_level.picking_id
+                    package, other_reserved_lines.picking_id
                 ),
             )
 
+        # TODO we do not have a package level if we have a partial package reserved
         # Switch the package with the level which was moving it, as we know
         # that:
         # * only one package level at a time is supposed to move a package
-        # * the content of the other package is the same (as we checked the
-        #   content is the same as the current move lines)
+        # * the content of the other package contains the same product
         # * if we left the reserved level with the scanned package, we would
         #   have 2 levels for the same package and odoo would unreserve the
         #   move lines as soon as we confirm the current moves

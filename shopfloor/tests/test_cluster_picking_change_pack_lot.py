@@ -145,6 +145,47 @@ class ClusterPickingChangePackLotCase(ClusterPickingChangePackLotCommon):
             line, lambda: line.product_qty, package=new_package
         )
 
+    def test_change_pack_lot_change_pack_less_qty_ok(self):
+        initial_package = self._create_package_in_location(
+            self.shelf1, [self.PackageContent(self.product_a, 100, lot=None)]
+        )
+        self._simulate_batch_selected(self.batch, fill_stock=False)
+
+        line = self.batch.picking_ids.move_line_ids
+        self.assertRecordValues(
+            line, [{
+                "package_id": initial_package.id,
+                # since we don't move the entire package (10 out of 100), no
+                # result package
+                "result_package_id": False
+            }]
+        )
+        self.assertFalse(line.package_level_id)
+
+        # ensure we have our new package in the same location
+        new_package = self._create_package_in_location(
+            self.shelf1, [self.PackageContent(self.product_a, 10, lot=None)]
+        )
+
+        self._test_change_pack_lot(
+            line,
+            new_package.name,
+            success=True,
+            message=self.service.msg_store.package_replaced_by_package(
+                initial_package, new_package
+            ),
+        )
+        self.assertRecordValues(
+            line, [{"package_id": new_package.id, "result_package_id": new_package.id}]
+        )
+        self.assertRecordValues(line.package_level_id, [{"package_id": new_package.id}])
+
+        # check that reservations have been updated
+        self.assert_quant_reserved_qty(line, lambda: 0, package=initial_package)
+        self.assert_quant_reserved_qty(
+            line, lambda: line.product_qty, package=new_package
+        )
+
     def test_change_pack_lot_change_pack_different_location(self):
         initial_package = self._create_package_in_location(
             self.shelf1, [self.PackageContent(self.product_a, 10, lot=None)]
