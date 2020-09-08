@@ -595,6 +595,7 @@ class ClusterPicking(Component, ChangePackLotMixin):
                     ).format(bin_package.name),
                 },
             )
+        # TODO delete package level if any
         move_line.write({"qty_done": quantity, "result_package_id": bin_package.id})
 
         zero_check = move_line.picking_id.picking_type_id.shopfloor_zero_check

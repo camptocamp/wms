@@ -602,6 +602,11 @@ class ZonePicking(Component, ChangePackLotMixin):
                 message=self.msg_store.package_already_used(package),
             )
             return (package_changed, response)
+
+        # get rid of the package level since we are no longer moving the
+        # entire package
+        move_line.package_level_id.shallow_unlink()
+
         # the quantity done is set to the passed quantity
         # but if we move a partial qty, we need to split the move line
         compare = self._move_line_compare_qty(move_line, quantity)

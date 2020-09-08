@@ -412,6 +412,7 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
         self.assertEqual(len(moves_before), 1)
         self.assertEqual(len(moves_before.move_line_ids), 1)
         move_line = moves_before.move_line_ids
+        self.assertTrue(move_line.package_level_id)
         response = self.service.dispatch(
             "set_destination",
             params={
@@ -437,6 +438,9 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
                 },
             ],
         )
+        # since we are no longer moving the entire package, we should no longer
+        # have a package level
+        self.assertFalse(move_line.package_level_id)
         # Check response
         move_lines = self.service._find_location_move_lines(zone_location, picking_type)
         move_lines = move_lines.sorted(lambda l: l.move_id.priority, reverse=True)
@@ -468,6 +472,7 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
         self.assertEqual(len(moves_before), 1)
         self.assertEqual(len(moves_before.move_line_ids), 1)
         move_line = moves_before.move_line_ids
+        self.assertTrue(move_line.package_level_id)
         response = self.service.dispatch(
             "set_destination",
             params={
@@ -486,6 +491,9 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
         )
         self.assertTrue(move_line != new_move_line)
         self.assertEqual(moves_before, moves_after)
+        # since we are no longer moving the entire package, we should no longer
+        # have a package level
+        self.assertFalse(move_line.package_level_id)
         self.assertRecordValues(
             move_line,
             [
@@ -501,7 +509,8 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
             new_move_line,
             [
                 {
-                    "result_package_id": new_move_line.package_id.id,  # Unchanged
+                    # reset, we don't move the entire package
+                    "result_package_id": False,
                     "product_uom_qty": 4,
                     "qty_done": 0,
                     "shopfloor_user_id": False,

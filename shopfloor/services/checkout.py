@@ -626,6 +626,7 @@ class Checkout(Component):
 
     def _put_lines_in_allowed_package(self, picking, selected_lines, package):
         lines_to_pack = selected_lines.filtered(self._filter_lines_to_pack)
+        # TODO delete package level if any
         lines_to_pack.write(
             {"result_package_id": package.id, "shopfloor_checkout_done": True}
         )
@@ -764,6 +765,7 @@ class Checkout(Component):
                 message=self.msg_store.stock_picking_not_found()
             )
         selected_lines = self.env["stock.move.line"].browse(selected_line_ids).exists()
+        # TODO delete package level if any
         selected_lines.write(
             {"shopfloor_checkout_done": True, "result_package_id": False}
         )
@@ -955,6 +957,7 @@ class Checkout(Component):
                 and l.result_package_id == package
             )
             for move_line in move_lines:
+                # TODO delete package level if any
                 move_line.write(
                     {
                         "qty_done": 0,
