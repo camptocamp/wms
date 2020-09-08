@@ -394,5 +394,5 @@ class ZonePickingSelectLineCase(ZonePickingCommonCase):
         )
         # check response
         self.assert_response_unload_all(
-            response, zone_location, picking_type, self.picking5.move_line_ids,
+            response, zone_location, picking_type, self.picking5.move_line_ids.sorted(),
         )

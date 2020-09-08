@@ -13,10 +13,10 @@ class StockPicking(models.Model):
         help="Technical field. Indicates number of move lines included.",
     )
     shopfloor_display_packing_info = fields.Boolean(
-        related="picking_type_id.shopfloor_display_packing_info",
+        related="picking_type_id.shopfloor_display_packing_info"
     )
     shopfloor_packing_info = fields.Text(
-        string="Packing information", related="partner_id.shopfloor_packing_info",
+        string="Packing information", related="partner_id.shopfloor_packing_info"
     )
 
     @api.depends(
@@ -46,3 +46,8 @@ class StockPicking(models.Model):
     def action_done(self):
         self = self.with_context(_action_done_from_picking=True)
         return super().action_done()
+
+    def _check_entire_pack(self):
+        return super(
+            StockPicking, self.with_context(_check_entire_pack_exclude_done=True)
+        )._check_entire_pack()
