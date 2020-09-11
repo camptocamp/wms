@@ -142,3 +142,15 @@ class StockMoveLine(models.Model):
             self.with_context(bypass_reservation_update=True).product_uom_qty = qty_done
             return (new_line, "lesser")
         return (new_line, "full")
+
+    def filtered(self, func):
+        # Workaround for "StockPicking._check_entire_pack" which do not filter
+        # on "done"/"cancel" lines. In a standard odoo, it doesn't need to because
+        # we set all the lines to "done" at once, but since shopfloor allow setting
+        # them to done one by one, we need to exclude already processed lines.
+        lines = super().filtered(func)
+        if self.env.context.get("_check_entire_pack_exclude_done"):
+            lines = lines.with_context(_check_entire_pack_exclude_done=False).filtered(
+                lambda ml: ml.state not in ("cancel", "done")
+            )
+        return lines
