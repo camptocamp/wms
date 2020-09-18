@@ -6,13 +6,16 @@ from odoo.tools.float_utils import float_compare
 class StockMoveLine(models.Model):
     _inherit = "stock.move.line"
 
+    # shopfloor_priority is set to this value when postponed
+    # consider it as the max value for priority
+    _SF_PRIORITY_POSTPONED = 9999
+
     # TODO use a serialized field
     shopfloor_unloaded = fields.Boolean(default=False)
-    shopfloor_postponed = fields.Boolean(
-        default=False,
+    shopfloor_priority = fields.Integer(
+        default=10,
         copy=False,
-        help="Technical field. "
-        "Indicates if a the move has been postponed in a barcode scenario.",
+        help="Technical field. " "Overrides move line's priority in barcode scenario.",
     )
     shopfloor_checkout_done = fields.Boolean(default=False)
     shopfloor_user_id = fields.Many2one(comodel_name="res.users", index=True)

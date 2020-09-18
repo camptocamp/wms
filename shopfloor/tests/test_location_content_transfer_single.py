@@ -318,7 +318,9 @@ class LocationContentTransferSingleCase(LocationContentTransferCommonCase):
 
     def test_postpone_package_ok(self):
         package_level = self.picking1.move_line_ids.package_level_id
-        self.assertFalse(package_level.shopfloor_postponed)
+        self.assertNotEqual(
+            package_level.shopfloor_priority, package_level._SF_PRIORITY_POSTPONED
+        )
         response = self.service.dispatch(
             "postpone_package",
             params={
@@ -326,7 +328,9 @@ class LocationContentTransferSingleCase(LocationContentTransferCommonCase):
                 "package_level_id": package_level.id,
             },
         )
-        self.assertTrue(package_level.shopfloor_postponed)
+        self.assertEqual(
+            package_level.shopfloor_priority, package_level._SF_PRIORITY_POSTPONED
+        )
         move_lines = self.service._find_transfer_move_lines(self.content_loc)
         self.assert_response_start_single(
             response, move_lines.mapped("picking_id"),
@@ -376,12 +380,14 @@ class LocationContentTransferSingleCase(LocationContentTransferCommonCase):
 
     def test_postpone_line_ok(self):
         move_line = self.picking2.move_line_ids[0]
-        self.assertFalse(move_line.shopfloor_postponed)
+        self.assertNotEqual(
+            move_line.shopfloor_priority, move_line._SF_PRIORITY_POSTPONED
+        )
         response = self.service.dispatch(
             "postpone_line",
             params={"location_id": self.content_loc.id, "move_line_id": move_line.id},
         )
-        self.assertTrue(move_line.shopfloor_postponed)
+        self.assertEqual(move_line.shopfloor_priority, move_line._SF_PRIORITY_POSTPONED)
         move_lines = self.service._find_transfer_move_lines(self.content_loc)
         self.assert_response_start_single(
             response, move_lines.mapped("picking_id"),

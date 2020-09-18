@@ -318,7 +318,7 @@ class ClusterPicking(Component):
     @staticmethod
     def _sort_key_lines(line):
         return (
-            line.shopfloor_postponed,
+            line.shopfloor_priority or 10,
             line.location_id.shopfloor_picking_sequence or "",
             line.location_id.name,
             -int(line.move_id.priority or 1),
@@ -377,7 +377,7 @@ class ClusterPicking(Component):
         data["package_dest"] = None
         data["batch"] = self.data.picking_batch(batch)
         data["picking"] = self.data.picking(picking)
-        data["postponed"] = line.shopfloor_postponed
+        data["postponed"] = line.shopfloor_priority == line._SF_PRIORITY_POSTPONED
         data["product"]["qty_available"] = product.with_context(
             location=line.location_id.id
         ).qty_available
@@ -734,7 +734,7 @@ class ClusterPicking(Component):
                 batch, message=self.msg_store.operation_not_found()
             )
         # flag as postponed
-        move_line.shopfloor_postponed = True
+        move_line.shopfloor_priority = move_line._SF_PRIORITY_POSTPONED
         return self._pick_after_skip_line(move_line)
 
     def _pick_after_skip_line(self, move_line):
