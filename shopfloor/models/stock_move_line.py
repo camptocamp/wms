@@ -139,5 +139,34 @@ class StockMoveLine(models.Model):
         return (new_line, "full")
 
     def replace_package(self, new_package):
-        """Replace a package on assigned move lines and package level"""
-        raise NotImplementedError()
+        """Replace a package on assigned move lines"""
+        self.package_id = new_package
+        self.package_level_id.package_id = new_package
+
+        picking = self.picking_id
+        move_entire_package = picking._check_move_lines_map_quant_package(new_package)
+        if move_entire_package:
+            # TODO not sure, as we are exploding the other lines, maybe we
+            # should put nothing in result or only if we have one line
+            self.result_package_id = new_package
+        # TODO what if lot/owner changed?
+
+    def __eauaeu_replace_package(self, new_package):
+        if self.state not in ("new", "assigned"):
+            return
+
+        move_lines = self.move_line_ids
+        # the write method on stock.move.line updates the reservation on quants
+        move_lines.package_id = new_package
+        # when a package is set on a line, the destination package is the same
+        # by default, if we move the whole quantity
+        # FIXME check what happens if we don't move full package
+        # move_lines.result_package_id = new_package
+
+        for quant in new_package.quant_ids:
+            for line in move_lines:
+                if line.product_id == quant.product_id:
+                    line.lot_id = quant.lot_id
+                    line.owner_id = quant.owner_id
+
+        self.package_id = new_package

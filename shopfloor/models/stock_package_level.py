@@ -5,31 +5,12 @@ class StockPackageLevel(models.Model):
     _name = "stock.package_level"
     _inherit = ["stock.package_level", "shopfloor.priority.postpone.mixin"]
 
-    def replace_package(self, new_package):
-        """Replace a package on an assigned package level and related records
+    def shallow_unlink(self):
+        """Unlink but keep the moves"""
+        self.move_ids.package_level_id = False
+        self.unlink()
 
-        The replacement package must have the same properties (same products
-        and quantities).
-        """
-        if self.state not in ("new", "assigned"):
-            return
-
+    def explode_package(self):
         move_lines = self.move_line_ids
-        # the write method on stock.move.line updates the reservation on quants
-        move_lines.package_id = new_package
-        # when a package is set on a line, the destination package is the same
-        # by default, if we move the whole quantity
-        # FIXME check what happens if we don't move full package
-        # move_lines.result_package_id = new_package
-
-        picking = move_lines.picking_id
-        mapp = picking._check_move_lines_map_quant_package(new_package)
-        import ipdb; ipdb.set_trace()
-
-        for quant in new_package.quant_ids:
-            for line in move_lines:
-                if line.product_id == quant.product_id:
-                    line.lot_id = quant.lot_id
-                    line.owner_id = quant.owner_id
-
-        self.package_id = new_package
+        move_lines.result_package_id = False
+        self.shallow_unlink()

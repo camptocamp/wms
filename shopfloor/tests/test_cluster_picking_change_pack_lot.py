@@ -153,12 +153,15 @@ class ClusterPickingChangePackLotCase(ClusterPickingChangePackLotCommon):
 
         line = self.batch.picking_ids.move_line_ids
         self.assertRecordValues(
-            line, [{
-                "package_id": initial_package.id,
-                # since we don't move the entire package (10 out of 100), no
-                # result package
-                "result_package_id": False
-            }]
+            line,
+            [
+                {
+                    "package_id": initial_package.id,
+                    # since we don't move the entire package (10 out of 100), no
+                    # result package
+                    "result_package_id": False,
+                }
+            ],
         )
         self.assertFalse(line.package_level_id)
 
