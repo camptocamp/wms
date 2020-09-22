@@ -1,21 +1,9 @@
-from odoo import fields, models
-
-from .stock_move_line import StockMoveLine
+from odoo import models
 
 
 class StockPackageLevel(models.Model):
-    _inherit = "stock.package_level"
-
-    # shopfloor_priority is set to this value when postponed
-    # consider it as the max value for priority
-    _SF_PRIORITY_POSTPONED = StockMoveLine._SF_PRIORITY_POSTPONED
-
-    shopfloor_priority = fields.Integer(
-        default=10,
-        copy=False,
-        help="Technical field. "
-        "Overrides package level's priority in barcode scenario.",
-    )
+    _name = "stock.package_level"
+    _inherit = ["stock.package_level", "shopfloor.priority.postpone.mixin"]
 
     def replace_package(self, new_package):
         """Replace a package on an assigned package level and related records

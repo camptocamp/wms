@@ -52,22 +52,23 @@ class ClusterPickingSkipLineCase(ClusterPickingCommonCase):
             lambda line: (line.location_id == self.stock_location)
         )
         # no line postponed yet
-        self.assertEqual(all_lines.mapped("shopfloor_priority"), [10, 10, 10, 10])
+        self.assertEqual(
+            all_lines.mapped("shopfloor_postponed"), [False, False, False, False]
+        )
 
-        postponed_value = self.env["stock.move.line"]._SF_PRIORITY_POSTPONED
         # skip line from loc 1
         self._skip_line(loc1_lines[0], loc1_lines[1])
-        self.assertEqual(loc1_lines[0].shopfloor_priority, postponed_value)
+        self.assertTrue(loc1_lines[0].shopfloor_postponed)
 
         # 2nd line, next is 1st from 2nd location
-        self.assertNotEqual(loc1_lines[1].shopfloor_priority, postponed_value)
+        self.assertFalse(loc1_lines[1].shopfloor_postponed)
         self._skip_line(loc1_lines[1], loc2_lines[0])
-        self.assertEqual(loc1_lines[1].shopfloor_priority, postponed_value)
+        self.assertTrue(loc1_lines[1].shopfloor_postponed)
 
         # 3rd line, next is 4th
-        self.assertNotEqual(loc2_lines[0].shopfloor_priority, postponed_value)
+        self.assertFalse(loc2_lines[0].shopfloor_postponed)
         self._skip_line(loc2_lines[0], loc2_lines[1])
-        self.assertEqual(loc2_lines[0].shopfloor_priority, postponed_value)
+        self.assertTrue(loc2_lines[0].shopfloor_postponed)
 
 
 # TODO tests for transitions to next line / no next lines, ...

@@ -659,7 +659,7 @@ class LocationContentTransfer(Component):
         if not location.exists():
             return self._response_for_start(message=self.msg_store.record_not_found())
         if package_level.exists():
-            package_level.shopfloor_priority = package_level._SF_PRIORITY_POSTPONED
+            package_level.shopfloor_postponed = True
         move_lines = self._find_transfer_move_lines(location)
         return self._response_for_start_single(move_lines.mapped("picking_id"))
 
@@ -674,7 +674,7 @@ class LocationContentTransfer(Component):
             return self._response_for_start(message=self.msg_store.record_not_found())
         move_line = self.env["stock.move.line"].browse(move_line_id)
         if move_line.exists():
-            move_line.shopfloor_priority = move_line._SF_PRIORITY_POSTPONED
+            move_line.shopfloor_postponed = True
         move_lines = self._find_transfer_move_lines(location)
         return self._response_for_start_single(move_lines.mapped("picking_id"))
 
