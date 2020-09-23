@@ -90,13 +90,6 @@ class ChangePackageLot(Component):
     def change_package(self, move_line, package, response_ok_func, response_error_func):
         inventory = self.actions_for("inventory")
 
-        package_level = move_line.package_level_id
-        # several move lines can be moved by the package level, if we change
-        # the package for the current one, we destroy the package level because
-        # we are no longer moving the entire package
-        if len(package_level.move_line_ids) > 1:
-            package_level.explode_package()
-
         # prevent to replace a package by a package that would not satisfy the
         # move (different product)
         content_replacement_allowed = self._package_content_replacement_allowed(
@@ -155,6 +148,11 @@ class ChangePackageLot(Component):
         move_line.replace_package(package)
 
         to_assign_moves._action_assign()
+
+        # computation of the 'state' of the package levels is not
+        # triggered, force it
+        to_assign_moves.move_line_ids.package_level_id.modified(["move_line_ids"])
+        move_line.package_level_id.modified(["move_line_ids"])
 
         return response_ok_func(
             move_line,

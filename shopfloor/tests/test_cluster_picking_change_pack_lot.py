@@ -398,16 +398,12 @@ class ClusterPickingChangePackLotCaseSpecial(ClusterPickingChangePackLotCommon):
         # create a new package in the same location
         # with a different content
         new_package = self._create_package_in_location(
-            self.shelf1,
-            [
-                self.PackageContent(self.product_a, 10, lot=None),
-                self.PackageContent(self.product_b, 8, lot=None),
-            ],
+            self.shelf1, [self.PackageContent(self.product_b, 8, lot=None)]
         )
 
         lines = batch.picking_ids.move_line_ids
-        # try to use the new package, which has a different content,
-        # not accepted
+        # try to use the new package, which doesn't contain our product,
+        # cannot be changed
         self._test_change_pack_lot(
             lines[0],
             new_package.name,
@@ -416,6 +412,22 @@ class ClusterPickingChangePackLotCaseSpecial(ClusterPickingChangePackLotCommon):
         )
 
     def test_change_pack_lot_change_pack_multi_content_with_lot(self):
+        """Switch package for a line which was part of a multi-products package
+
+        We have a move line which is part of a package with more than one
+        product and the other product is moved by another move line.
+
+        We want to pick the goods for product A in a different package. What
+        should happen is:
+
+        * the package level is exploded, as we will no longer move the entire
+          package
+        * the move line for product A should now use the new package, and be
+          updated with the lot of the package
+        * the move line for the other product should keep the other package, if
+          the user want to change the package for the other product too, they
+          can do it when they pick it
+        """
         (self.product_a + self.product_b).tracking = "lot"
         # create a package with 2 products tracked by lot, stored in shelf1
         # this package is reserved first on the move line
@@ -435,7 +447,6 @@ class ClusterPickingChangePackLotCaseSpecial(ClusterPickingChangePackLotCommon):
         self._simulate_batch_selected(batch, fill_stock=False)
 
         lines = picking.move_line_ids
-        package_level = lines.mapped("package_level_id")
 
         # create a second package with the same content, which will be used
         # as replacement
@@ -448,39 +459,46 @@ class ClusterPickingChangePackLotCaseSpecial(ClusterPickingChangePackLotCommon):
                 self.PackageContent(self.product_b, 10, new_lot_b),
             ],
         )
-        # changing the package of the first line will change all of them
+        line1, line2 = lines
         self._test_change_pack_lot(
-            lines[0],
+            line1,
             new_package.name,
             success=True,
             message=self.service.msg_store.package_replaced_by_package(
                 initial_package, new_package
             ),
         )
-
         self.assertRecordValues(
-            lines,
+            line1,
             [
                 {
                     "package_id": new_package.id,
-                    "result_package_id": new_package.id,
+                    # we are no longer moving an entire package
+                    "result_package_id": False,
                     "lot_id": new_lot_a.id,
-                },
-                {
-                    "package_id": new_package.id,
-                    "result_package_id": new_package.id,
-                    "lot_id": new_lot_b.id,
                 },
             ],
         )
-
-        self.assertRecordValues(package_level, [{"package_id": new_package.id}])
+        self.assertRecordValues(
+            line2,
+            [
+                {
+                    "package_id": initial_package.id,
+                    # we are no longer moving an entire package
+                    "result_package_id": False,
+                    "lot_id": initial_lot_b.id,
+                },
+            ],
+        )
         # check that reservations have been updated
-        for line in lines:
-            self.assert_quant_reserved_qty(line, lambda: 0, package=initial_package)
-            self.assert_quant_reserved_qty(
-                line, lambda: line.product_qty, package=new_package
-            )
+        self.assert_quant_reserved_qty(line1, lambda: 0, package=initial_package)
+        self.assert_quant_reserved_qty(
+            line2, lambda: line2.product_qty, package=initial_package
+        )
+        self.assert_quant_reserved_qty(
+            line1, lambda: line1.product_qty, package=new_package
+        )
+        self.assert_quant_reserved_qty(line2, lambda: 0, package=new_package)
 
     def test_change_pack_lot_change_pack_steal_from_other_move_line(self):
         # create 2 picking, each with its own package
@@ -500,6 +518,7 @@ class ClusterPickingChangePackLotCaseSpecial(ClusterPickingChangePackLotCommon):
         self._simulate_batch_selected(batch, fill_stock=False)
 
         line = picking1.move_line_ids
+
         # We "steal" package2 for the picking1
         self._test_change_pack_lot(
             line,

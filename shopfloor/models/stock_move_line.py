@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, exceptions, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
@@ -140,33 +140,42 @@ class StockMoveLine(models.Model):
 
     def replace_package(self, new_package):
         """Replace a package on assigned move lines"""
-        self.package_id = new_package
-        self.package_level_id.package_id = new_package
+        self.ensure_one()
 
-        picking = self.picking_id
-        move_entire_package = picking._check_move_lines_map_quant_package(new_package)
-        if move_entire_package:
-            # TODO not sure, as we are exploding the other lines, maybe we
-            # should put nothing in result or only if we have one line
-            self.result_package_id = new_package
-        # TODO what if lot/owner changed?
+        # several move lines can be moved by the package level, if we change
+        # the package for the current one, we destroy the package level because
+        # we are no longer moving the entire package
+        self.package_level_id.explode_package()
 
-    def __eauaeu_replace_package(self, new_package):
-        if self.state not in ("new", "assigned"):
-            return
+        quant = fields.first(
+            new_package.quant_ids.filtered(
+                lambda quant: quant.product_id == self.product_id
+                # TODO use float_tools
+                and quant.quantity > quant.reserved_quantity
+            )
+        )
+        if not quant:
+            raise exceptions.UserError(
+                _(
+                    "Package {} does not contain available product {},"
+                    " cannot replace package."
+                ).format(new_package.display_name, self.product_id.display_name)
+            )
 
-        move_lines = self.move_line_ids
-        # the write method on stock.move.line updates the reservation on quants
-        move_lines.package_id = new_package
-        # when a package is set on a line, the destination package is the same
-        # by default, if we move the whole quantity
-        # FIXME check what happens if we don't move full package
-        # move_lines.result_package_id = new_package
+        self.write(
+            {
+                "package_id": new_package.id,
+                "lot_id": quant.lot_id.id,
+                "owner_id": quant.owner_id.id,
+                "result_package_id": False,
+            }
+        )
+        # TODO ensure the qty is max the available one of the quant
+        # and if we reduce the qty, that we assign and make the rest
+        # in a new move line
 
-        for quant in new_package.quant_ids:
-            for line in move_lines:
-                if line.product_id == quant.product_id:
-                    line.lot_id = quant.lot_id
-                    line.owner_id = quant.owner_id
-
-        self.package_id = new_package
+        # try reassign the move in case we had a partial qty, also, it will
+        # recreate a package level if it applies
+        # TODO issue if we have an existing line with qty_done?
+        # write a test
+        self.move_id._action_assign()
