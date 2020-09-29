@@ -439,3 +439,14 @@ Vue.component("btn-fullscreen", {
     },
     template: `<btn-action @click="fullscreen_on ? leave_fullscreen() : go_fullscreen()">{{ btn_label }}</btn-action>`,
 });
+
+Vue.component("select-zone-operation-type-item", {
+    mixins: [ItemDetailMixin],
+    template: `
+<div :class="$options._componentTag">
+    <div v-for="op_type in record.operation_types" :key="make_component_key([op_type.id])">
+        <div class="detail-field">{{ $t("zone_picking.picking_type_detail", op_type) }}</div>
+    </div>
+</div>
+    `,
+});
