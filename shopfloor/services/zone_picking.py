@@ -223,7 +223,9 @@ class ZonePicking(Component):
         return {
             "zone_location": self.data.location(zone_location),
             "picking_type": self.data.picking_type(picking_type),
-            "move_lines": self.data.move_lines(move_lines, with_picking=True),
+            "move_lines": self.data.move_lines(
+                move_lines, with_picking=True, empty_location=True
+            ),
         }
 
     def _data_for_location(self, zone_location, picking_type, location):
@@ -1428,7 +1430,7 @@ class ShopfloorZonePickingValidatorResponse(Component):
         return {
             "start": {},
             "select_picking_type": self._schema_for_select_picking_type,
-            "select_line": self._schema_for_move_lines,
+            "select_line": self._schema_for_move_lines_empty_location,
             "set_line_destination": self._schema_for_move_line,
             "zero_check": self._schema_for_zero_check,
             "change_pack_lot": self._schema_for_move_line,
@@ -1546,6 +1548,14 @@ class ShopfloorZonePickingValidatorResponse(Component):
                 "required": False,
             },
         }
+        return schema
+
+    @property
+    def _schema_for_move_lines_empty_location(self):
+        schema = self._schema_for_move_lines
+        schema["move_lines"] = self.schemas._schema_list_of(
+            self.schemas.move_line(with_picking=True, empty_location=True)
+        )
         return schema
 
     @property

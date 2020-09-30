@@ -222,7 +222,9 @@ class ZonePickingCommonCase(CommonCase):
             data={
                 "zone_location": self.data.location(zone_location),
                 "picking_type": self.data.picking_type(picking_type),
-                "move_lines": self.data.move_lines(move_lines, with_picking=True),
+                "move_lines": self.data.move_lines(
+                    move_lines, with_picking=True, empty_location=True
+                ),
             },
             message=message,
             popup=popup,
