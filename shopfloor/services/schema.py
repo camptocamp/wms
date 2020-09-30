@@ -72,7 +72,7 @@ class BaseShopfloorSchemaResponse(Component):
             "scheduled_date": {"type": "string", "nullable": False, "required": True},
         }
 
-    def move_line(self, with_packaging=False, with_picking=False, empty_location=False):
+    def move_line(self, with_packaging=False, with_picking=False):
         schema = {
             "id": {"type": "integer", "required": True},
             "qty_done": {"type": "float", "required": True},
@@ -96,12 +96,6 @@ class BaseShopfloorSchemaResponse(Component):
         }
         if with_picking:
             schema["picking"] = self._schema_dict_of(self.picking())
-        if empty_location:
-            schema["empty_location_src"] = {
-                "type": "boolean",
-                "nullable": False,
-                "required": True,
-            }
         return schema
 
     def move(self):

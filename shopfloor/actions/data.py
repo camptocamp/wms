@@ -124,7 +124,7 @@ class DataAction(Component):
     def _lot_parser(self):
         return self._simple_record_parser() + ["ref"]
 
-    def move_line(self, record, with_picking=False, empty_location=False, **kw):
+    def move_line(self, record, with_picking=False, **kw):
         record = record.with_context(location=record.location_id.id)
         parser = self._move_line_parser
         if with_picking:
@@ -143,11 +143,6 @@ class DataAction(Component):
                     ),
                 }
             )
-            # tell if the location is about to be empty if we process these move lines
-            if empty_location:
-                data[
-                    "empty_location_src"
-                ] = record.location_id.planned_qty_in_location_is_empty(record)
         return data
 
     def move_lines(self, records, **kw):
