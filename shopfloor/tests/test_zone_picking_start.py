@@ -30,6 +30,14 @@ class ZonePickingStartCase(ZonePickingCommonCase):
         cls._update_qty_in_location(cls.zone_sublocation1, cls.product_b, 10)
         extra_picking.action_assign()
 
+    def test_data_for_zone(self):
+        pass
+
+    def test_select_zone(self):
+        """Scanned location invalid, no location found."""
+        response = self.service.dispatch("select_zone")
+        self.assert_response_start(response)
+
     def test_scan_location_wrong_barcode(self):
         """Scanned location invalid, no location found."""
         response = self.service.dispatch(
@@ -52,8 +60,11 @@ class ZonePickingStartCase(ZonePickingCommonCase):
 
     def test_scan_location_no_move_lines(self):
         """Scanned location valid, but no move lines found in it."""
+        sub1_lines = self.service._find_location_move_lines(self.zone_sublocation1)
+        # no more lines available
+        sub1_lines.picking_id.action_cancel()
         response = self.service.dispatch(
-            "scan_location", params={"barcode": self.shelf2.barcode},
+            "scan_location", params={"barcode": self.zone_sublocation1.barcode},
         )
         self.assert_response_start(
             response, message=self.service.msg_store.no_lines_to_process(),
