@@ -410,15 +410,23 @@ class StockReceptionScreen(models.Model):
 
     def _handle_product_packaging(self, packaging):
         if packaging:
+            storage_type = packaging.package_storage_type_id
+            if (
+                self.current_step == "set_package"
+                and storage_type.height_required
+                and not packaging.height
+            ):
+                # Avoid the constraint _check_storage_type_height_required
+                # To be called when in the middle of the steps
+                # Actually is it needed at that time ?
+                return
             # Set the product packaging on the move and on the package
             self.current_move_id.product_packaging = packaging
             package = self.current_move_line_id.result_package_id
-            package.product_packaging_id = packaging
-            # Set the storage type on the package
-            storage_type = packaging.package_storage_type_id
-            package.package_storage_type_id = storage_type
-            # Set the height on the package
+            # Set the storage type and height on the package
             package.height = packaging.height
+            package.product_packaging_id = packaging
+            package.package_storage_type_id = storage_type
 
     def process_select_product(self):
         self.next_step()
