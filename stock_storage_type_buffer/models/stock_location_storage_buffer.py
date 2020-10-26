@@ -51,23 +51,21 @@ class StockLocationStorageBuffer(models.Model):
 
     def _help_message_location_items(self, records):
         items = records[: self.MAX_LOCATIONS_IN_HELP].mapped("display_name")
-        if len(records) > self.MAX_LOCATIONS_IN_HELP:
-            items.append("... and {} other locations.".format(
-                len(records) - self.MAX_LOCATIONS_IN_HELP
-            ))
-        return items
+        return items, max(0, len(records) - self.MAX_LOCATIONS_IN_HELP)
 
     def _prepare_values_for_help_message(self):
-        buffer_location_items = self._help_message_location_items(
+        buffer_location_items, buffer_remaining = self._help_message_location_items(
             self.buffer_location_ids.leaf_location_ids
         )
-        location_items = self._help_message_location_items(
+        location_items, loc_remaining = self._help_message_location_items(
             self.location_ids.leaf_location_ids
         )
         return {
             "buffers_have_capacity": self.buffers_have_capacity(),
             "buffer_locations": buffer_location_items,
+            "buffer_locations_remaining": buffer_remaining,
             "locations": location_items,
+            "locations_remaining": loc_remaining,
         }
 
     def _help_message(self):

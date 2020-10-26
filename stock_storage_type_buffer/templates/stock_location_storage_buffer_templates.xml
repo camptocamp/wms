@@ -1,7 +1,5 @@
 <odoo>
-
     <template id="storage_buffer_help_message">
-
         <p>The buffer locations
             <ul class="mt8">
                 <t t-foreach="buffer_locations" t-as="loc_text">
@@ -9,6 +7,9 @@
                         <span itemprop="name" t-esc="loc_text" />
                     </li>
                 </t>
+                <li t-if="buffer_locations_remaining">
+                    ... and <span t-esc="buffer_locations_remaining" /> other locations.
+                </li>
             </ul>
             <span t-if="buffers_have_capacity">
                 currently <strong>have capacity</strong>,
@@ -26,14 +27,14 @@
                         <span itemprop="name" t-esc="loc_text" />
                     </li>
                 </t>
+                <li t-if="locations_remaining">
+                    ... and <span t-esc="locations_remaining" /> other locations.
+                </li>
             </ul>
         </p>
-
         <p t-if="not buffers_have_capacity">
             The buffers have no capacity because they all contain
             goods or will contain goods due to move lines reaching them.
         </p>
-
     </template>
-
 </odoo>
