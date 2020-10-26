@@ -325,7 +325,7 @@ class StockLocation(models.Model):
             valid_location_ids |= set(locations.ids)
         return self.browse(valid_location_ids)
 
-    def _select_valid_locations(self, limit=None):
+    def _select_final_valid_putaway_locations(self, limit=None):
         """Return the valid locations using the provided limit
 
         ``self`` contains locations already ordered and contains
@@ -388,7 +388,9 @@ class StockLocation(models.Model):
         # locations while preserving the initial order
         valid_location_ids = [id_ for id_ in self.ids if id_ in valid_locations.ids]
         valid_locations = self.browse(valid_location_ids)
-        valid_locations = valid_locations._select_valid_locations(limit=limit)
+        valid_locations = valid_locations._select_final_valid_putaway_locations(
+            limit=limit
+        )
 
         _logger.debug(
             "select allowed location for package storage"
