@@ -14,6 +14,7 @@
     "depends": ["stock_storage_type"],
     "data": [
         "views/stock_location_storage_buffer_views.xml",
+        "templates/stock_location_storage_buffer_templates.xml",
         "security/ir.model.access.csv",
     ],
 }

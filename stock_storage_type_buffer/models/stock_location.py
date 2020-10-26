@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 class StockLocation(models.Model):
     _inherit = "stock.location"
 
-    def _select_valid_locations(self, limit=None):
+    def _select_final_valid_putaway_locations(self, limit=None):
         """Return the valid locations using the provided limit
 
         ``self`` contains locations already ordered and contains
@@ -22,7 +22,7 @@ class StockLocation(models.Model):
         """
         if self:  # short-circuit computation when already 0 valid
             self = self._filter_locations_blocked_by_buffer()
-        return super()._select_valid_locations(limit=limit)
+        return super()._select_final_valid_putaway_locations(limit=limit)
 
     def _filter_locations_blocked_by_buffer(self):
         valid_location_ids = set(self.ids)

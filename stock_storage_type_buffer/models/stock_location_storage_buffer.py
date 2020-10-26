@@ -49,65 +49,42 @@ class StockLocationStorageBuffer(models.Model):
         buffer_locations = self.buffer_location_ids.leaf_location_ids
         return any(location.location_is_empty for location in buffer_locations)
 
+    def _help_message_location_items(self, records):
+        items = records[: self.MAX_LOCATIONS_IN_HELP].mapped("display_name")
+        if len(records) > self.MAX_LOCATIONS_IN_HELP:
+            items.append("... and {} other locations.".format(
+                len(records) - self.MAX_LOCATIONS_IN_HELP
+            ))
+        return items
+
+    def _prepare_values_for_help_message(self):
+        buffer_location_items = self._help_message_location_items(
+            self.buffer_location_ids.leaf_location_ids
+        )
+        location_items = self._help_message_location_items(
+            self.location_ids.leaf_location_ids
+        )
+        return {
+            "buffers_have_capacity": self.buffers_have_capacity(),
+            "buffer_locations": buffer_location_items,
+            "locations": location_items,
+        }
+
     def _help_message(self):
-        buffer_locations = self.buffer_location_ids.leaf_location_ids
-        buffer_location_count = len(buffer_locations)
-        leaf_locations = self.location_ids.leaf_location_ids
-        leaf_location_count = len(leaf_locations)
-
-        message = "<p>The buffer locations:<ul><br/>"
-
-        other_locs_template = _("<li>... and {} other locations.</li>")
-
-        for idx, location in enumerate(buffer_locations):
-            if idx == self.MAX_LOCATIONS_IN_HELP:
-                message += other_locs_template.format(
-                    buffer_location_count - self.MAX_LOCATIONS_IN_HELP
-                )
-                break
-            message += "<li>{}</li>".format(location.display_name)
-
-        buffers_have_capacity = self.buffers_have_capacity()
-
-        if buffers_have_capacity:
-            message += _(
-                "</ul>currently <strong>have capacity</strong>,"
-                " so the following locations "
-                "<strong>can receive putaways</strong>:<ul><br/>"
-            )
-        else:
-            message += _(
-                "</ul>currently <strong>have no capacity</strong>,"
-                " so the following locations  "
-                "<strong>cannot receive putaways</strong>:<ul><br/>"
-            )
-
-        for idx, location in enumerate(leaf_locations):
-            if idx == self.MAX_LOCATIONS_IN_HELP:
-                message += other_locs_template.format(
-                    leaf_location_count - self.MAX_LOCATIONS_IN_HELP
-                )
-                break
-            message += "<li>{}</li>".format(location.display_name)
-
-        message += "</ul></p>"
-
-        if not buffers_have_capacity:
-            message += _(
-                "<p>The buffers have no capacity because they all contain"
-                " goods or will contain goods due to move lines reaching them.</p>"
-            )
-        return message
+        return self.env["ir.qweb"].render(
+            "stock_storage_type_buffer.storage_buffer_help_message",
+            self._prepare_values_for_help_message(),
+        )
 
     def name_get(self):
         result = []
         for record in self:
             name = ", ".join(
-                self.buffer_location_ids[: self.MAX_LOCATIONS_IN_NAME_GET].mapped(
+                record.buffer_location_ids[: self.MAX_LOCATIONS_IN_NAME_GET].mapped(
                     "name"
                 )
             )
-            if len(self.buffer_location_ids) > self.MAX_LOCATIONS_IN_NAME_GET:
+            if len(record.buffer_location_ids) > self.MAX_LOCATIONS_IN_NAME_GET:
                 name += ", ..."
             result.append((record.id, name))
         return result
