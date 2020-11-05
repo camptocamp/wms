@@ -9,36 +9,59 @@
 start -> select_picking_type: **/scan_location**
 select_picking_type -> select_line: **/list_move_lines**
 select_line -> set_line_destination: **/scan_source**
+
+group /set_destination
 set_line_destination -[#red]> set_line_destination: **/set_destination** \n(error)
 set_line_destination -> set_line_destination: **/set_destination** \n(scanned location not expected but valid, confirmation required)
 set_line_destination -> select_line: **/set_destination**
 set_line_destination -> zero_check: **/set_destination**
 zero_check -> select_line: **/is_zero**
+end
+
+group /prepare_unload
 select_line -> unload_single: **/prepare_unload** \n(different destinations in buffer lines, process one by one)
 select_line -> unload_set_destination: **/prepare_unload** \n(only one move line in the buffer)
 select_line -> unload_all: **/prepare_unload** \n(buffer lines have all the same destination location)
 select_line -> select_line: **/prepare_unload** \n(no remaining lines in the buffer)
+end
+
+group /set_destination_all
 unload_all -[#red]> unload_all: **/set_destination_all** \n(error, scanned destination location invalid)
 unload_all -> unload_all: **/set_destination_all** \n(scanned destination not expected but valid, confirmation required)
 unload_all -> select_line: **/set_destination_all** \n(move lines still need to be processed)
 unload_all -> start: **/set_destination_all** \n(all move lines have been processed)
+end
+
+group /unload_split
 select_line -> unload_single: **/unload_split**
 select_line -> unload_set_destination: **/unload_split**
 select_line -> select_line: **/unload_split**
+end
+
+group /unload_scan_pack
 unload_single -[#red]> unload_single: **/unload_scan_pack** \n(error)
 unload_single -> unload_set_destination: **/unload_scan_pack**
 unload_single -> select_line: **/unload_scan_pack**
 unload_single -> start: **/unload_scan_pack**
+end
+
+group /unload_set_destination
 unload_set_destination -> unload_single: **/unload_set_destination**
 unload_set_destination -[#red]> unload_set_destination: **/unload_set_destination** \n(error)
 unload_set_destination -> select_line: **/unload_set_destination**
 unload_set_destination -> start: **/unload_set_destination**
+end
 
+group /stock_issue
 set_line_destination -> stock_issue: Button **"stock out"** (client-side)
 stock_issue -> set_line_destination: **/stock_issue** \n(goods are available after the inventory)
 stock_issue -> select_line: **/stock_issue** \n(goods still not available)
+end
+
+group /change_pack_lot
 set_line_destination -> change_pack_lot: Button "Change pack or lot" (client-side)
 change_pack_lot -> set_line_destination: **/change_pack_lot** \n(pack/lot has been changed on the line)
 change_pack_lot -[#red]> change_pack_lot: **/change_pack_lot** \n(error, unable to change pack/lot on the line)
+end
 
 @enduml
