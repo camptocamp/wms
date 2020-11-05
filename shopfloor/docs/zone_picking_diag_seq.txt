@@ -20,7 +20,8 @@ select_line -> unload_all: **/prepare_unload** \n(buffer lines have all the same
 select_line -> select_line: **/prepare_unload** \n(no remaining lines in the buffer)
 unload_all -[#red]> unload_all: **/set_destination_all** \n(error, scanned destination location invalid)
 unload_all -> unload_all: **/set_destination_all** \n(scanned destination not expected but valid, confirmation required)
-unload_all -> select_line: **/set_destination_all**
+unload_all -> select_line: **/set_destination_all** \n(move lines still need to be processed)
+unload_all -> start: **/set_destination_all** \n(all move lines have been processed)
 select_line -> unload_single: **/unload_split**
 select_line -> unload_set_destination: **/unload_split**
 select_line -> select_line: **/unload_split**

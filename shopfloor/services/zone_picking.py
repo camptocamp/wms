@@ -15,6 +15,9 @@ class ZonePicking(Component):
 
     Zone picking of move lines.
 
+    You will find a sequence diagram describing states and endpoints
+    relationships [here](../docs/zone_picking_diag_seq.png).
+
     Note:
 
     * Several operation types could be linked to a single menu item
