@@ -420,7 +420,9 @@ class ZonePicking(Component):
         )
         return self._response_for_select_line(zone_location, picking_type, move_lines)
 
-    def _scan_source_location(self, zone_location, picking_type, location):
+    def _scan_source_location(
+        self, zone_location, picking_type, location, order="priority"
+    ):
         """Return the move line related to the scanned `location`.
 
         The method tries to identify unambiguously a move line in the location
@@ -432,16 +434,22 @@ class ZonePicking(Component):
         package = quants.package_id
         if len(product) > 1 or len(lot) > 1 or len(package) > 1:
             return False
-        domain = [("location_id", "=", location.id)]
+        domain = [
+            ("location_id", "=", location.id),
+            "|",
+            ("shopfloor_user_id", "=", False),
+            ("shopfloor_user_id", "=", self.env.uid),
+        ]
         if product:
             domain.append(("product_id", "=", product.id))
             if lot:
                 domain.append(("lot_id", "=", lot.id))
             if package:
                 domain.append(("package_id", "=", package.id))
-            move_line = self.env["stock.move.line"].search(domain)
-            if len(move_line) == 1:
-                return move_line
+            move_lines = self.env["stock.move.line"].search(domain)
+            sort_keys_func, reverse = self._sort_key_move_lines(order)
+            move_lines = move_lines.sorted(sort_keys_func, reverse=reverse)
+            return first(move_lines)
         return False
 
     def _scan_source_package(self, zone_location, picking_type, package, order):
@@ -498,14 +506,14 @@ class ZonePicking(Component):
                     message=self.msg_store.location_not_allowed()
                 )
             move_line = self._scan_source_location(
-                zone_location, picking_type, location
+                zone_location, picking_type, location, order=order
             )
             # if no move line, narrow the list of move lines on the scanned location
             if not move_line:
                 response = self.list_move_lines(location.id, picking_type.id)
                 return self._response(
                     base_response=response,
-                    message=self.msg_store.several_lines_in_location(location),
+                    message=self.msg_store.location_empty(location),
                 )
         package = search.package_from_scan(barcode)
         if package:
