@@ -596,7 +596,7 @@ class Checkout(Component):
     @staticmethod
     def _filter_lines_unpacked(move_line):
         return (
-            move_line.qty_done == 0 or move_line.shopfloor_user_id == move_line.env.user
+            move_line.qty_done == 0 or move_line.shopfloor_user_id
         ) and not move_line.shopfloor_checkout_done
 
     @staticmethod
