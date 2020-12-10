@@ -10,3 +10,8 @@ class StockPicking(models.Model):
     sale_date_expected = fields.Date(
         string="Delivery Date", related="group_id.date_expected", store=True
     )
+
+    def _get_shipping_policy(self):
+        # Override the method to get the shipping policy from the related order
+        self.ensure_one()
+        return self.sale_id.picking_policy or super()._get_shipping_policy()
