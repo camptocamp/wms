@@ -402,7 +402,7 @@ class ZonePicking(Component):
 
         product, lot, package = self._find_product_in_location(location)
         if len(product) > 1 or len(lot) > 1 or len(package) > 1:
-            response = self.list_move_lines(location.id, picking_type.id)
+            response = self.list_move_lines(location.id, picking_type.id, order=order)
             message = self.msg_store.several_products_in_location(location)
             return response, message
 
@@ -415,18 +415,13 @@ class ZonePicking(Component):
             order=order,
             match_user=True,
         )
-        # if no move line, narrow the list of move lines on the scanned location
-        if not move_lines:
-            response = self.list_move_lines(location.id, picking_type.id)
-            message = self.msg_store.location_empty(location)
-            return response, message
-
         if move_lines:
             response = self._response_for_set_line_destination(
                 zone_location, picking_type, first(move_lines)
             )
         else:
-            response = self.list_move_lines(zone_location.id, picking_type.id)
+            # if no move line, narrow the list of move lines on the scanned location
+            response = self.list_move_lines(location.id, picking_type.id, order=order)
             message = self.msg_store.location_empty(location)
         return response, message
 
@@ -458,7 +453,9 @@ class ZonePicking(Component):
                 zone_location, picking_type, first(move_lines)
             )
         else:
-            response = self.list_move_lines(zone_location.id, picking_type.id)
+            response = self.list_move_lines(
+                zone_location.id, picking_type.id, order=order
+            )
             message = self.msg_store.package_not_found()
         return response, message
 
@@ -481,7 +478,9 @@ class ZonePicking(Component):
                 zone_location, picking_type, first(move_lines)
             )
         else:
-            response = self.list_move_lines(zone_location.id, picking_type.id)
+            response = self.list_move_lines(
+                zone_location.id, picking_type.id, order=order
+            )
             message = self.msg_store.product_not_found()
         return response, message
 
@@ -502,7 +501,9 @@ class ZonePicking(Component):
                 zone_location, picking_type, first(move_lines)
             )
         else:
-            response = self.list_move_lines(zone_location.id, picking_type.id)
+            response = self.list_move_lines(
+                zone_location.id, picking_type.id, order=order
+            )
             message = self.msg_store.lot_not_found()
         return response, message
 
@@ -549,7 +550,7 @@ class ZonePicking(Component):
             )
             if response:
                 return self._response(base_response=response, message=message)
-        response = self.list_move_lines(zone_location.id, picking_type.id)
+        response = self.list_move_lines(zone_location.id, picking_type.id, order=order)
         return self._response(
             base_response=response, message=self.msg_store.barcode_not_found()
         )
