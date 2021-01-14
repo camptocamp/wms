@@ -231,7 +231,7 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
             # its quantity won't be counted in previously reserved
             # and we get 3 more on the next one
 
-            # promised qty is 0 because we picking is excluded by its date
+            # promised qty is 0 because the picking is excluded by its date
             self.assertEqual(picking2.move_lines.previous_promised_qty, 0)
 
             # promised qty is 3 because we have 3 for picking2
@@ -286,6 +286,12 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
             self.assertEqual(
                 picking2.move_lines.ordered_available_to_promise_uom_qty, 0
             )
+
+            # release picking 1
+            picking.move_lines.release_available_to_promise()
+            # When released, even if outside horizon, the qty is taken into account
+            # So, promised qty is now 5
+            self.assertEqual(picking2.move_lines.previous_promised_qty, 5)
 
         # move the horizon fwd
         self.env.company.stock_reservation_horizon = 10
