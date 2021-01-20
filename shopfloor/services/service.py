@@ -2,6 +2,7 @@
 # Copyright 2020 Akretion (http://www.akretion.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import json
+import logging
 import traceback
 
 from werkzeug.exceptions import BadRequest
@@ -15,6 +16,8 @@ from odoo.osv import expression
 from odoo.addons.base_rest.controllers.main import _PseudoCollection
 from odoo.addons.component.core import AbstractComponent, WorkContext
 from odoo.addons.component.exception import NoComponentError
+
+_logger = logging.getLogger(__name__)
 
 
 def to_float(val):
@@ -197,42 +200,49 @@ class BaseShopfloorService(AbstractComponent):
             res.append(self._convert_one_record(record))
         return res
 
-    def _get_validator_schema(self, method_name, usage_suffix):
-        validator_component = self.component(
-            usage="{}.{}".format(self._usage, usage_suffix)
-        )
+    def _get_validator_component(self, method_name):
+        if method_name.startswith("_validator_return_"):
+            suffix = "validator.response"
+            method_name = method_name.replace("_validator_return_", "")
+        elif method_name.startswith("_validator_"):
+            suffix = "validator"
+            method_name = method_name.replace("_validator_", "")
+        else:
+            # if you land here, you may have started to migrate endpoints to
+            # using the restapi.method decorator, you may need to customize the
+            # way to find the validator handler
+            raise ValueError("cannot find validator for %s" % method_name)
+        validator_component = self.component(usage="{}.{}".format(self._usage, suffix))
+        return validator_component, method_name
+
+    def _get_validator_handler(self, method_name):
+        try:
+            validator_component, method_name = self._get_validator_component(
+                method_name
+            )
+        except NoComponentError:
+            _logger.warning("no component found for %s method %s", self, method_name)
+            return {}
+        except AttributeError:
+            _logger.warning(
+                "no validator method found for %s method %s", self, method_name
+            )
+            return {}
         return getattr(validator_component, method_name)
 
-    # FIXME: must be replaced by a cleaner way to customize the validator
-    # handler, using: https://github.com/OCA/rest-framework/pull/99
-    def __getattr__(self, item):
-        # We have delegated the validator / return validators to dedicated
-        # components. In the new base_rest API, validator schemas are handled
-        # differently, but a backward compatibility layer adds
-        # "_validator_<method>" and "_validator_return_<method>" in the
-        # "routing" of the endpoints, which are automatically called on the
-        # service. As we have no way to replace the current service by the
-        # validator upstream, catch calls to these methods and get the schema
-        # from the validator services.
-        if item.startswith("_validator_return_"):
-            method_name = item.replace("_validator_return_", "")
-            try:
-                schema_handler = self._get_validator_schema(
-                    method_name, "validator.response"
-                )
-            except NoComponentError:
-                return super().__getattr__(item)
-            return schema_handler
+    def _has_validator_handler(self, method_name):
+        """Return if the service has a validator handler for a method
 
-        if item.startswith("_validator_"):
-            method_name = item.replace("_validator_", "")
-            try:
-                schema_handler = self._get_validator_schema(method_name, "validator")
-            except NoComponentError:
-                return super().__getattr__(item)
-            return schema_handler
-
-        return super().__getattr__(item)
+        By default, it returns True if the the method exists on the service.
+        It can be customized to delegate the validators to another component.
+        """
+        try:
+            validator_component, method_name = self._get_validator_component(
+                method_name
+            )
+        except NoComponentError:
+            return False
+        return hasattr(validator_component, method_name)
 
     def _response(
         self, base_response=None, data=None, next_state=None, message=None, popup=None
