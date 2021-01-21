@@ -227,6 +227,13 @@ class MessageAction(Component):
             "body": _("No putaway destination is available."),
         }
 
+    def package_unable_to_transfer(self, pack):
+        return {
+            "message_type": "error",
+            "body": _("The package %s cannot be transferred with this scenario.")
+            % pack.name,
+        }
+
     def unrecoverable_error(self):
         return {
             "message_type": "error",
