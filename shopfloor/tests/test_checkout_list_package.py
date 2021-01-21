@@ -23,7 +23,8 @@ class SelectDestPackageMixin:
                     "scheduled_date": picking.scheduled_date.isoformat() + "+00:00",
                 },
                 "packages": [
-                    self._package_data(package, picking) for package in packages
+                    self._package_data(package, picking, dest=True)
+                    for package in packages
                 ],
                 "selected_move_lines": [
                     self._move_line_data(ml) for ml in selected_lines.sorted()
