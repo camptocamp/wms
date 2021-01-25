@@ -10,7 +10,7 @@ class StockAction(Component):
     _inherit = "shopfloor.process.action"
     _usage = "stock"
 
-    def validate_moves(self, moves):
+    def validate_moves(self, moves, check_backorder=True):
         """Validate moves in different ways depending on several criterias:
 
         - moves to process are all the moves of the related transfer:
@@ -19,12 +19,13 @@ class StockAction(Component):
             the moves are put in a new transfer which is validated, the current
             transfer still have the remaining moves
         - moves to process are exactly the assigned moves of the related transfer:
-            the transfer is validated as usual, creating a backorder.
+            the transfer is validated as usual, creating a backorder (except if
+            `check_backorder` parameter is set to `False`).
         """
         moves.split_unavailable_qty()
         for picking in moves.picking_id:
             moves_todo = picking.move_lines & moves
-            if self._check_backorder(picking, moves_todo):
+            if check_backorder and self._check_backorder(picking, moves_todo):
                 picking.action_done()
             else:
                 moves_todo.extract_and_action_done()
