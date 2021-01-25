@@ -47,11 +47,13 @@ export var Workstation = Vue.component("workstation", {
             this.odoo.call("setdefault", {barcode: scanned.text}).then(result => {
                 this.workstation_scanned = true;
                 if (result.error) {
-                    console.error(result);
+                    let parts = [result.error.status, result.error.error];
+                    if (result.error.status === 404) {
+                        parts.push("\nMaybe the module shopfloor_workstation is not installed.")
+                    }
                     this.scan_message = {
                         message_type: "error",
-                        body:
-                            "Request could not be processed, maybe the module shopfloor_workstation is not installed.",
+                        body: parts.join(" "),
                     };
                     return;
                 }
