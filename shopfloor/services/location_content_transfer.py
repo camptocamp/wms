@@ -421,7 +421,11 @@ class LocationContentTransfer(Component):
 
     def _set_all_destination_lines_and_done(self, pickings, move_lines, dest_location):
         self._write_destination_on_lines(move_lines, dest_location)
-        pickings.action_done()
+        stock = self.actions_for("stock")
+        # Ensure that the `picking._create_backorder` is not called for remaining
+        # qty (to avoid logic related to this method), instead they'll be put in
+        # a separate transfer by 'extract_and_action_done'
+        stock.validate_moves(move_lines.move_id, check_backorder=False)
 
     def _lock_lines(self, lines):
         """Lock move lines"""

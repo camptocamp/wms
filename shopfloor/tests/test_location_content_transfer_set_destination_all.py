@@ -1,6 +1,8 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
+from unittest import mock
+
 from .test_location_content_transfer_base import LocationContentTransferCommonCase
 
 
@@ -80,6 +82,53 @@ class LocationContentTransferSetDestinationAllCase(LocationContentTransferCommon
             ),
         )
         self.assert_all_done(sub_shelf1)
+
+    def test_set_destination_all_with_partially_available_move(self):
+        """Scanned destination location valid, but one of the move to process
+        is partially available.
+
+        In such case, a new picking is created with the remaining qty, and the
+        current one is validated.
+        """
+        # Put a partial quantity for 'product_d' to get a partially available move
+        self.picking2.do_unreserve()
+        self._update_qty_in_location(self.content_loc, self.product_d, 5)
+        self.picking2.action_assign()
+        self._simulate_pickings_selected(self.picking2)
+
+        sub_shelf1 = (
+            self.env["stock.location"]
+            .sudo()
+            .create(
+                {
+                    "name": "Sub Shelf 1",
+                    "barcode": "subshelf1",
+                    "location_id": self.shelf1.id,
+                }
+            )
+        )
+        with mock.patch.object(self.picking2, "_create_backorder") as mocked:
+            response = self.service.dispatch(
+                "set_destination_all",
+                params={
+                    "location_id": self.content_loc.id,
+                    "barcode": sub_shelf1.barcode,
+                },
+            )
+            self.assert_response_start(
+                response,
+                message=self.service.msg_store.location_content_transfer_complete(
+                    self.content_loc, sub_shelf1
+                ),
+            )
+            # Despite the partially available move, when the pickings are validated
+            # we should not hit the '_create_backorder' method as the remaining
+            # qty to process are put in their own picking before validation
+            # (use of 'extract_and_action_done()' method).
+            mocked.assert_not_called()
+            self.assertEqual(self.picking2.state, "confirmed")
+            self.assertEqual(self.picking2.move_lines.product_qty, 5)
+            self.assertEqual(self.picking2.backorder_ids.state, "done")
 
     def test_set_destination_all_dest_location_ok_with_completion_info(self):
         """Scanned destination location valid, moves set to done accepted
