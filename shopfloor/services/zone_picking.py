@@ -133,13 +133,13 @@ class ZonePicking(Component):
         )
 
     def _response_for_zero_check(
-        self, zone_location, picking_type, location, message=None
+        self, zone_location, picking_type, move_line, message=None
     ):
-        return self._response(
-            next_state="zero_check",
-            data=self._data_for_location(zone_location, picking_type, location),
-            message=message,
+        data = self._data_for_location(
+            zone_location, picking_type, move_line.location_id
         )
+        data["move_line"] = self.data.move_line(move_line)
+        return self._response(next_state="zero_check", data=data, message=message,)
 
     def _response_for_change_pack_lot(
         self, zone_location, picking_type, move_line, message=None
@@ -624,7 +624,7 @@ class ZonePicking(Component):
         zero_check = picking_type.shopfloor_zero_check
         if zero_check and move_line.location_id.planned_qty_in_location_is_empty():
             response = self._response_for_zero_check(
-                zone_location, picking_type, move_line.location_id
+                zone_location, picking_type, move_line
             )
         return (location_changed, response)
 
@@ -710,7 +710,7 @@ class ZonePicking(Component):
         zero_check = picking_type.shopfloor_zero_check
         if zero_check and move_line.location_id.planned_qty_in_location_is_empty():
             response = self._response_for_zero_check(
-                zone_location, picking_type, move_line.location_id
+                zone_location, picking_type, move_line
             )
         return (package_changed, response)
 
@@ -1665,5 +1665,6 @@ class ShopfloorZonePickingValidatorResponse(Component):
             "zone_location": self.schemas._schema_dict_of(self.schemas.location()),
             "picking_type": self.schemas._schema_dict_of(self.schemas.picking_type()),
             "location": self.schemas._schema_dict_of(self.schemas.location()),
+            "move_line": self.schemas._schema_dict_of(self.schemas.move_line()),
         }
         return schema
