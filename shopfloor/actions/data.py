@@ -66,13 +66,17 @@ class DataAction(Component):
             "scheduled_date",
         ]
 
-    def package(self, record, picking=None, with_packaging=False, **kw):
+    def package(self, record, picking=None, with_packaging=False, dest=False, **kw):
         """Return data for a stock.quant.package
 
         If a picking is given, it will include the number of lines of the package
         for the picking.
+        If `dest` is True, the package weight is computed based on the picking lines.
         """
-        parser = self._package_parser
+        if picking and dest:
+            parser = self._package_parser(picking=picking)
+        else:
+            parser = self._package_parser()
         if with_packaging:
             parser += self._package_packaging_parser
         data = self._jsonify(record, parser, **kw)
@@ -86,14 +90,24 @@ class DataAction(Component):
     def packages(self, records, picking=None, **kw):
         return [self.package(rec, picking=picking, **kw) for rec in records]
 
-    @property
-    def _package_parser(self):
-        return [
+    def _package_parser(self, picking=None):
+        parser = [
             "id",
             "name",
-            "pack_weight:weight",
             ("package_storage_type_id:storage_type", ["id", "name"]),
         ]
+
+        context_kwargs = {}
+        if picking:
+            context_kwargs["picking_id"] = picking.id
+        parser.append(
+            (
+                "pack_weight:weight",
+                lambda rec, fname: rec.pack_weight
+                or rec.with_context(**context_kwargs).estimated_pack_weight,
+            ),
+        )
+        return parser
 
     @property
     def _package_packaging_parser(self):
@@ -141,7 +155,7 @@ class DataAction(Component):
                         record.package_id, record.picking_id, **kw
                     ),
                     "package_dest": self.package(
-                        record.result_package_id, record.picking_id, **kw
+                        record.result_package_id, record.picking_id, dest=True, **kw
                     ),
                 }
             )
@@ -175,7 +189,7 @@ class DataAction(Component):
             "id",
             "is_done",
             ("picking_id:picking", self._simple_record_parser()),
-            ("package_id:package_src", self._package_parser),
+            ("package_id:package_src", self._package_parser()),
             ("location_dest_id:location_dest", self._location_parser),
             (
                 "location_id:location_src",
