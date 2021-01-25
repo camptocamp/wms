@@ -1,5 +1,6 @@
 # Copyright 2021 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+from odoo import _
 from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
 
@@ -17,7 +18,6 @@ class ShopfloorWorkstation(Component):
     _inherit = "base.shopfloor.service"
     _name = "shopfloor.workstation"
     _usage = "workstation"
-    _expose_model = "shopfloor.workstation"
     _description = __doc__
 
     def setdefault(self, barcode):
@@ -26,12 +26,12 @@ class ShopfloorWorkstation(Component):
         if self._set_workstation_as_default(ws):
             message = {
                 "message_type": "info",
-                "body": "Default workstation set to {}".format(ws.name),
+                "body": _("Default workstation set to {}").format(ws.name),
             }
         else:
             message = {
                 "message_type": "error",
-                "body": "Workstation not found",
+                "body": _("Workstation not found"),
             }
         return self._response(
             message=message, data={"size": len(ws), "records": self._to_json(ws)}
@@ -47,14 +47,17 @@ class ShopfloorWorkstation(Component):
         return True
 
     def _convert_one_record(self, record):
+        profile_data = None
+        if record.shopfloor_profile_id:
+            profile_data = {
+                "id": record.shopfloor_profile_id.id,
+                "name": record.shopfloor_profile_id.name,
+            }
         return {
             "id": record.id,
             "name": record.name,
             "barcode": record.barcode,
-            "profile": {
-                "id": record.shopfloor_profile_id.id,
-                "name": record.shopfloor_profile_id.name,
-            },
+            "profile": profile_data,
         }
 
 
@@ -103,6 +106,7 @@ class ShopfloorWorkstationValidatorResponse(Component):
             "barcode": {"type": "string", "nullable": False, "required": True},
             "profile": {
                 "type": "dict",
+                "nullable": True,
                 "schema": {
                     "id": {"coerce": to_int, "required": True, "type": "integer"},
                     "name": {"type": "string", "nullable": False, "required": True},

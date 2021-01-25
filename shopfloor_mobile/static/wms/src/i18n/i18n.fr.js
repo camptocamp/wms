@@ -29,8 +29,8 @@ const messages_fr = {
                 title: "Choisissez un profil",
             },
             workstation: {
-                name: "Sation de travail",
-                title: "Select station de travail",
+                name: "Station de travail",
+                title: "Choisissez une station de travail",
                 workstation_updated: "Station de travail mise à jour",
             },
             fullscreen: {

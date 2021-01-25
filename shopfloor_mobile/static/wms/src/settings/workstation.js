@@ -57,12 +57,14 @@ export var Workstation = Vue.component("workstation", {
                 }
                 this.scan_data = result.data;
                 this.scan_message = result.message;
-                if (this.scan_message.message_type === "info") {
-                    this.$root.trigger(
-                        "profile:selected",
-                        this.scan_data.records[0].profile,
-                        true
-                    );
+                if (this.scan_data.records.length) {
+                    if (this.scan_data.records[0].profile){
+                        this.$root.trigger(
+                            "profile:selected",
+                            this.scan_data.records[0].profile,
+                            true
+                        );
+                    }
                     // TODO: the success message will not be displayed, as we change screen !
                     this.$root.$router.push({name: "home"});
                 }
