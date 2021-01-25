@@ -7,10 +7,7 @@
 export var SettingsControlPanel = Vue.component("settings-control-panel", {
     data: function() {
         return {
-            // Why do I have to do the sub 1 to get the correct name ?
-            profile_name: this.$root.has_profile
-                ? this.$root.profiles[this.$root.profile.id - 1].name
-                : "?",
+            profile_name: this.$root.has_profile ? this.$root.profile.name : "?",
         };
     },
     methods: {
@@ -23,7 +20,7 @@ export var SettingsControlPanel = Vue.component("settings-control-panel", {
             return this.$root.available_languages;
         },
         active_language() {
-            var language = this.available_languages.find(
+            const language = this.available_languages.find(
                 ({id}) => id === this.$i18n.locale
             );
             return language ? language.name : "?";
@@ -50,7 +47,7 @@ export var SettingsControlPanel = Vue.component("settings-control-panel", {
                 </v-row>
                 <v-row align="center">
                     <v-col class="text-center" cols="12">
-                        <btn-action @click="logout()">{{ $t('screen.settings.profile.action.logout') }}</btn-action>
+                        <btn-action @click="logout()">{{ $t('app.action.logout') }}</btn-action>
                     </v-col>
                 </v-row>
                 <v-row align="center">
