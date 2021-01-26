@@ -23,7 +23,8 @@ class ShopfloorWorkstation(Component):
     def setdefault(self, barcode):
         """Endpoint that receives a scanned barcode."""
         ws = self.env["shopfloor.workstation"].search([("barcode", "=", barcode)])
-        if self._set_workstation_as_default(ws):
+        if ws:
+            ws.set_as_default_on_user(self.env.user)
             message = {
                 "message_type": "info",
                 "body": _("Default workstation set to {}").format(ws.name),
@@ -36,15 +37,6 @@ class ShopfloorWorkstation(Component):
         return self._response(
             message=message, data={"size": len(ws), "records": self._to_json(ws)}
         )
-
-    def _set_workstation_as_default(self, workstation):
-        """Apply changes to backend user configuration."""
-        if not workstation:
-            return False
-        if workstation.printing_printer_id:
-            # TODO : should the default action be checked ?
-            self.env.user.printing_printer_id = workstation.printing_printer_id
-        return True
 
     def _convert_one_record(self, record):
         profile_data = None
