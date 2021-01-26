@@ -57,7 +57,7 @@ export class OdooMixin {
             "Endpoint not found, please check your odoo configuration. URL: ",
             response.url
         );
-        return this._error_info(response, json);
+        return this._error_info(response);
     }
     _handle_error(response) {
         console.log(response.status, response.statusText, response.url);
