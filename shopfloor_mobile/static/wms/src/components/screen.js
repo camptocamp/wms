@@ -181,7 +181,7 @@ Vue.component("Screen", {
                         </v-col>
                         <v-col class="text-center" cols="12">
                             <v-btn @click="$router.push({'name': 'workstation'})">
-                                <v-icon>mdi-printer</v-icon>
+                                <v-icon>mdi-account-cog-outline</v-icon>
                                 <span>{{ $t('app.workstation_scan') }}</span>
                             </v-btn>
                         </v-col>

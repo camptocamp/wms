@@ -11,7 +11,7 @@
     "author": "Camptocamp, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "application": True,
-    "depends": ["shopfloor", "base_report_to_printer",],
-    "demo": ["demo/shopfloor_workstation_demo.xml",],
-    "data": ["security/ir.model.access.csv", "views/shopfloor_workstation.xml",],
+    "depends": ["shopfloor", "base_report_to_printer"],
+    "demo": ["demo/shopfloor_workstation_demo.xml"],
+    "data": ["security/ir.model.access.csv", "views/shopfloor_workstation.xml"],
 }

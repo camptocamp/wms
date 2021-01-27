@@ -37,8 +37,8 @@ class ShopfloorWorkstationCase(CommonCase):
         res = self.service.dispatch("setdefault", params={"barcode": "bc-???"})
         self.assert_response(
             res,
-            message={"body": "Workstation not found", "message_type": "error",},
-            data={"size": 0, "records": [],},
+            message={"body": "Workstation not found", "message_type": "error"},
+            data={},
         )
 
     def test_workstation_set_default_found(self):
@@ -51,18 +51,13 @@ class ShopfloorWorkstationCase(CommonCase):
                 "message_type": "info",
             },
             data={
-                "size": 1,
-                "records": [
-                    {
-                        "id": self.ws1.id,
-                        "name": "Pollux",
-                        "barcode": "ws-1",
-                        "profile": {
-                            "id": self.ws1.shopfloor_profile_id.id,
-                            "name": "Highbay Truck",
-                        },
-                    },
-                ],
+                "id": self.ws1.id,
+                "name": "Pollux",
+                "barcode": "ws-1",
+                "profile": {
+                    "id": self.ws1.shopfloor_profile_id.id,
+                    "name": "Highbay Truck",
+                },
             },
         )
         self.assertEqual(self.env.user.printing_printer_id, self.printer1)

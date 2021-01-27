@@ -39,29 +39,33 @@ export class OdooMixin {
                 if (_.isUndefined(handler)) {
                     handler = this._handle_error;
                 }
-                return {error: handler.call(this, response)};
+                return response.json().then(json => {
+                    return {error: handler.call(this, response, json)};
+                });
             }
             return response.json();
         });
     }
-    _error_info(response) {
-        return _.extend({}, {
+    _error_info(response, json) {
+        return _.extend({}, json, {
+            // strip html
+            description: $(json.description).text(),
             // TODO: this might be superfluous as we get error data wrapper by rest api
             error: response.statusText,
             status: response.status,
             response: response,
         });
     }
-    _handle_404(response) {
+    _handle_404(response, json) {
         console.log(
             "Endpoint not found, please check your odoo configuration. URL: ",
             response.url
         );
-        return this._error_info(response);
+        return this._error_info(response, json);
     }
-    _handle_error(response) {
+    _handle_error(response, json) {
         console.log(response.status, response.statusText, response.url);
-        return this._error_info(response);
+        return this._error_info(response, json);
     }
     _get_headers(method) {
         // /!\ IMPORTANT /!\ Always use headers w/out underscores.

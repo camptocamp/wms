@@ -46,24 +46,17 @@ export var Workstation = Vue.component("workstation", {
         on_scan: function(scanned) {
             this.odoo.call("setdefault", {barcode: scanned.text}).then(result => {
                 this.workstation_scanned = true;
-                if (result.error) {
-                    let parts = [result.error.status, result.error.error];
-                    if (result.error.status === 404) {
-                        parts.push("\nMaybe the module shopfloor_workstation is not installed.")
-                    }
-                    this.scan_message = {
-                        message_type: "error",
-                        body: parts.join(" "),
-                    };
-                    return;
-                }
+                // TODO : See how well a 404 when the shopfloor_workstation
+                // module is not installed will be handeled.
+                // Maybe there will be some this.$root.appconfig.features.xyz
+                // to test if installed.
                 this.scan_data = result.data;
                 this.scan_message = result.message;
-                if (this.scan_data.records.length) {
-                    if (this.scan_data.records[0].profile){
+                if (this.scan_data) {
+                    if (this.scan_data.profile) {
                         this.$root.trigger(
                             "profile:selected",
-                            this.scan_data.records[0].profile,
+                            this.scan_data.profile,
                             true
                         );
                     }

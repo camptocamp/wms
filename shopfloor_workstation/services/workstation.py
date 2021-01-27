@@ -36,7 +36,7 @@ class ShopfloorWorkstation(Component):
                 "body": _("Workstation not found"),
             }
         return self._response(
-            message=message, data={"size": len(ws), "records": self._to_json(ws)}
+            message=message, data=self._convert_one_record(ws) if ws else {},
         )
 
     def _convert_one_record(self, record):
@@ -81,15 +81,7 @@ class ShopfloorWorkstationValidatorResponse(Component):
     _usage = "workstation.validator.response"
 
     def setdefault(self):
-        return self._response_schema(
-            {
-                "size": {"coerce": to_int, "required": True, "type": "integer"},
-                "records": {
-                    "type": "list",
-                    "schema": {"type": "dict", "schema": self._record_schema},
-                },
-            }
-        )
+        return self._response_schema(self._record_schema)
 
     @property
     def _record_schema(self):

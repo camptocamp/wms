@@ -22,15 +22,17 @@
                         bg_color="bg-danger"
                         attrs="{'invisible': [('active', '=', True)]}"
                     />
-                    <group>
-                        <group>
+                    <group name="main">
+                        <group name="main-info">
                             <field name="name" />
                             <field name="barcode" />
-                        </group>
-                        <group>
-                            <field name="printing_printer_id" />
-                            <field name="shopfloor_profile_id" />
                             <field name="active" invisible="1" />
+                        </group>
+                        <group name="printing">
+                            <field name="printing_printer_id" />
+                        </group>
+                        <group name="mobileapp">
+                            <field name="shopfloor_profile_id" />
                         </group>
                     </group>
                 </sheet>
