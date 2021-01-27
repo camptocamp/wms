@@ -5,15 +5,13 @@ from odoo.addons.shopfloor.tests.common import CommonCase
 
 
 class ShopfloorWorkstationCase(CommonCase):
-    def setUp(self):
-        super().setUp()
-        with self.work_on_services() as work:
-            self.service = work.component(usage="workstation")
-
-        self.pserver = self.env["printing.server"].sudo().create({})
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.pserver = cls.env["printing.server"].sudo().create({})
         printer_vals = {
             "name": "P-One",
-            "server_id": self.pserver.id,
+            "server_id": cls.pserver.id,
             "system_name": "Sys Name",
             "default": True,
             "status": "unknown",
@@ -22,13 +20,18 @@ class ShopfloorWorkstationCase(CommonCase):
             "location": "Location",
             "uri": "URI",
         }
-        self.printer1 = self.env["printing.printer"].sudo().create(printer_vals)
+        cls.printer1 = cls.env["printing.printer"].sudo().create(printer_vals)
         printer_vals["name"] = "P-Two"
-        self.printer2 = self.env["printing.printer"].sudo().create(printer_vals)
-        self.ws1 = self.env.ref("shopfloor_workstation.ws_pollux")
-        self.ws1.sudo().printing_printer_id = self.printer1
-        self.profile1 = self.env.ref("shopfloor.shopfloor_profile_hb_truck_demo")
-        self.ws1.sudo().shopfloor_profile_id = self.profile1
+        cls.printer2 = cls.env["printing.printer"].sudo().create(printer_vals)
+        cls.ws1 = cls.env.ref("shopfloor_workstation.ws_pollux")
+        cls.ws1.sudo().printing_printer_id = cls.printer1
+        cls.profile1 = cls.env.ref("shopfloor.shopfloor_profile_hb_truck_demo")
+        cls.ws1.sudo().shopfloor_profile_id = cls.profile1
+
+    def setUp(self):
+        super().setUp()
+        with self.work_on_services() as work:
+            self.service = work.component(usage="workstation")
 
     def test_workstation_set_default_not_found(self):
         res = self.service.dispatch("setdefault", params={"barcode": "bc-???"})
