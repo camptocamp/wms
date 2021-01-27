@@ -102,9 +102,10 @@ class ClusterPicking(Component):
         if last_picked_line:
             # suggest pack to be used for the next line
             data["package_dest"] = self.data.package(
-                last_picked_line.result_package_id,
+                last_picked_line.result_package_id.with_context(
+                    picking_id=move_line.picking_id.id
+                ),
                 picking=move_line.picking_id,
-                dest=True,
             )
         return self._response(next_state="scan_destination", data=data, message=message)
 
