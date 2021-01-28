@@ -299,6 +299,9 @@ class StockReceptionScreen(models.Model):
 
     @api.model
     def create(self, vals):
+        # FIXME: better way to preserve the original destination until we
+        # validate the line would be to update the destination of the line
+        # at the end (last step), like it is done for package
         screen = super().create(vals)
         # Keep a ref of original destinations for move lines
         for move_line in screen.picking_id.move_line_ids:
