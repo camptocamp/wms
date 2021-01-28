@@ -37,22 +37,22 @@ class StockReceptionScreen(models.Model):
         },
         "set_quantity": {
             "label": _("Set Quantity"),
-            "next_steps": [{"next": "set_location"}],
-            "focus_field": "current_move_line_qty_done",
-        },
-        "set_location": {
-            "label": _("Set Destination"),
             "next_steps": [
                 {
-                    "before": "_before_set_location_to_select_packaging",
+                    "before": "_before_set_quantity_to_select_packaging",
                     "next": "select_packaging",
                 }
             ],
-            "focus_field": "current_move_line_location_dest_id",
+            "focus_field": "current_move_line_qty_done",
         },
         "select_packaging": {
             "label": _("Select Packaging"),
+            "next_steps": [{"next": "set_location"}],
+        },
+        "set_location": {
+            "label": _("Set Destination"),
             "next_steps": [{"next": "set_package"}],
+            "focus_field": "current_move_line_location_dest_id",
         },
         "set_package": {
             "label": _("Set Package"),
@@ -108,6 +108,7 @@ class StockReceptionScreen(models.Model):
     current_filter_product = fields.Char(string="Filter product", copy=False)
     # current move
     current_move_id = fields.Many2one(comodel_name="stock.move", copy=False)
+    current_move_has_tracking = fields.Selection(related="current_move_id.has_tracking")
     current_move_product_id = fields.Many2one(
         related="current_move_id.product_id", string="Move's product"
     )
@@ -124,8 +125,21 @@ class StockReceptionScreen(models.Model):
     current_move_product_vendor_code = fields.Char(
         related="current_move_id.vendor_code"
     )
+    current_move_product_qty_available = fields.Float(
+        related="current_move_id.product_id.qty_available"
+    )
+    current_move_product_outgoing_qty = fields.Float(
+        related="current_move_id.product_id.outgoing_qty"
+    )
+    current_move_product_last_lot_life_date = fields.Datetime(
+        compute="_compute_current_move_product_last_lot_life_date",
+        string="Most recent exp. date",
+    )
     # current move line
     current_move_line_id = fields.Many2one(comodel_name="stock.move.line", copy=False)
+    current_move_line_original_location_dest_id = fields.Many2one(
+        related="current_move_line_id.original_location_dest_id"
+    )
     current_move_line_location_dest_id = fields.Many2one(
         comodel_name="stock.location",
         string="Destination",
@@ -162,6 +176,12 @@ class StockReceptionScreen(models.Model):
         "product.packaging", domain="[('product_id', '=', current_move_product_id)]",
     )
     package_storage_type_id = fields.Many2one("stock.package.storage.type",)
+    allowed_location_dest_ids = fields.One2many(
+        "stock.location",
+        string="Allowed destination locations",
+        help="Allowed destination locations based on the package storage type.",
+        compute="_compute_allowed_location_dest_ids",
+    )
     package_storage_type_height_required = fields.Boolean(
         related="package_storage_type_id.height_required"
     )
@@ -199,16 +219,34 @@ class StockReceptionScreen(models.Model):
                     "focus_field", ""
                 )
 
+    def _compute_current_move_product_last_lot_life_date(self):
+        for wiz in self:
+            lot = self.env["stock.production.lot"].search(
+                [
+                    ("product_id", "=", wiz.current_move_product_id.id),
+                    ("life_date", "!=", False),
+                ],
+                order="life_date DESC",
+                limit=1,
+            )
+            wiz.current_move_product_last_lot_life_date = lot.life_date
+
     @api.depends("current_move_line_id.location_dest_id")
     def _compute_current_move_line_location_dest_id(self):
+        """Compute the default destination location for the processed line."""
         for wiz in self:
             move_line = wiz.current_move_line_id
+            # Default location
             wiz.current_move_line_location_dest_id = move_line.location_dest_id
             location = move_line.location_dest_id._get_putaway_strategy(
                 move_line.product_id
             )
             if location:
                 wiz.current_move_line_location_dest_id = location
+            # If there are some allowed destinations set the field empty,
+            # the user will choose the right one among them
+            if wiz.allowed_location_dest_ids:
+                wiz.current_move_line_location_dest_id = False
 
     def _inverse_current_move_line_location_dest_id(self):
         for wiz in self:
@@ -245,6 +283,30 @@ class StockReceptionScreen(models.Model):
     def _inverse_current_move_line_package(self):
         for wiz in self:
             wiz.current_move_line_package_stored = wiz.current_move_line_package
+
+    @api.depends("package_storage_type_id.location_storage_type_ids")
+    def _compute_allowed_location_dest_ids(self):
+        for wiz in self:
+            wiz.allowed_location_dest_ids = self.env["stock.location"].search(
+                [
+                    (
+                        "allowed_location_storage_type_ids",
+                        "in",
+                        wiz.package_storage_type_id.location_storage_type_ids.ids,
+                    ),
+                ]
+            )
+
+    @api.model
+    def create(self, vals):
+        # FIXME: better way to preserve the original destination until we
+        # validate the line would be to update the destination of the line
+        # at the end (last step), like it is done for package
+        screen = super().create(vals)
+        # Keep a ref of original destinations for move lines
+        for move_line in screen.picking_id.move_line_ids:
+            move_line.original_location_dest_id = move_line.location_dest_id
+        return screen
 
     @api.onchange("product_packaging_id")
     def onchange_product_packaging_id(self):
@@ -570,7 +632,7 @@ class StockReceptionScreen(models.Model):
     def process_select_packaging(self):
         self.next_step()
 
-    def _before_set_location_to_select_packaging(self):
+    def _before_set_quantity_to_select_packaging(self):
         """Auto-complete the package data matching the qty (if there is one)."""
         qty_done = self.current_move_line_qty_done
         if qty_done:
@@ -698,9 +760,6 @@ class StockReceptionScreen(models.Model):
         assert self.current_step == "set_quantity", f"step = {self.current_step}"
         self.current_move_line_qty_done = qty_done
         self.process_set_quantity()
-        #   - set the destination
-        self.current_move_line_location_dest_id = location_dest
-        self.process_set_location()
         #   - set packaging data
         assert self.current_step == "select_packaging", f"step = {self.current_step}"
         self.product_packaging_id = product_packaging
@@ -708,6 +767,10 @@ class StockReceptionScreen(models.Model):
         if self.package_storage_type_height_required:
             self.package_height = package_height
         self.process_select_packaging()
+        #   - set the destination
+        assert self.current_step == "set_location", f"step = {self.current_step}"
+        self.current_move_line_location_dest_id = location_dest
+        self.process_set_location()
         assert self.current_step == "set_package", f"step = {self.current_step}"
         return True
 
