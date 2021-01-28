@@ -94,10 +94,6 @@
                 <field name="current_move_has_tracking" invisible="1" />
                 <field name="current_move_product_id" invisible="1" />
                 <field name="current_move_line_id" invisible="1" />
-                <field
-                    name="current_move_line_original_location_dest_id"
-                    invisible="1"
-                />
                 <field name="package_storage_type_height_required" invisible="1" />
                 <field name="allowed_location_dest_ids" invisible="1" />
                 <div class="o_screen_data">
@@ -269,7 +265,7 @@
                       'readonly': [('current_step', '!=', 'set_location')],
                     }"
                                         options="{'no_open': True, 'no_create_edit': True}"
-                                        domain="[('usage', '!=', 'view'), '|', ('id', '=', current_move_line_original_location_dest_id), ('id', 'in', allowed_location_dest_ids)]"
+                                        domain="[('usage', '!=', 'view'), ('id', 'in', allowed_location_dest_ids)]"
                                     />
                                 </div>
                                 <!-- set_package -->

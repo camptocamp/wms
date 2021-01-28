@@ -137,9 +137,6 @@ class StockReceptionScreen(models.Model):
     )
     # current move line
     current_move_line_id = fields.Many2one(comodel_name="stock.move.line", copy=False)
-    current_move_line_original_location_dest_id = fields.Many2one(
-        related="current_move_line_id.original_location_dest_id"
-    )
     current_move_line_location_dest_id = fields.Many2one(
         comodel_name="stock.location",
         string="Destination",
@@ -287,26 +284,20 @@ class StockReceptionScreen(models.Model):
     @api.depends("package_storage_type_id.location_storage_type_ids")
     def _compute_allowed_location_dest_ids(self):
         for wiz in self:
-            wiz.allowed_location_dest_ids = self.env["stock.location"].search(
-                [
-                    (
-                        "allowed_location_storage_type_ids",
-                        "in",
-                        wiz.package_storage_type_id.location_storage_type_ids.ids,
-                    ),
-                ]
-            )
-
-    @api.model
-    def create(self, vals):
-        # FIXME: better way to preserve the original destination until we
-        # validate the line would be to update the destination of the line
-        # at the end (last step), like it is done for package
-        screen = super().create(vals)
-        # Keep a ref of original destinations for move lines
-        for move_line in screen.picking_id.move_line_ids:
-            move_line.original_location_dest_id = move_line.location_dest_id
-        return screen
+            if wiz.package_storage_type_id:
+                wiz.allowed_location_dest_ids = self.env["stock.location"].search(
+                    [
+                        (
+                            "allowed_location_storage_type_ids",
+                            "in",
+                            wiz.package_storage_type_id.location_storage_type_ids.ids,
+                        ),
+                    ]
+                )
+            else:
+                wiz.allowed_location_dest_ids = self.env["stock.location"].search(
+                    [("id", "child_of", self.picking_location_dest_id.id)]
+                )
 
     @api.onchange("product_packaging_id")
     def onchange_product_packaging_id(self):

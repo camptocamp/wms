@@ -10,11 +10,6 @@ class StockMoveLine(models.Model):
     lot_life_date = fields.Datetime(
         string="End of Life Date", related="lot_id.life_date"
     )
-    original_location_dest_id = fields.Many2one(
-        comodel_name="stock.location",
-        ondelete="restrict",
-        string="Original default destination",
-    )
 
     def action_select_move_line(self):
         """Set the move line as the current one at the picking level."""
