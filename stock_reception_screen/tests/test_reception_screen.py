@@ -110,6 +110,9 @@ class TestReceptionScreen(SavepointCase):
         # Check that a destination location is defined by default
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_location")
+        self.screen.current_move_line_location_dest_id = (
+            self.screen.current_move_line_original_location_dest_id
+        )
         self.assertTrue(self.screen.current_move_line_location_dest_id)
         # Set a package
         self.screen.button_save_step()
@@ -147,6 +150,10 @@ class TestReceptionScreen(SavepointCase):
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_location")
         self.screen.current_move_line_location_dest_id = self.location_dest
+        # Set location
+        self.screen.button_save_step()
+        self.assertEqual(self.screen.current_step, "set_location")
+        self.screen.current_move_line_location_dest_id = self.location_dest
         # Set a package
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_package")
@@ -173,6 +180,7 @@ class TestReceptionScreen(SavepointCase):
         self.screen.package_height = 20
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_location")
+        self.screen.current_move_line_location_dest_id = self.location_dest
         self.assertTrue(self.screen.current_move_line_location_dest_id)
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_package")
@@ -211,6 +219,9 @@ class TestReceptionScreen(SavepointCase):
         # Check that a destination location is defined by default
         self.screen.button_save_step()
         self.assertEqual(self.screen.current_step, "set_location")
+        self.screen.current_move_line_location_dest_id = (
+            self.screen.current_move_line_original_location_dest_id
+        )
         self.assertTrue(self.screen.current_move_line_location_dest_id)
         # Set a package
         self.screen.button_save_step()

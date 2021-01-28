@@ -126,6 +126,9 @@ class StockReceptionScreen(models.Model):
     )
     # current move line
     current_move_line_id = fields.Many2one(comodel_name="stock.move.line", copy=False)
+    current_move_line_original_location_dest_id = fields.Many2one(
+        related="current_move_line_id.original_location_dest_id"
+    )
     current_move_line_location_dest_id = fields.Many2one(
         comodel_name="stock.location",
         string="Destination",
@@ -162,6 +165,12 @@ class StockReceptionScreen(models.Model):
         "product.packaging", domain="[('product_id', '=', current_move_product_id)]",
     )
     package_storage_type_id = fields.Many2one("stock.package.storage.type",)
+    allowed_location_dest_ids = fields.One2many(
+        "stock.location",
+        string="Allowed destination locations",
+        help="Allowed destination locations based on the package storage type.",
+        compute="_compute_allowed_location_dest_ids",
+    )
     package_storage_type_height_required = fields.Boolean(
         related="package_storage_type_id.height_required"
     )
@@ -201,14 +210,20 @@ class StockReceptionScreen(models.Model):
 
     @api.depends("current_move_line_id.location_dest_id")
     def _compute_current_move_line_location_dest_id(self):
+        """Compute the default destination location for the processed line."""
         for wiz in self:
             move_line = wiz.current_move_line_id
+            # Default location
             wiz.current_move_line_location_dest_id = move_line.location_dest_id
             location = move_line.location_dest_id._get_putaway_strategy(
                 move_line.product_id
             )
             if location:
                 wiz.current_move_line_location_dest_id = location
+            # If there are some allowed destinations set the field empty,
+            # the user will choose the right one among them
+            if wiz.allowed_location_dest_ids:
+                wiz.current_move_line_location_dest_id = False
 
     def _inverse_current_move_line_location_dest_id(self):
         for wiz in self:
@@ -245,6 +260,27 @@ class StockReceptionScreen(models.Model):
     def _inverse_current_move_line_package(self):
         for wiz in self:
             wiz.current_move_line_package_stored = wiz.current_move_line_package
+
+    @api.depends("package_storage_type_id.location_storage_type_ids")
+    def _compute_allowed_location_dest_ids(self):
+        for wiz in self:
+            wiz.allowed_location_dest_ids = self.env["stock.location"].search(
+                [
+                    (
+                        "allowed_location_storage_type_ids",
+                        "in",
+                        wiz.package_storage_type_id.location_storage_type_ids.ids,
+                    ),
+                ]
+            )
+
+    @api.model
+    def create(self, vals):
+        screen = super().create(vals)
+        # Keep a ref of original destinations for move lines
+        for move_line in screen.picking_id.move_line_ids:
+            move_line.original_location_dest_id = move_line.location_dest_id
+        return screen
 
     @api.onchange("product_packaging_id")
     def onchange_product_packaging_id(self):
