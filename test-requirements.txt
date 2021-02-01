@@ -1,1 +1,2 @@
 freezegun
+odoo13-addon-rest_log @ git+https://github.com/OCA/rest-framework.git@refs/pull/106/head#subdirectory=setup/rest_log
