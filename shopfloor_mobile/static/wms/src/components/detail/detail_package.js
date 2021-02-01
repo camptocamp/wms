@@ -11,7 +11,7 @@ Vue.component("detail-package", {
     methods: {
         detail_fields() {
             return [
-                {path: "location_src.name", label: "Location"},
+                {path: "location.name", label: "Location"},
                 {path: "weight", label: "Weight"},
                 {path: "packaging.name", label: "Packaging"},
                 {path: "storage_type.name", label: "Storage type"},
@@ -35,6 +35,7 @@ Vue.component("detail-package", {
                     action_val_path: "product.barcode",
                     klass: "loud",
                 },
+                {path: "product.barcode", label: "Barcode"},
                 {path: "product.supplier_code", label: "Vendor code"},
                 {path: "lot.name", label: "Lot"},
                 {path: "product.qty_reserved", label: "Reserved"},
