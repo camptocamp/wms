@@ -52,6 +52,7 @@ const app = new Vue({
             // collect global events
             event_hub: EventHub,
             current_profile: {},
+            current_workstation: {},
             profile_menu: null,
             current_apikey: null,
             loading: false,
@@ -87,6 +88,24 @@ const app = new Vue({
         app_info: function() {
             return shopfloor_app_info;
         },
+        available_languages: function() {
+            // FIXME: this should come from odoo and from app config
+            // They will match w/ $i18n.availableLocales
+            return [
+                {
+                    id: "en-US",
+                    name: this.$t("language.name.English"),
+                },
+                {
+                    id: "fr-FR",
+                    name: this.$t("language.name.French"),
+                },
+                {
+                    id: "de-DE",
+                    name: this.$t("language.name.German"),
+                },
+            ];
+        },
         has_profile: function() {
             return !_.isEmpty(this.profile);
         },
@@ -101,6 +120,18 @@ const app = new Vue({
             set: function(v) {
                 this.current_profile = v;
                 this.$storage.set("profile", v);
+            },
+        },
+        workstation: {
+            get: function() {
+                if (_.isEmpty(this.current_workstation)) {
+                    this.current_workstation = this.$storage.get("workstation");
+                }
+                return this.current_workstation;
+            },
+            set: function(v) {
+                this.current_workstation = v;
+                this.$storage.set("workstation", v);
             },
         },
         profiles: function() {
