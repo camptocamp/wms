@@ -1,1 +1,2 @@
 freezegun
+odoo13-addon-stock_helper @ git+https://github.com/OCA/stock-logistics-warehouse@refs/pull/1073/head#subdirectory=setup/stock_helper
