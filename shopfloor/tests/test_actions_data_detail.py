@@ -158,15 +158,7 @@ class TestActionsDataDetailCase(ActionsDataDetailCaseBase):
 
     def test_data_picking(self):
         picking = self.picking
-        carrier = picking.carrier_id.search([])[0]
-        picking.write(
-            {
-                "origin": "created by test",
-                "note": "read me",
-                "priority": "3",
-                "carrier_id": carrier.id,
-            }
-        )
+        picking.write({"origin": "created by test", "note": "read me", "priority": "3"})
         picking.move_lines.write({"date_expected": "2020-05-13"})
         data = self.data_detail.picking_detail(picking)
         self.assert_schema(self.schema_detail.picking_detail(), data)
@@ -183,7 +175,6 @@ class TestActionsDataDetailCase(ActionsDataDetailCaseBase):
                 "id": picking.picking_type_id.id,
                 "name": picking.picking_type_id.name,
             },
-            "carrier": {"id": carrier.id, "name": carrier.name},
             "move_lines": self.data_detail.move_lines(picking.move_line_ids),
             "picking_type_code": "outgoing",
         }
