@@ -3,16 +3,8 @@
 from odoo.addons.component.core import Component
 
 
-class ShopfloorSchemaDetailResponse(Component):
-    """Provide methods to share schema structures
-
-    The methods should be used in Service Components, so we try to
-    have similar schema structures across scenarios.
-    """
-
-    _inherit = "base.shopfloor.schemas"
-    _name = "base.shopfloor.schemas.detail"
-    _usage = "schema_detail"
+class ShopfloorSchemaDetailAction(Component):
+    _inherit = "shopfloor.schema.detail.action"
 
     def location_detail(self):
         schema = self.location()

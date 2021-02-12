@@ -5,6 +5,8 @@ import logging
 from odoo.addons.component.core import AbstractComponent, Component
 from odoo.addons.component.exception import NoComponentError
 
+from ..actions.base_action import get_actions_for
+
 _logger = logging.getLogger(__name__)
 
 
@@ -167,13 +169,16 @@ class BaseShopfloorValidatorResponse(AbstractComponent):
         """
         return {}
 
+    def _actions_for(self, usage, **kw):
+        return get_actions_for(self, usage, **kw)
+
     @property
     def schemas(self):
-        return self.component(usage="schema")
+        return self._actions_for("schema")
 
     @property
     def schemas_detail(self):
-        return self.component(usage="schema_detail")
+        return self._actions_for("schema_detail")
 
     def _response_schema(self, data_schema=None, next_states=None):
         """Schema for the return validator
@@ -213,6 +218,8 @@ class BaseShopfloorValidatorResponse(AbstractComponent):
         if not data_schema:
             data_schema = {}
 
+        # TODO: shall we keep `next_state` as part of base module?
+        # In theory the next state is what leads users to the next step.
         if next_states:
             next_states = set(next_states)
             next_states.add(self._start_state)

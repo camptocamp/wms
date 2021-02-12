@@ -1,14 +1,15 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-from .test_menu_base import CommonMenuCase
+from .common import CommonCase
+from .common_misc import MenuTestMixin
 
 
-class UserCase(CommonMenuCase):
+class UserCase(CommonCase, MenuTestMixin):
     @classmethod
     def setUpClassVars(cls, *args, **kwargs):
         super().setUpClassVars(*args, **kwargs)
-        cls.profile = cls.env.ref("shopfloor.shopfloor_profile_hb_truck_demo")
-        cls.profile2 = cls.env.ref("shopfloor.shopfloor_profile_shelf_1_demo")
+        cls.profile = cls.env.ref("shopfloor_base.profile_demo_1")
+        cls.profile2 = cls.env.ref("shopfloor_base.profile_demo_2")
 
     def setUp(self):
         super().setUp()

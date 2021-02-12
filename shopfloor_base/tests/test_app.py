@@ -5,10 +5,10 @@ from .common import CommonCase
 
 class AppCase(CommonCase):
     @classmethod
-    def setUpClassVars(cls, *args, **kwargs):
-        super().setUpClassVars(*args, **kwargs)
-        cls.profile = cls.env.ref("shopfloor.shopfloor_profile_hb_truck_demo")
-        cls.profile2 = cls.env.ref("shopfloor.shopfloor_profile_shelf_1_demo")
+    def setUpClassVars(cls):
+        super().setUpClassVars()
+        cls.profile = cls.env.ref("shopfloor_base.profile_demo_1")
+        cls.profile2 = cls.env.ref("shopfloor_base.profile_demo_2")
 
     def setUp(self):
         super().setUp()
