@@ -24,10 +24,16 @@ class PriorityPostponeMixin(models.AbstractModel):
         self.ensure_one()
         return max(rec.shopfloor_priority for rec in records)
 
-    def shopfloor_postpone(self, records):
-        """Postpone the record and update its priority based on other records."""
+    def shopfloor_postpone(self, *recordsets):
+        """Postpone the record and update its priority based on other records.
+
+        The method accepts several recordsets as parameter (to be able to get
+        the current max priority from different types of records).
+        """
         self.ensure_one()
         # Set the max priority from sibling records + 1
-        max_priority = self._get_max_shopfloor_priority(records)
+        max_priority = max(
+            self._get_max_shopfloor_priority(records) for records in recordsets
+        )
         self.shopfloor_priority = max_priority + 1
         self.shopfloor_postponed = True
