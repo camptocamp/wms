@@ -503,3 +503,21 @@ class MessageAction(Component):
                 packaging.name, carrier.name
             ),
         }
+
+    def dest_package_not_valid(self, package):
+        return {
+            "message_type": "error",
+            "body": _("{} is not a valid destination package.").format(package.name),
+        }
+
+    def no_valid_package_to_select(self):
+        return {
+            "message_type": "warning",
+            "body": _("No valid package to select."),
+        }
+
+    def no_delivery_packaging_available(self):
+        return {
+            "message_type": "warning",
+            "body": _("No delivery package type available."),
+        }

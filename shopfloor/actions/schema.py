@@ -103,6 +103,19 @@ class ShopfloorSchemaAction(Component):
             "qty": {"type": "float", "required": True},
         }
 
+    def delivery_packaging(self):
+        return {
+            "id": {"required": True, "type": "integer"},
+            "name": {"type": "string", "nullable": False, "required": True},
+            "packaging_type": {"type": "string", "nullable": True, "required": True},
+            "shipper_package_code": {
+                "type": "string",
+                "nullable": True,
+                "required": True,
+            },
+            "barcode": {"type": "string", "nullable": True, "required": True},
+        }
+
     def picking_batch(self, with_pickings=False):
         schema = {
             "id": {"required": True, "type": "integer"},

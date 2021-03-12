@@ -30,6 +30,18 @@ class ActionsDataCaseBase(CommonCase, ActionsDataTestMixin):
             .sudo()
             .create({"name": "Pallet", "packaging_type_id": cls.packaging_type.id})
         )
+        cls.delivery_packaging = (
+            cls.env["product.packaging"]
+            .sudo()
+            .create(
+                {
+                    "name": "Pallet",
+                    "packaging_type_id": cls.packaging_type.id,
+                    "shipper_package_code": "PAL",
+                    "barcode": "PALCODE",
+                }
+            )
+        )
         cls.product_b.tracking = "lot"
         cls.product_c.tracking = "lot"
         cls.picking = cls._create_picking(
@@ -136,6 +148,17 @@ class ActionsDataCaseBase(CommonCase, ActionsDataTestMixin):
             "name": record.packaging_type_id.name,
             "code": record.packaging_type_id.code,
             "qty": record.qty,
+        }
+        data.update(kw)
+        return data
+
+    def _expected_delivery_packaging(self, record, **kw):
+        data = {
+            "id": record.id,
+            "name": record.name,
+            "packaging_type": record.packaging_type_id.display_name,
+            "shipper_package_code": record.shipper_package_code,
+            "barcode": record.barcode,
         }
         data.update(kw)
         return data
