@@ -596,7 +596,7 @@ class ClusterPicking(Component):
             )
 
         # the scanned package can contain only move lines of the same picking
-        if any(
+        if bin_package.quant_ids and any(
             ml.picking_id != move_line.picking_id
             for ml in bin_package.planned_move_line_ids
         ):
