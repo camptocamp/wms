@@ -94,7 +94,7 @@ class ShopfloorMenu(models.Model):
     def _compute_pick_pack_same_time_is_possible(self):
         for menu in self:
             menu.pick_pack_same_time_is_possible = menu.scenario_id.has_option(
-                "pick_pack_same_time_is_possible"
+                "pick_pack_same_time"
             )
 
     @api.onchange("unreserve_other_moves_is_possible")

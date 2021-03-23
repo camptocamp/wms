@@ -1,5 +1,7 @@
 # Copyright 2021 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+from odoo import _, exceptions
+
 from odoo.addons.component.core import Component
 
 
@@ -20,6 +22,10 @@ class PackagingAction(Component):
         # to unify lookup of this field.
         # As alternative add a computed field.
         default_packaging = carrier[delivery_type + "_default_packaging_id"]
+        if not default_packaging:
+            raise exceptions.UserError(
+                _("No default packaging set for %s") % carrier.name
+            )
         return self.create_package_from_packaging(default_packaging)
 
     def create_package_from_packaging(self, packaging=None):

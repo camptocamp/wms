@@ -16,7 +16,7 @@
         <field name="key">zone_picking</field>
         <field name="options_edit">
 {
-    "pick_pack_same_time": false
+    "pick_pack_same_time": true
 }
         </field>
     </record>
