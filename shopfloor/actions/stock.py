@@ -43,3 +43,12 @@ class StockAction(Component):
             moves.move_orig_ids.filtered(lambda m: m.state not in ("cancel", "done"))
         )
         return moves == assigned_moves and not has_ancestors
+
+    def no_putaway_available(self, picking_types, move_lines):
+        """Returns `True` if no putaway destination has been computed for one
+        of the given move lines.
+        """
+        base_locations = picking_types.default_location_dest_id
+        # when no putaway is found, the move line destination stays the
+        # default's of the picking type
+        return any(line.location_dest_id in base_locations for line in move_lines)
