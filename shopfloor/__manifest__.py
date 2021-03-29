@@ -24,6 +24,7 @@
         "auth_api_key",
         #  OCA / stock-logistics-warehouse
         "stock_helper",
+        "stock_helper_delivery",
         "stock_picking_completion_info",
         "stock_quant_package_product_packaging",
         #  OCA / stock-logistics-workflow
