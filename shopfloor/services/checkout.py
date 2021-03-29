@@ -779,7 +779,7 @@ class Checkout(Component):
                 (
                     "package_carrier_type",
                     "=",
-                    picking.carrier_id.delivery_type or "none",
+                    picking.get_carrier_from_chained_picking().delivery_type or "none",
                 ),
             ],
             order="name",
