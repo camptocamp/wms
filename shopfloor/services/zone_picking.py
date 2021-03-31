@@ -821,7 +821,7 @@ class ZonePicking(Component):
         good_for_packing = False
         message = ""
         picking = move_line.picking_id
-        carrier = picking.get_carrier_from_chained_picking()
+        carrier = picking.get_picking_with_carrier_from_chain().carrier_id
         if carrier:
             actions = self._actions_for("packaging")
             pkg = actions.create_delivery_package(carrier)
@@ -842,7 +842,7 @@ class ZonePicking(Component):
         good_for_packing = False
         message = None
         picking = move_line.picking_id
-        carrier = picking.get_carrier_from_chained_picking()
+        carrier = picking.get_picking_with_carrier_from_chain().carrier_id
         if carrier:
             actions = self._actions_for("packaging")
             if actions.packaging_valid_for_carrier(package.packaging_id, carrier):
