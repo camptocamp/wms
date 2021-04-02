@@ -11,17 +11,24 @@
                     attrs="{'invisible': [('scenario', '!=', 'cluster_picking')]}"
                 >
                     <field name="batch_create" />
+                    <field name="batch_group_by_commercial_partner" />
                     <field
                         name="batch_create_max_picking"
-                        attrs="{'invisible': [('batch_create', '=', False)]}"
+                        attrs="{
+                          'invisible': ['|', ('batch_create', '=', False), ('batch_group_by_commercial_partner', '=', True)],
+                        }"
                     />
                     <field
                         name="batch_create_max_volume"
-                        attrs="{'invisible': [('batch_create', '=', False)]}"
+                        attrs="{
+                          'invisible': ['|', ('batch_create', '=', False), ('batch_group_by_commercial_partner', '=', True)],
+                        }"
                     />
                     <field
                         name="batch_create_max_weight"
-                        attrs="{'invisible': [('batch_create', '=', False)]}"
+                        attrs="{
+                          'invisible': ['|', ('batch_create', '=', False), ('batch_group_by_commercial_partner', '=', True)],
+                        }"
                     />
                 </group>
             </group>
