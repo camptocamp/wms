@@ -6,3 +6,5 @@ stock-logistics-workflow
 web
 rest-framework
 server-auth
+# https://github.com/OCA/delivery-carrier/pull/354
+delivery-carrier https://github.com/camptocamp/delivery-carrier 13.0-stock_picking_delivery_link
