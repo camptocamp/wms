@@ -24,7 +24,6 @@
         "auth_api_key",
         #  OCA / stock-logistics-warehouse
         "stock_helper",
-        "stock_helper_delivery",
         "stock_picking_completion_info",
         "stock_quant_package_product_packaging",
         #  OCA / stock-logistics-workflow
@@ -44,6 +43,8 @@
         "delivery",
         #  OCA / product-attribute
         "product_packaging_type",
+        #  OCA / delivery
+        "stock_picking_delivery_link",
     ],
     "data": [
         "data/shopfloor_scenario_data.xml",
