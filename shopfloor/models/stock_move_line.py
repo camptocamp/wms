@@ -52,6 +52,8 @@ class StockMoveLine(models.Model):
         Return the new picking (in case a split has been made), or the current
         related pickings.
         """
+        # FIXME: issue spotted: this method could let empty (draft) transfers
+        # we need to process transfer one by one
         location_src_to_process = self.location_id
         if location_src_to_process and len(location_src_to_process) != 1:
             raise UserError(
@@ -74,8 +76,9 @@ class StockMoveLine(models.Model):
             new_move = move_line.move_id.split_other_move_lines(
                 move_line, intersection=True
             )
-            new_move._recompute_state()
-            new_move_ids.append(new_move.id)
+            if new_move:
+                new_move._recompute_state()
+                new_move_ids.append(new_move.id)
         # If we have new moves, create the backorder picking
         # NOTE: code copy/pasted & adapted from OCA module 'stock_split_picking'
         new_moves = self.env["stock.move"].browse(new_move_ids)
