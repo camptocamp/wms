@@ -77,9 +77,8 @@ class SinglePackTransfer(Component):
                 self.msg_store.package_not_found_for_barcode(barcode)
             )
 
-        if not package.location_id.is_sublocation_of(
-            picking_types.default_location_src_id
-        ):
+        stock = self._actions_for("stock")
+        if not stock.is_src_location_valid(self, package.location_id):
             return self._response_for_start(
                 message=self.msg_store.package_not_allowed_in_src_location(
                     barcode, picking_types
@@ -130,7 +129,7 @@ class SinglePackTransfer(Component):
         message = self.msg_store.no_pending_operation_for_pack(package)
         if not package_level and self.work.menu.allow_move_create:
             package_level = self._create_package_level(package)
-            if not self._is_dest_location_valid(
+            if not self.is_dest_location_valid(
                 package_level.move_line_ids.move_id, package_level.location_dest_id
             ):
                 package_level = None
@@ -195,23 +194,6 @@ class SinglePackTransfer(Component):
     def _is_move_state_valid(self, moves):
         return all(move.state != "cancel" for move in moves)
 
-    def _is_dest_location_valid(self, moves, scanned_location):
-        """We ensure the destination is either valid regarding the picking
-        destination location or the move destination location. With the push
-        rules in the module stock_dynamic_routing in OCA/wms, it is possible
-        that the move destination is not anymore a child of the picking default
-        destination (as it is the last pushed move that now respects this
-        condition and not anymore this one that has a destination to an
-        intermediate location)
-        """
-        return scanned_location.is_sublocation_of(
-            moves[0].picking_id.location_dest_id
-        ) or scanned_location.is_sublocation_of(moves.location_dest_id, all)
-
-    def _is_dest_location_to_confirm(self, location_dest_id, scanned_location):
-        """Destination that could be used but need confirmation"""
-        return not scanned_location.is_sublocation_of(location_dest_id)
-
     def validate(self, package_level_id, location_barcode, confirmation=False):
         """Validate the transfer"""
         search = self._actions_for("search")
@@ -237,12 +219,13 @@ class SinglePackTransfer(Component):
                 package_level, message=self.msg_store.no_location_found()
             )
 
-        if not self._is_dest_location_valid(moves, scanned_location):
+        stock = self._actions_for("stock")
+        if not stock.is_dest_location_valid(moves, scanned_location):
             return self._response_for_scan_location(
                 package_level, message=self.msg_store.dest_location_not_allowed()
             )
 
-        if not confirmation and self._is_dest_location_to_confirm(
+        if not confirmation and stock.is_dest_location_to_confirm(
             package_level.location_dest_id, scanned_location
         ):
             return self._response_for_scan_location(
