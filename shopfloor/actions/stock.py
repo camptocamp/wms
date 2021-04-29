@@ -10,13 +10,13 @@ class StockAction(Component):
     _inherit = "shopfloor.process.action"
     _usage = "stock"
 
-    def is_src_location_valid(self, menu, location):
-        """Check the source location is valid for given menu.
+    def is_src_location_valid(self, process, location):
+        """Check the source location is valid for given process.
 
         We ensure the source is valid regarding one of the picking types of the
-        menu.
+        process.
         """
-        return location.is_sublocation_of(menu.picking_types.default_location_src_id)
+        return location.is_sublocation_of(process.picking_types.default_location_src_id)
 
     def is_dest_location_valid(self, moves, location):
         """Check the destination location is valid for given moves.
@@ -30,7 +30,7 @@ class StockAction(Component):
         intermediate location)
         """
         return location.is_sublocation_of(
-            moves[0].picking_id.location_dest_id
+            moves.picking_id.location_dest_id, all
         ) or location.is_sublocation_of(moves.location_dest_id, all)
 
     def is_dest_location_to_confirm(self, location_dest_id, location):
