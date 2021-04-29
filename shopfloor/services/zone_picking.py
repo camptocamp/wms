@@ -570,7 +570,7 @@ class ZonePicking(Component):
         # Ask confirmation to the user if the scanned location is not in the
         # expected ones but is valid (in picking type's default destination)
         stock = self._actions_for("stock")
-        if not self.is_dest_location_valid(move_line.move_id, location):
+        if not stock.is_dest_location_valid(move_line.move_id, location):
             response = self._response_for_set_line_destination(
                 move_line, message=self.msg_store.dest_location_not_allowed(),
             )

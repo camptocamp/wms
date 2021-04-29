@@ -204,7 +204,7 @@ class LocationContentTransfer(Component):
             [("location_id", "=", location.id), ("quantity", ">", 0)]
         )
         # create moves for each quant
-        picking_type = self.work.menu.picking_type_ids
+        picking_type = self.picking_types
         move_vals_list = []
         for quant in quants:
             move_vals_list.append(
@@ -336,8 +336,8 @@ class LocationContentTransfer(Component):
         if (
             not move_lines
             and menu.allow_move_create
-            and len(menu.picking_type_ids) == 1
-            and stock.is_src_location_valid(menu, location)
+            and len(self.picking_types) == 1
+            and stock.is_src_location_valid(self, location)
         ):
             new_moves = self._create_moves_from_location(location)
             if not new_moves:

@@ -129,7 +129,7 @@ class SinglePackTransfer(Component):
         message = self.msg_store.no_pending_operation_for_pack(package)
         if not package_level and self.work.menu.allow_move_create:
             package_level = self._create_package_level(package)
-            if not self.is_dest_location_valid(
+            if not stock.is_dest_location_valid(
                 package_level.move_line_ids.move_id, package_level.location_dest_id
             ):
                 package_level = None
