@@ -21,7 +21,7 @@ class StockReceptionScreen(models.Model):
     display_package_dimensions = fields.Char(
         string="Dimensions (lxhxw)",
         compute="_compute_package_dimensions",
-        help="Dimensions of the package (length x height x width)",
+        help="Dimensions of the package in mm (length x height x width)",
     )
     scan_requested = fields.Boolean(
         help="A scan from the measuring device was requested",
@@ -49,7 +49,7 @@ class StockReceptionScreen(models.Model):
             dimension_values = [pack.lngth, pack.height, pack.width]
             if all(dimension_values):
                 record.display_package_dimensions = " x ".join(
-                    [str(val) for val in dimension_values]
+                    [f"{str(val)}mm" for val in dimension_values]
                 )
             else:
                 record.display_package_dimensions = False
