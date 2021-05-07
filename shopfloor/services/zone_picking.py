@@ -769,9 +769,15 @@ class ZonePicking(Component):
                 pkg_moved, response = self._set_destination_location(
                     move_line, quantity, confirmation, location,
                 )
-                if response:
-                    if extra_message:
+                if response and extra_message:
+                    if response.get("message"):
                         response["message"]["body"] += "\n" + extra_message["body"]
+                    else:
+                        # _handle_pick_pack_same_time_for_location successful
+                        response["message"] = {
+                            "body": extra_message["body"],
+                            "message_type": "success",
+                        }
                     return response
 
         # When the barcode is a package
