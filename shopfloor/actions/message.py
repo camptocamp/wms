@@ -72,6 +72,15 @@ class MessageAction(Component):
             "body": _("This package does not exist anymore."),
         }
 
+    def package_different_change(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "You scanned a different package with the same product, "
+                "do you want to change pack ? Scan it again to confirm"
+            ),
+        }
+
     def package_not_available_in_picking(self, package, picking):
         return {
             "message_type": "warning",

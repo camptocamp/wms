@@ -203,6 +203,52 @@ class ZonePickingSelectLineCase(ZonePickingCommonCase):
             message=self.service.msg_store.package_not_found(),
         )
 
+    def test_scan_source_barcode_package_can_replace_in_line(self):
+        """Scan source: scanned package has no related line but can replace
+        next step 'select_line' expected with confirmation required set.
+        Scan source: 2nd time the package replace package line with new package
+        next step 'set_line_destination'.
+        """
+        # Add the same product same package in the same location to use as replacement
+        picking1b = self._create_picking(lines=[(self.product_a, 10)])
+        self._fill_stock_for_moves(
+            picking1b.move_lines, in_package=True, location=self.zone_sublocation1
+        )
+        picking1b.action_assign()
+        picking1b.action_cancel()
+        package1b = picking1b.package_level_ids[0].package_id
+        package1 = self.picking1.package_level_ids[0].package_id
+        # 1st scan
+        response = self.service.dispatch(
+            "scan_source", params={"barcode": package1b.name},
+        )
+        move_lines = self.service._find_location_move_lines(package=package1,)
+        move_lines = move_lines.sorted(lambda l: l.move_id.priority, reverse=True)
+        self.assert_response_select_line(
+            response,
+            zone_location=self.zone_location,
+            picking_type=self.picking_type,
+            move_lines=move_lines,
+            message=self.service.msg_store.package_different_change(),
+            confirmation_required=True,
+        )
+        self.assertEqual(self.picking1.package_level_ids[0].package_id, package1)
+        # 2nd scan
+        response = self.service.dispatch(
+            "scan_source", params={"barcode": package1b.name, "confirmation": True},
+        )
+        self.assert_response_set_line_destination(
+            response,
+            zone_location=self.zone_location,
+            picking_type=self.picking_type,
+            move_line=move_lines[0],
+            message=self.service.msg_store.package_replaced_by_package(
+                package1, package1b
+            ),
+        )
+        # Check the package has been changed on the move line
+        self.assertEqual(self.picking1.package_level_ids[0].package_id, package1b)
+
     def test_scan_source_barcode_product(self):
         """Scan source: scanned product has one related move line,
         next step 'set_line_destination' expected on it.
