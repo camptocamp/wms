@@ -17,6 +17,18 @@ msgstr ""
 "X-Generator: Weblate 4.3.2\n"
 
 #. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__pick_pack_same_time
+msgid ""
+"\n"
+"If you tick this box, while picking goods from a location\n"
+"(eg: zone picking) set destination will work as follow:\n"
+"\n"
+"* if a location is scanned, a new delivery package is created;\n"
+"* if a package is scanned, the package is validated against the carrier\n"
+"* in both cases, if the picking has no carrier the operation fails.\",\n"
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "A destination package is required."
@@ -146,11 +158,6 @@ msgid "Control stock issue in location {} for {}"
 msgstr "Error en control de inventario en ubicación {} para {}"
 
 #. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__create_uid
-msgid "Created by"
-msgstr "Creado por"
-
-#. module: shopfloor
 #: code:addons/shopfloor/models/stock_move.py:0
 #, python-format
 msgid ""
@@ -159,11 +166,6 @@ msgid ""
 msgstr ""
 "Creado desde pedido pendiente <a href=# data-oe-model=stock.picking data-oe-"
 "id=%d>%s</a>."
-
-#. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__create_date
-msgid "Created on"
-msgstr "Creado el"
 
 #. module: shopfloor
 #: code:addons/shopfloor/models/shopfloor_menu.py:0
@@ -179,7 +181,6 @@ msgid "Delivery"
 msgstr "Entrega"
 
 #. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__display_name
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_priority_postpone_mixin__display_name
 msgid "Display Name"
 msgstr "Mostrar Nombre"
@@ -201,7 +202,12 @@ msgid "From"
 msgstr "Desde"
 
 #. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__id
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Goods packed into {0.name}"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_priority_postpone_mixin__id
 msgid "ID"
 msgstr "ID"
@@ -253,20 +259,9 @@ msgid "Inventory Locations"
 msgstr "Ubicaciones de Inventario"
 
 #. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log____last_update
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_priority_postpone_mixin____last_update
 msgid "Last Modified on"
 msgstr "Última Modificación el"
-
-#. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__write_uid
-msgid "Last Updated by"
-msgstr "Última Actualización por"
-
-#. module: shopfloor
-#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_log__write_date
-msgid "Last Updated on"
-msgstr "Última Actualización el"
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/completion_info.py:0
@@ -275,11 +270,6 @@ msgid "Last operation of transfer {}. Next operation ({}) is ready to proceed."
 msgstr ""
 "Última operación de transferencia: {}. Siguiente operación ({}) está lista "
 "para proceder."
-
-#. module: shopfloor
-#: model:ir.model,name:shopfloor.model_shopfloor_log
-msgid "Legacy model for tracking REST calls: replacedy by rest.log"
-msgstr "Modelo heredado para rastrear llamadas REST: reemplazado por rest.log"
 
 #. module: shopfloor
 #: code:addons/shopfloor/services/checkout.py:0
@@ -482,6 +472,12 @@ msgstr "No hay paquete válido para seleccionar."
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "No value"
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid ""
 "Not all lines have been processed with full quantity. Do you confirm partial "
 "operation?"
@@ -616,6 +612,12 @@ msgid "Packages"
 msgstr "Paquetes"
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Packaging '{}' is not allowed for carrier {}."
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/services/checkout.py:0
 #, python-format
 msgid "Packaging changed on package {}"
@@ -624,8 +626,20 @@ msgstr "El Empaquetado cambió en el paquete {}"
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Packaging {} is not allowed for carrier {}."
-msgstr "Empaquetado {} no está permitido para en transportista {}."
+msgid ""
+"Pick + Pack mode ON: the picking {0.name} has no carrier set. The system "
+"couldn't pack goods automatically."
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__pick_pack_same_time_is_possible
+msgid "Pick Pack Same Time Is Possible"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__pick_pack_same_time
+msgid "Pick and pack at the same time"
+msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/change_package_lot.py:0
@@ -690,12 +704,6 @@ msgstr "Producto rastreado por lote, por favor escanée uno."
 #, python-format
 msgid "Product {} belongs to a picking without a valid state."
 msgstr "Producto {} pertenece a una entrega sin estado válido."
-
-#. module: shopfloor
-#: code:addons/shopfloor/services/checkout.py:0
-#, python-format
-msgid "Goods packed in {}"
-msgstr "Producto(s) empaquetado(s) en {}"
 
 #. module: shopfloor
 #: code:addons/shopfloor/services/checkout.py:0
@@ -965,6 +973,7 @@ msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/models/stock_move_line.py:0
+#: code:addons/shopfloor/models/stock_picking.py:0
 #, python-format
 msgid ""
 "The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-id=\"%d"
@@ -1233,6 +1242,28 @@ msgstr "{} no es un paquete de destino válido."
 #, python-format
 msgid "{} {} put in {}"
 msgstr "{} {} poner en {}"
+
+#~ msgid "Created by"
+#~ msgstr "Creado por"
+
+#~ msgid "Created on"
+#~ msgstr "Creado el"
+
+#~ msgid "Last Updated by"
+#~ msgstr "Última Actualización por"
+
+#~ msgid "Last Updated on"
+#~ msgstr "Última Actualización el"
+
+#~ msgid "Legacy model for tracking REST calls: replacedy by rest.log"
+#~ msgstr ""
+#~ "Modelo heredado para rastrear llamadas REST: reemplazado por rest.log"
+
+#~ msgid "Packaging {} is not allowed for carrier {}."
+#~ msgstr "Empaquetado {} no está permitido para en transportista {}."
+
+#~ msgid "Goods packed in {}"
+#~ msgstr "Producto(s) empaquetado(s) en {}"
 
 #~ msgid "Not a valid destination package"
 #~ msgstr "No es un paquete de destino válido"
