@@ -30,8 +30,8 @@ class StockAction(Component):
         intermediate location)
         """
         return location.is_sublocation_of(
-            moves.picking_id.location_dest_id, all
-        ) or location.is_sublocation_of(moves.location_dest_id, all)
+            moves.picking_id.location_dest_id, func=all
+        ) or location.is_sublocation_of(moves.location_dest_id, func=all)
 
     def is_dest_location_to_confirm(self, location_dest_id, location):
         """Check the destination location requires confirmation
