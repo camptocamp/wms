@@ -408,8 +408,7 @@ class ZonePicking(Component):
         zone_location = search.location_from_scan(barcode)
         if not zone_location:
             return self._response_for_start(message=self.msg_store.no_location_found())
-        stock = self._actions_for("stock")
-        if not stock.is_src_location_valid(self, zone_location):
+        if not self.is_src_location_valid(zone_location):
             return self._response_for_start(
                 message=self.msg_store.location_not_allowed()
             )
@@ -603,13 +602,13 @@ class ZonePicking(Component):
         # Ask confirmation to the user if the scanned location is not in the
         # expected ones but is valid (in picking type's default destination)
         stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(move_line.move_id, location):
+        if not self.is_dest_location_valid(move_line.move_id, location):
             response = self._response_for_set_line_destination(
                 move_line, message=self.msg_store.dest_location_not_allowed(),
             )
             return (location_changed, response)
 
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             move_line.location_dest_id, location
         ):
             response = self._response_for_set_line_destination(
@@ -1124,9 +1123,8 @@ class ZonePicking(Component):
             if len(location_dest) != 1:
                 error = self.msg_store.lines_different_dest_location()
             # check if the scanned location is allowed
-            stock = self._actions_for("stock")
             moves = buffer_lines.mapped("move_id")
-            if not stock.is_dest_location_valid(moves, location):
+            if not self.is_dest_location_valid(moves, location):
                 error = self.msg_store.location_not_allowed()
             if error:
                 return self._set_destination_all_response(buffer_lines, message=error)
@@ -1135,7 +1133,7 @@ class ZonePicking(Component):
             #     destination set on buffer lines
             #   - To confirm if the scanned destination is not a child of the
             #     current destination set on buffer lines
-            if not confirmation and stock.is_dest_location_to_confirm(
+            if not confirmation and self.is_dest_location_to_confirm(
                 buffer_lines.location_dest_id, location
             ):
                 return self._response_for_unload_all(
@@ -1153,6 +1151,7 @@ class ZonePicking(Component):
             # TODO: update tests
             for move in moves:
                 move.split_other_move_lines(buffer_lines & move.move_line_ids)
+            stock = self._actions_for("stock")
             stock.validate_moves(moves)
             message = self.msg_store.buffer_complete()
             buffer_lines = self._find_buffer_move_lines()
@@ -1276,9 +1275,8 @@ class ZonePicking(Component):
         search = self._actions_for("search")
         location = search.location_from_scan(barcode)
         if location:
-            stock = self._actions_for("stock")
             moves = buffer_lines.mapped("move_id")
-            if not stock.is_dest_location_valid(moves, location):
+            if not self.is_dest_location_valid(moves, location):
                 return self._response_for_unload_set_destination(
                     first(buffer_lines),
                     message=self.msg_store.dest_location_not_allowed(),
@@ -1288,7 +1286,7 @@ class ZonePicking(Component):
             #     destination set on buffer lines
             #   - To confirm if the scanned destination is not a child of the
             #     current destination set on buffer lines
-            if not confirmation and stock.is_dest_location_to_confirm(
+            if not confirmation and self.is_dest_location_to_confirm(
                 buffer_lines.location_dest_id, location
             ):
                 return self._response_for_unload_set_destination(
@@ -1306,6 +1304,7 @@ class ZonePicking(Component):
             for move in moves:
                 move.split_other_move_lines(buffer_lines & move.move_line_ids)
 
+            stock = self._actions_for("stock")
             stock.validate_moves(moves)
             buffer_lines = self._find_buffer_move_lines()
 

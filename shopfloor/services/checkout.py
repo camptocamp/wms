@@ -180,8 +180,7 @@ class Checkout(Component):
         if not picking:
             location = search.location_from_scan(barcode)
             if location:
-                stock = self._actions_for("stock")
-                if not stock.is_src_location_valid(self, location):
+                if not self.is_src_location_valid(location):
                     return self._response_for_select_document(
                         message=self.msg_store.location_not_allowed()
                     )

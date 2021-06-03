@@ -77,8 +77,7 @@ class SinglePackTransfer(Component):
                 self.msg_store.package_not_found_for_barcode(barcode)
             )
 
-        stock = self._actions_for("stock")
-        if not stock.is_src_location_valid(self, package.location_id):
+        if not self.is_src_location_valid(package.location_id):
             return self._response_for_start(
                 message=self.msg_store.package_not_allowed_in_src_location(
                     barcode, picking_types
@@ -129,7 +128,7 @@ class SinglePackTransfer(Component):
         message = self.msg_store.no_pending_operation_for_pack(package)
         if not package_level and self.work.menu.allow_move_create:
             package_level = self._create_package_level(package)
-            if not stock.is_dest_location_valid(
+            if not self.is_dest_location_valid(
                 package_level.move_line_ids.move_id, package_level.location_dest_id
             ):
                 package_level = None
@@ -219,13 +218,12 @@ class SinglePackTransfer(Component):
                 package_level, message=self.msg_store.no_location_found()
             )
 
-        stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(moves, scanned_location):
+        if not self.is_dest_location_valid(moves, scanned_location):
             return self._response_for_scan_location(
                 package_level, message=self.msg_store.dest_location_not_allowed()
             )
 
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             package_level.location_dest_id, scanned_location
         ):
             return self._response_for_scan_location(

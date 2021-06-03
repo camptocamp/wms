@@ -943,13 +943,12 @@ class ClusterPicking(Component):
             return self._response_for_unload_all(
                 batch, message=self.msg_store.no_location_found()
             )
-        stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(lines.move_id, scanned_location):
+        if not self.is_dest_location_valid(lines.move_id, scanned_location):
             return self._response_for_unload_all(
                 batch, message=self.msg_store.dest_location_not_allowed()
             )
 
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             first_line.location_dest_id, scanned_location
         ):
             return self._response_for_confirm_unload_all(batch)
@@ -1106,12 +1105,11 @@ class ClusterPicking(Component):
             return self._response_for_unload_set_destination(
                 batch, package, message=self.msg_store.no_location_found()
             )
-        stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(lines.move_id, scanned_location):
+        if not self.is_dest_location_valid(lines.move_id, scanned_location):
             return self._response_for_unload_set_destination(
                 batch, package, message=self.msg_store.dest_location_not_allowed()
             )
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             first_line.location_dest_id, scanned_location
         ):
             return self._response_for_confirm_unload_set_destination(batch, package)

@@ -342,12 +342,11 @@ class LocationContentTransfer(Component):
         #   - scanned location is a valid source for one the menu's picking types
         # then prepare new stock moves to move goods from the scanned location.
         menu = self.work.menu
-        stock = self._actions_for("stock")
         if (
             not move_lines
             and menu.allow_move_create
             and len(self.picking_types) == 1
-            and stock.is_src_location_valid(self, location)
+            and self.is_src_location_valid(location)
         ):
             new_moves = self._create_moves_from_location(location)
             if not new_moves:
@@ -364,7 +363,7 @@ class LocationContentTransfer(Component):
             pickings = new_moves.mapped("picking_id")
             move_lines = new_moves.move_line_ids
             for move_line in move_lines:
-                if not stock.is_dest_location_valid(
+                if not self.is_dest_location_valid(
                     move_line.move_id, move_line.location_dest_id
                 ):
                     savepoint.rollback()
@@ -463,12 +462,11 @@ class LocationContentTransfer(Component):
                 pickings, message=self.msg_store.barcode_not_found()
             )
 
-        stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(move_lines.move_id, scanned_location):
+        if not self.is_dest_location_valid(move_lines.move_id, scanned_location):
             return self._response_for_scan_destination_all(
                 pickings, message=self.msg_store.dest_location_not_allowed()
             )
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             move_lines.location_dest_id, scanned_location
         ):
             return self._response_for_scan_destination_all(
@@ -647,15 +645,14 @@ class LocationContentTransfer(Component):
             return self._response_for_scan_destination(
                 location, package_level, message=self.msg_store.no_location_found()
             )
-        stock = self._actions_for("stock")
         package_moves = package_level.move_line_ids.move_id
-        if not stock.is_dest_location_valid(package_moves, scanned_location):
+        if not self.is_dest_location_valid(package_moves, scanned_location):
             return self._response_for_scan_destination(
                 location,
                 package_level,
                 message=self.msg_store.dest_location_not_allowed(),
             )
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             package_level.location_dest_id, scanned_location
         ):
             return self._response_for_scan_destination(
@@ -669,6 +666,7 @@ class LocationContentTransfer(Component):
             # split the move to process only the lines related to the package.
             package_move.split_other_move_lines(package_move_lines)
         self._write_destination_on_lines(package_level.move_line_ids, scanned_location)
+        stock = self._actions_for("stock")
         stock.validate_moves(package_moves)
         move_lines = self._find_transfer_move_lines(location)
         message = self.msg_store.location_content_transfer_item_complete(
@@ -711,12 +709,11 @@ class LocationContentTransfer(Component):
             return self._response_for_scan_destination(
                 location, move_line, message=self.msg_store.no_location_found()
             )
-        stock = self._actions_for("stock")
-        if not stock.is_dest_location_valid(move_line.move_id, scanned_location):
+        if not self.is_dest_location_valid(move_line.move_id, scanned_location):
             return self._response_for_scan_destination(
                 location, move_line, message=self.msg_store.dest_location_not_allowed()
             )
-        if not confirmation and stock.is_dest_location_to_confirm(
+        if not confirmation and self.is_dest_location_to_confirm(
             move_line.location_dest_id, scanned_location
         ):
             return self._response_for_scan_destination(
