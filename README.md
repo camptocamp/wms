@@ -23,7 +23,7 @@ addon | version | summary
 [delivery_carrier_warehouse](delivery_carrier_warehouse/) | 13.0.1.2.0 | Get delivery method used in sales orders from warehouse
 [delivery_preference_glue_stock_picking_group](delivery_preference_glue_stock_picking_group/) | 13.0.1.0.0 | Fix Delivery preferences module on grouping picking
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 13.0.1.5.0 | Integration between Sales and Available to Promise Release
-[shopfloor](shopfloor/) | 13.0.4.7.0 | manage warehouse operations with barcode scanners
+[shopfloor](shopfloor/) | 13.0.4.8.0 | manage warehouse operations with barcode scanners
 [shopfloor_base](shopfloor_base/) | 13.0.1.1.0 | Core module for creating mobile apps
 [shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 13.0.1.1.0 | Create batch transfers for Cluster Picking
 [shopfloor_checkout_sync](shopfloor_checkout_sync/) | 13.0.1.0.0 | Glue module
@@ -45,6 +45,7 @@ addon | version | summary
 [stock_picking_type_shipping_policy](stock_picking_type_shipping_policy/) | 13.0.1.0.0 | Define different shipping policies according to picking type
 [stock_picking_type_shipping_policy_group_by](stock_picking_type_shipping_policy_group_by/) | 13.0.1.0.0 | Glue module for Picking Type Shipping Policy and Group Transfers by Partner and Carrier
 [stock_reception_screen](stock_reception_screen/) | 13.0.1.6.2 | Dedicated screen to receive/scan goods.
+[stock_reception_screen_measuring_device](stock_reception_screen_measuring_device/) | 13.0.1.0.0 | Allow to use a measuring device from a reception screen.for packaging measurement
 [stock_storage_type](stock_storage_type/) | 13.0.1.12.0 | Manage packages and locations storage types
 [stock_storage_type_buffer](stock_storage_type_buffer/) | 13.0.1.2.0 | Exclude storage locations from put-away if their buffer is full
 [stock_storage_type_putaway_abc](stock_storage_type_putaway_abc/) | 13.0.1.1.0 | Advanced storage strategy ABC for WMS
