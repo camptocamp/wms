@@ -81,7 +81,7 @@ const ClusterPicking = {
             <div class="unload-all" v-if="state_is('unload_all')">
                 <item-detail-card
                     v-if="current_carrier()"
-                    :card_color="utils.colors.color_for('detail_carrier_card')"
+                    :card_color="utils.colors.color_for('success')"
                     :key="make_state_component_key(['batch-picking', state.data.id])"
                     :record="current_carrier()"
                     :options="{main: true, key_title: 'name', title_icon: 'mdi-truck-outline'}"
