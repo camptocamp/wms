@@ -1,2 +1,5 @@
 freezegun
 odoo_test_helper
+
+odoo13-addon-stock_packaging_calculator @ git+https://github.com/OCA/stock-logistics-warehouse@refs/pull/1168/head#subdirectory=setup/stock_packaging_calculator
+odoo13-addon-stock_packaging_calculator @ git+https://github.com/OCA/stock-logistics-warehouse@refs/pull/1168/head#subdirectory=setup/stock_product_qty_by_packaging
