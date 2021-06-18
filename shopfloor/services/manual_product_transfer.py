@@ -105,11 +105,10 @@ class ManualProductTransfer(Component):
         * start: no stock found or wrong barcode
         """
         search = self._actions_for("search")
-        stock = self._actions_for("stock")
         location = search.location_from_scan(barcode)
         if not location:
             return self._response_for_start(message=self.msg_store.no_location_found())
-        if not stock.is_src_location_valid(self, location):
+        if not self.is_src_location_valid(location):
             return self._response_for_start(
                 message=self.msg_store.location_not_allowed()
             )
@@ -522,6 +521,24 @@ class ManualProductTransfer(Component):
         # Get back on the start screen if record IDs do not exist
         if not move_lines or move_lines.ids != move_line_ids:
             return self._response_for_start(message=self.msg_store.record_not_found())
+        search = self._actions_for("search")
+        # Check the scanned destination
+        location = search.location_from_scan(barcode)
+        if not location:
+            return self._response_for_scan_destination_location(
+                move_lines.picking_id,
+                move_lines,
+                message=self.msg_store.no_location_found(),
+            )
+        if not self.is_dest_location_valid(move_lines.move_id, location):
+            return self._response_for_scan_destination_location(
+                move_lines.picking_id,
+                move_lines,
+                message=self.msg_store.location_not_allowed(),
+            )
+        # Set the destination on move lines
+        move_lines.location_dest_id = location
+        # Validate the move and get back to the start
         stock = self._actions_for("stock")
         stock.validate_moves(move_lines.move_id)
         return self._response_for_start(

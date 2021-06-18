@@ -21,7 +21,7 @@ class ManualProductTransferScanDestinationLocation(ManualProductTransferCommonCa
             response, message=self.service.msg_store.record_not_found(),
         )
 
-    def test_scan_destination_location_ok(self):
+    def _confirm_quantity(self):
         self.service.dispatch(
             "confirm_quantity",
             params={
@@ -35,6 +35,27 @@ class ManualProductTransferScanDestinationLocation(ManualProductTransferCommonCa
             self.src_location, self.product_a
         )
         picking = move_lines.picking_id
+        return picking, move_lines
+
+    def test_scan_destination_location_wrong_destination(self):
+        picking, move_lines = self._confirm_quantity()
+        response = self.service.dispatch(
+            "scan_destination_location",
+            params={
+                "move_line_ids": move_lines.ids,
+                "barcode": self.not_allowed_location.barcode,
+            },
+        )
+        self.assertEqual(move_lines.state, "assigned")
+        self.assert_response_scan_destination_location(
+            response,
+            picking,
+            move_lines,
+            message=self.service.msg_store.location_not_allowed(),
+        )
+
+    def test_scan_destination_location_ok(self):
+        picking, move_lines = self._confirm_quantity()
         response = self.service.dispatch(
             "scan_destination_location",
             params={"move_line_ids": move_lines.ids, "barcode": self.shelf1.barcode},
