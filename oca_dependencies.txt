@@ -7,4 +7,3 @@ server-tools
 stock-logistics-workflow
 stock-logistics-warehouse
 web
-community-data-files
