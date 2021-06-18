@@ -3,7 +3,7 @@
 
 {
     "name": "Shopfloor Dangerous Goods",
-    "summary": "Glue Module Between Shopfloor and l10n_eu_product_adr",
+    "summary": "Glue Module Between Shopfloor and Stock Dangerous Goods",
     "version": "13.0.1.0.0",
     "development_status": "Alpha",
     "category": "Inventory",

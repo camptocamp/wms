@@ -13,9 +13,8 @@ class ActionsDataBase(ActionsDataCaseBase):
 
     @classmethod
     def setUpClass(cls):
-        res = super().setUpClass()
+        super().setUpClass()
         cls._set_product_lq()
-        return res
 
     def test_data_stock_move_line(self):
         move_line = self.move_a.move_line_ids

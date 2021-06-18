@@ -14,7 +14,7 @@ class ShopfloorSchemaAction(Component):
         res["has_lq_products"] = {
             "type": "boolean",
             "nullable": False,
-            "required": True,
+            "required": False,
         }
         return res
 
@@ -23,6 +23,6 @@ class ShopfloorSchemaAction(Component):
         res["has_lq_products"] = {
             "type": "boolean",
             "nullable": False,
-            "required": True,
+            "required": False,
         }
         return res
