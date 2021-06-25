@@ -540,7 +540,9 @@ class ManualProductTransfer(Component):
         move_lines.location_dest_id = location
         # Validate the move and get back to the start
         stock = self._actions_for("stock")
-        stock.validate_moves(move_lines.move_id)
+        stock.validate_moves(
+            move_lines.move_id.with_context({"force_reservation": True})
+        )
         return self._response_for_start(
             message=self.msg_store.transfer_done_success(move_lines.picking_id)
         )
