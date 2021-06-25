@@ -20,14 +20,6 @@ const ManualProductTransfer = {
                 />
 
             <item-detail-card
-                v-if="state_in(['scan_destination_location'])"
-                :key="make_state_component_key(['manual-transfer-op', picking().id])"
-                :record="picking()"
-                :options="{main: true, key_title: 'name', title_action_field: {action_val_path: 'name'}}"
-                :card_color="utils.colors.color_for('screen_step_done')"
-                />
-
-            <item-detail-card
                 v-if="state_in(['scan_product', 'confirm_quantity', 'change_quantity', 'scan_destination_location'])"
                 :key="make_state_component_key(['manual-transfer-loc-src', location_src().id])"
                 :record="location_src()"
@@ -65,8 +57,15 @@ const ManualProductTransfer = {
                 </div>
             </div>
 
+            <v-card v-if="state_is('confirm_quantity')" class="pa-2" :color="utils.colors.color_for('screen_step_todo')">
+                <packaging-qty-picker
+                    :key="make_state_component_key(['packaging-qty-picker', 1232])"
+                    :options="utils.wms.move_line_qty_picker_options(fake_line())"
+                    />
+            </v-card>
+
             <div class="detail item-detail-card" v-if="state_is('scan_destination_location')">
-                <v-card :color="utils.colors.color_for('detail_main_card')">
+                <v-card :color="utils.colors.color_for('screen_step_done')">
                     <v-card-title>
                         <span class="label">Quantity = {{ quantity() }}</span>
                     </v-card-title>
@@ -84,11 +83,6 @@ const ManualProductTransfer = {
             <div class="button-list button-vertical-list full" v-if="!state_is('change_quantity')">
                 <v-row align="center"  v-if="!state_is('scan_source_location')">
                     <v-col class="text-center" cols="12" v-if="state_is('confirm_quantity')">
-                        <btn-action @click="state.on_change_qty">
-                            {{ quantity_btn_label() }}
-                        </btn-action>
-                    </v-col>
-                    <v-col class="text-center" cols="12" v-if="state_is('confirm_quantity')">
                         <btn-action @click="state.on_confirm_qty">Confirm quantity</btn-action>
                     </v-col>
                     <v-col class="text-center" cols="12">
@@ -104,7 +98,10 @@ const ManualProductTransfer = {
             return "Quantity " + this.quantity().toString();
         },
         screen_title: function() {
-            return this.menu_item().name;
+            if (_.isEmpty(this.state.data.picking)) {
+                return this.menu_item().name;
+            }
+            return this.state.data.picking.name;
         },
         state_data_check: function(data) {},
         location_src: function() {
@@ -155,8 +152,8 @@ const ManualProductTransfer = {
             if (_.isEmpty(data.move_lines)) {
                 return {};
             }
-            if (!_.isEmpty(data.move_lines[0].product.lot)) {
-                return data.move_lines[0].product.lot;
+            if (!_.isEmpty(data.move_lines[0].lot)) {
+                return data.move_lines[0].lot;
             }
             return {};
         },
@@ -193,13 +190,6 @@ const ManualProductTransfer = {
                 return data.move_lines[0].location_dest;
             }
             return {};
-        },
-        picking: function() {
-            const data = this.state.data;
-            if (_.isEmpty(data) || _.isEmpty(data.picking)) {
-                return {};
-            }
-            return data.picking;
         },
     },
     data: function() {
@@ -255,9 +245,6 @@ const ManualProductTransfer = {
                             })
                         );
                     },
-                    on_change_qty: () => {
-                        this.state_to("change_quantity");
-                    },
                     on_confirm_qty: () => {
                         this.wait_call(
                             this.odoo.call("confirm_quantity", {
@@ -271,6 +258,12 @@ const ManualProductTransfer = {
                     },
                     on_cancel: () => {
                         this.state_to("scan_source_location");
+                    },
+                    events: {
+                        qty_edit: "on_qty_update",
+                    },
+                    on_qty_update: qty => {
+                        this.state.data.quantity = qty;
                     },
                 },
                 change_quantity: {
