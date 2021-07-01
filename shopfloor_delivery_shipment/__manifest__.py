@@ -17,6 +17,6 @@
         # OCA/stock-logistics-transport
         "shipment_advice",
     ],
-    "data": ["data/shopfloor_scenario_data.xml"],
+    "data": ["data/shopfloor_scenario_data.xml", "views/shopfloor_menu.xml"],
     "demo": ["demo/shopfloor_menu_demo.xml"],
 }

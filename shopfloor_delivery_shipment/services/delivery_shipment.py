@@ -23,6 +23,13 @@ class DeliveryShipment(Component):
     * Manager assign shipment advice to loading dock without content planning and start them
     * Operators create shipment advice on the fly (option “Allow shipment advice creation”
       in the scenario)
+
+    Expected:
+
+    * Existing packages are moved to customer location
+    * Products are moved to customer location as raw products
+    * Bin packed products are placed in new shipping package and shipped to customer
+    * A shipment advice is marked as done
     """
 
     _inherit = "base.shopfloor.process"
@@ -39,8 +46,29 @@ class DeliveryShipment(Component):
             message=message,
         )
 
-    def ENDPOINT_TODO(self, todo):
-        pass
+    def scan_dock(self, barcode):
+        """Scan a loading dock.
+
+        Called at the beginning of the workflow to select the shipment advice
+        (corresponding to the scanned loading dock) to work on.
+
+        If no shipment advice in progress related to the scanned loading dock
+        is found, a new one is created if the menu as the option
+        "Allow to create shipment advice" enabled.
+
+        Transitions:
+        * scan_planned_document: a shipment advice with planned moves has been found
+        * scan_unplanned_document: a shipment advice without planned moves has been
+          found or created
+        * scan_dock: no shipment advice found
+        """
+        # TODO
+
+    def scan_planned_document(self, barcode):
+        """Scan an operation, a package, a product or a lot.
+
+        Transitions:
+        """
 
 
 class ShopfloorDeliveryShipmentValidator(Component):
@@ -50,10 +78,9 @@ class ShopfloorDeliveryShipmentValidator(Component):
     _name = "shopfloor.delivery.shipment.validator"
     _usage = "delivery.shipment.validator"
 
-    def ENDPOINT_TODO(self):
+    def scan_dock(self):
         return {
-            # TODO
-            "TODO": {"required": True, "type": "string"},
+            "barcode": {"required": True, "type": "string"},
         }
 
 
@@ -64,7 +91,7 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
     _name = "shopfloor.delivery.shipment.validator.response"
     _usage = "delivery.shipment.validator.response"
 
-    _start_state = "TODO"
+    _start_state = "scan_dock"
 
     def _states(self):
         """List of possible next states
@@ -74,16 +101,31 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         """
         return {
             # TODO
-            "STATE1_TODO": self._schema_STATE1_TODO,
-            "STATE2_TODO": self._schema_STATE2_TODO,
+            "scan_dock": self._schema_scan_dock,
+            "scan_planned_document": self._schema_scan_planned_document,
+            "scan_unplanned_document": self._schema_scan_unplanned_document,
         }
 
     @property
-    def _schema_STATE1_TODO(self):
+    def _schema_scan_dock(self):
         # TODO
         return {}
 
     @property
-    def _schema_STATE2_TODO(self):
+    def _schema_scan_planned_document(self):
         # TODO
         return {}
+
+    @property
+    def _schema_scan_unplanned_document(self):
+        # TODO
+        return {}
+
+    def scan_dock(self):
+        return self._response_schema(
+            next_states={
+                "scan_planned_document",
+                "scan_unplanned_document",
+                "scan_dock",
+            }
+        )
