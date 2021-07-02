@@ -1,7 +1,8 @@
 # Copyright 2021 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
+from odoo import fields
 
-from odoo.addons.base_rest.components.service import to_int
+from odoo.addons.base_rest.components.service import to_bool, to_int
 from odoo.addons.component.core import Component
 
 
@@ -38,17 +39,16 @@ class DeliveryShipment(Component):
     _usage = "delivery_shipment"
     _description = __doc__
 
-    def _response_for_scan_planned_document(
-        self, shipment_advice, picking=None, message=None
-    ):
+    def _response_for_scan_dock(self, message=None):
+        return self._response(next_state="scan_dock", message=message)
+
+    def _response_for_scan_document(self, shipment_advice, picking=None, message=None):
         data = {
-            "shipment_advice": None,  # TODO
+            "shipment_advice": self.data.shipment_advice(shipment_advice),
         }
         if picking:
             data.update(picking=self._data_for_stock_picking(picking))
-        return self._response(
-            next_state="scan_planned_document", data=data, message=message,
-        )
+        return self._response(next_state="scan_document", data=data, message=message,)
 
     def _data_for_stock_picking(self, picking):
         data = self.data.picking(picking)
@@ -66,6 +66,24 @@ class DeliveryShipment(Component):
     def _data_for_move_lines(self, lines, **kw):
         return self.data.move_lines(lines, **kw)
 
+    def _find_shipment_advice_from_dock(self, dock):
+        return self.env["shipment.advice"].search(
+            [("dock_id", "=", dock.id), ("state", "in", ["in_progress"])],
+            limit=1,
+            order="arrival_date",
+        )
+
+    def _create_shipment_advice_from_dock(self, dock):
+        shipment_advice = self.env["shipment.advice"].create(
+            {
+                "dock_id": dock.id,
+                "arrival_date": fields.Datetime.to_string(fields.Datetime.now()),
+            }
+        )
+        shipment_advice.action_confirm()
+        shipment_advice.action_in_progress()
+        return shipment_advice
+
     def scan_dock(self, barcode):
         """Scan a loading dock.
 
@@ -77,14 +95,24 @@ class DeliveryShipment(Component):
         "Allow to create shipment advice" enabled.
 
         Transitions:
-        * scan_planned_document: a shipment advice with planned moves has been found
-        * scan_unplanned_document: a shipment advice without planned moves has been
-          found or created
+        * scan_document: a shipment advice has been found or created (with or
+          without planned moves)
         * scan_dock: no shipment advice found
         """
-        # TODO
+        search = self._actions_for("search")
+        dock = search.dock_from_scan(barcode)
+        if dock:
+            shipment_advice = self._find_shipment_advice_from_dock(dock)
+            if not shipment_advice:
+                if not self.work.menu.allow_shipment_advice_create:
+                    return self._response_for_scan_dock(
+                        message=self.msg_store.no_shipment_in_progress(dock)
+                    )
+                shipment_advice = self._create_shipment_advice_from_dock(dock)
+            return self._response_for_scan_document(shipment_advice)
+        return self._response_for_scan_dock(message=self.msg_store.barcode_not_found())
 
-    def scan_planned_document(self, shipment_advice_id, barcode, picking_id=None):
+    def scan_document(self, shipment_advice_id, barcode, picking_id=None):
         """Scan an operation, a package, a product or a lot.
 
         If an operation is scanned, reload the screen with the related
@@ -95,11 +123,86 @@ class DeliveryShipment(Component):
         operation listing its planned content.
 
         Transitions:
-        * scan_planned_document: once a good is loaded, or a operation has been
+        * scan_document: once a good is loaded, or a operation has been
           scanned, or in case of error
         * scan_dock: error (shipment not found...)
         """
+        shipment_advice = (
+            self.env["shipment.advice"].browse(shipment_advice_id).exists()
+        )
+        if not shipment_advice:
+            return self._response_for_scan_dock(
+                message=self.msg_store.record_not_found()
+            )
+        picking = None
+        if picking_id:
+            picking = self.env["stock.picking"].browse(picking_id).exists()
+            if not picking:
+                return self._response_for_scan_document(
+                    shipment_advice, message=self.msg_store.stock_picking_not_found()
+                )
         # TODO
+        # if scanned_picking:
+        #   return self._scan_picking(shipment_advice, scanned_picking)
+        # if scanned_package:
+        #   return self._scan_package(shipment_advice, scanned_package)
+        # if scanned_lot:
+        #   return self._scan_product(shipment_advice, scanned_lot)
+        # if scanned_product:
+        #   return self._scan_product(shipment_advice, scanned_product)
+        return self._response_for_scan_document(
+            shipment_advice, picking, message=self.msg_store.barcode_not_found()
+        )
+
+    def _scan_package(self, shipment_advice, package):
+        """Load the package in the shipment advice.
+
+        Find the package level (of the planned shipment advice in
+        priority if any) corresponding to the scanned package and load it.
+        If no package level is found an error will be returned.
+        """
+        # TODO
+        package_level = package
+        message = None
+        return self._response_for_scan_document(
+            shipment_advice, package_level.picking_id, message=message
+        )
+
+    def _scan_lot(self, shipment_advice, lot):
+        """Load the lot in the shipment advice.
+
+        Find the first move line (of the planned shipment advice in
+        priority if any) corresponding to the scanned lot and load it.
+        If no move line is found an error will be returned.
+        """
+        # TODO
+        move_line = lot
+        message = None
+        return self._response_for_scan_document(
+            shipment_advice, move_line.picking_id, message=message
+        )
+
+    def _scan_product(self, shipment_advice, product):
+        """Load the product in the shipment advice.
+
+        Find the first move line (of the planned shipment advice in
+        priority if any) corresponding to the scanned product and load it.
+        If no move line is found an error will be returned.
+        """
+        # TODO
+        move_line = product
+        message = None
+        return self._response_for_scan_document(
+            shipment_advice, move_line.picking_id, message=message
+        )
+
+    def loading_list(self, shipment_advice_id):
+        # TODO
+        pass
+
+    def validate_shipment(self, shipment_advice_id, confirm=False):
+        # TODO
+        pass
 
 
 class ShopfloorDeliveryShipmentValidator(Component):
@@ -114,7 +217,7 @@ class ShopfloorDeliveryShipmentValidator(Component):
             "barcode": {"required": True, "type": "string"},
         }
 
-    def scan_planned_document(self):
+    def scan_document(self):
         return {
             "shipment_advice_id": {
                 "coerce": to_int,
@@ -130,19 +233,27 @@ class ShopfloorDeliveryShipmentValidator(Component):
             },
         }
 
-    def scan_unplanned_document(self):
+    def loading_list(self):
         return {
             "shipment_advice_id": {
                 "coerce": to_int,
                 "required": True,
                 "type": "integer",
             },
-            "barcode": {"required": True, "type": "string"},
-            "picking_id": {
+        }
+
+    def validate_shipment(self):
+        return {
+            "shipment_advice_id": {
                 "coerce": to_int,
+                "required": True,
+                "type": "integer",
+            },
+            "confirm": {
+                "coerce": to_bool,
                 "required": False,
                 "nullable": True,
-                "type": "integer",
+                "type": "boolean",
             },
         }
 
@@ -163,10 +274,10 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         to the next state.
         """
         return {
-            # TODO
             "scan_dock": self._schema_scan_dock,
-            "scan_planned_document": self._schema_scan_planned_document,
-            "scan_unplanned_document": self._schema_scan_unplanned_document,
+            "scan_document": self._schema_scan_document,
+            "loading_list": self._schema_loading_list,
+            "validate_shipment": self._schema_validate_shipment,
         }
 
     @property
@@ -174,7 +285,7 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         return {}
 
     @property
-    def _schema_scan_planned_document(self):
+    def _schema_scan_document(self):
         shipment_schema = self.schemas.shipment_advice()
         picking_schema = self.schemas.picking_detail()
         return {
@@ -187,18 +298,37 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         }
 
     @property
-    def _schema_scan_unplanned_document(self):
+    def _schema_loading_list(self):
+        shipment_schema = self.schemas.shipment_advice()
         # TODO
-        return {}
+        return {
+            "shipment_advice": {
+                "type": "dict",
+                "nullable": False,
+                "schema": shipment_schema,
+            },
+        }
+
+    @property
+    def _schema_validate_shipment(self):
+        shipment_schema = self.schemas.shipment_advice()
+        # TODO
+        return {
+            "shipment_advice": {
+                "type": "dict",
+                "nullable": False,
+                "schema": shipment_schema,
+            },
+        }
 
     def scan_dock(self):
-        return self._response_schema(
-            next_states={
-                "scan_planned_document",
-                "scan_unplanned_document",
-                "scan_dock",
-            }
-        )
+        return self._response_schema(next_states={"scan_document", "scan_dock"})
 
-    def scan_planned_document(self):
-        return self._response_schema(next_states={"scan_planned_document", "scan_dock"})
+    def scan_document(self):
+        return self._response_schema(next_states={"scan_document", "scan_dock"})
+
+    def loading_list(self):
+        return self._response_schema(next_states={"loading_list", "scan_dock"})
+
+    def validate_shipment(self):
+        return self._response_schema(next_states={"validate_shipment", "scan_dock"})
