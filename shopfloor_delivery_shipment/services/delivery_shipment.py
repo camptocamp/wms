@@ -1,6 +1,7 @@
 # Copyright 2021 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
+from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
 
 
@@ -37,14 +38,33 @@ class DeliveryShipment(Component):
     _usage = "delivery_shipment"
     _description = __doc__
 
-    def _response_for_STATE(self, TODO, message=None):
+    def _response_for_scan_planned_document(
+        self, shipment_advice, picking=None, message=None
+    ):
+        data = {
+            "shipment_advice": None,  # TODO
+        }
+        if picking:
+            data.update(picking=self._data_for_stock_picking(picking))
         return self._response(
-            next_state="TODO",
-            data={
-                # TODO
-            },
-            message=message,
+            next_state="scan_planned_document", data=data, message=message,
         )
+
+    def _data_for_stock_picking(self, picking):
+        data = self.data.picking(picking)
+        # TODO: send package levels and lines w/o packages (with lot if any)
+        #       all sorted and grouped by source location
+        data.update(
+            content={
+                # "move_lines": self._data_for_move_lines(
+                #     line_picker(picking), with_packaging=done
+                # )
+            }
+        )
+        return data
+
+    def _data_for_move_lines(self, lines, **kw):
+        return self.data.move_lines(lines, **kw)
 
     def scan_dock(self, barcode):
         """Scan a loading dock.
@@ -64,11 +84,22 @@ class DeliveryShipment(Component):
         """
         # TODO
 
-    def scan_planned_document(self, barcode):
+    def scan_planned_document(self, shipment_advice_id, barcode, picking_id=None):
         """Scan an operation, a package, a product or a lot.
 
+        If an operation is scanned, reload the screen with the related
+        planned content of this operation for this shipment advice.
+
+        If a package, a product or a lot is scanned, it will be loaded in the
+        current shipment advice and the screen will be reloaded with the related
+        operation listing its planned content.
+
         Transitions:
+        * scan_planned_document: once a good is loaded, or a operation has been
+          scanned, or in case of error
+        * scan_dock: error (shipment not found...)
         """
+        # TODO
 
 
 class ShopfloorDeliveryShipmentValidator(Component):
@@ -81,6 +112,38 @@ class ShopfloorDeliveryShipmentValidator(Component):
     def scan_dock(self):
         return {
             "barcode": {"required": True, "type": "string"},
+        }
+
+    def scan_planned_document(self):
+        return {
+            "shipment_advice_id": {
+                "coerce": to_int,
+                "required": True,
+                "type": "integer",
+            },
+            "barcode": {"required": True, "type": "string"},
+            "picking_id": {
+                "coerce": to_int,
+                "required": False,
+                "nullable": True,
+                "type": "integer",
+            },
+        }
+
+    def scan_unplanned_document(self):
+        return {
+            "shipment_advice_id": {
+                "coerce": to_int,
+                "required": True,
+                "type": "integer",
+            },
+            "barcode": {"required": True, "type": "string"},
+            "picking_id": {
+                "coerce": to_int,
+                "required": False,
+                "nullable": True,
+                "type": "integer",
+            },
         }
 
 
@@ -108,13 +171,20 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
 
     @property
     def _schema_scan_dock(self):
-        # TODO
         return {}
 
     @property
     def _schema_scan_planned_document(self):
-        # TODO
-        return {}
+        shipment_schema = self.schemas.shipment_advice()
+        picking_schema = self.schemas.picking_detail()
+        return {
+            "shipment_advice": {
+                "type": "dict",
+                "nullable": False,
+                "schema": shipment_schema,
+            },
+            "picking": {"type": "dict", "nullable": True, "schema": picking_schema},
+        }
 
     @property
     def _schema_scan_unplanned_document(self):
@@ -129,3 +199,6 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
                 "scan_dock",
             }
         )
+
+    def scan_planned_document(self):
+        return self._response_schema(next_states={"scan_planned_document", "scan_dock"})

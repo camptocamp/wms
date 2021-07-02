@@ -27,9 +27,11 @@ scan_dock -> scan_planned_document: **/scan_dock(barcode)**
 scan_dock -> scan_unplanned_document: **/scan_dock(barcode)**
 
 == /scan_planned_document ==
-scan_planned_document -> SCREEN_3: **/scan_planned_document**(barcode)
+scan_planned_document -> scan_planned_document: **/scan_planned_document**(shipment_advice_id, barcode, picking_id=None)
+scan_planned_document -> SCREEN_3: **/scan_planned_document**(shipment_advice_id, barcode, picking_id=None)
 
 == /scan_unplanned_document ==
-scan_unplanned_document -> SCREEN_3: **/scan_unplanned_document**(barcode)
+scan_unplanned_document -> scan_unplanned_document: **/scan_unplanned_document**(shipment_advice_id, barcode, picking_id=None)
+scan_unplanned_document -> SCREEN_3: **/scan_unplanned_document**(shipment_advice_id, barcode, picking_id=None)
 
 @enduml
