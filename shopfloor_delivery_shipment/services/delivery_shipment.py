@@ -55,7 +55,7 @@ class DeliveryShipment(Component):
         # TODO: send package levels and lines w/o packages (with lot if any)
         #       all sorted and grouped by source location
         data.update(
-            content={
+            packages={
                 # "move_lines": self._data_for_move_lines(
                 #     line_picker(picking), with_packaging=done
                 # )
@@ -210,7 +210,7 @@ class ShopfloorDeliveryShipmentValidator(Component):
 
     _inherit = "base.shopfloor.validator"
     _name = "shopfloor.delivery.shipment.validator"
-    _usage = "delivery.shipment.validator"
+    _usage = "delivery_shipment.validator"
 
     def scan_dock(self):
         return {
@@ -263,7 +263,7 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
 
     _inherit = "base.shopfloor.validator.response"
     _name = "shopfloor.delivery.shipment.validator.response"
-    _usage = "delivery.shipment.validator.response"
+    _usage = "delivery_shipment.validator.response"
 
     _start_state = "scan_dock"
 
@@ -287,7 +287,7 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
     @property
     def _schema_scan_document(self):
         shipment_schema = self.schemas.shipment_advice()
-        picking_schema = self.schemas.picking_detail()
+        picking_schema = self.schemas.picking()
         return {
             "shipment_advice": {
                 "type": "dict",
