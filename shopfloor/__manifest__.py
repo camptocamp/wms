@@ -6,7 +6,7 @@
 {
     "name": "Shopfloor",
     "summary": "manage warehouse operations with barcode scanners",
-    "version": "13.0.4.10.1",
+    "version": "13.0.4.10.2",
     "development_status": "Alpha",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -39,6 +39,8 @@
         "stock_storage_type",
         # TODO: used for picking.carrier_id detail info
         # and to validate packaging/carrier in checkout scenario
+        #  OCA / stock-logistics-workflow
+        "stock_restrict_lot",
         # This must be an optional dep
         "delivery",
         #  OCA / product-attribute
