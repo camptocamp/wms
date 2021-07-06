@@ -13,3 +13,19 @@ class MessageAction(Component):
             "message_type": "error",
             "body": _("No shipment in progress found for dock {}.").format(dock.name),
         }
+
+    def picking_not_planned_in_shipment(self, picking, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Transfer %s has not been planned in the shipment {}.").format(
+                picking.name, shipment_advice.name,
+            ),
+        }
+
+    def carrier_not_allowed_by_shipment(self, picking):
+        return {
+            "message_type": "error",
+            "body": _(
+                "Delivery method {} not permitted for this shipment advice."
+            ).format(picking.carrier_id.name,),
+        }

@@ -1,5 +1,7 @@
 # Copyright 2021 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
+import collections
+
 from odoo import fields
 
 from odoo.addons.base_rest.components.service import to_bool, to_int
@@ -45,22 +47,47 @@ class DeliveryShipment(Component):
     def _response_for_scan_document(self, shipment_advice, picking=None, message=None):
         data = {
             "shipment_advice": self.data.shipment_advice(shipment_advice),
+            "content": self._data_for_content_to_load(shipment_advice, picking),
         }
         if picking:
-            data.update(picking=self._data_for_stock_picking(picking))
+            data.update(picking=self.data.picking(picking),)
         return self._response(next_state="scan_document", data=data, message=message,)
 
-    def _data_for_stock_picking(self, picking):
-        data = self.data.picking(picking)
-        # TODO: send package levels and lines w/o packages (with lot if any)
-        #       all sorted and grouped by source location
-        data.update(
-            packages={
-                # "move_lines": self._data_for_move_lines(
-                #     line_picker(picking), with_packaging=done
-                # )
+    def _data_for_content_to_load(self, shipment_advice, picking=None):
+        """Return a tuple list of dictionaries where keys are source locations
+        and values are dictionaries listing package_levels and move_lines
+        loaded or to load.
+
+        E.g:
+            {
+                "SRC_LOCATION1": {
+                    "package_levels": [{PKG_LEVEL_DATA}, ...],
+                    "move_lines": [{MOVE_LINE_DATA}, ...],
+                },
+                "SRC_LOCATION2": {
+                    ...
+                },
             }
-        )
+        """
+        data = collections.OrderedDict()
+        # Grab move lines to sort, restricted to the current delivery if any
+        move_lines = shipment_advice.planned_move_ids.move_line_ids
+        if picking:
+            move_lines = move_lines & picking.move_line_ids
+        package_level_ids = []
+        # Sort and group move lines by source location and prepare the data
+        for move_line in move_lines.sorted(lambda ml: ml.location_id.name):
+            location_data = data.setdefault(move_line.location_id.name, {})
+            if move_line.package_level_id:
+                pl_data = location_data.setdefault("package_levels", [])
+                if move_line.package_level_id.id in package_level_ids:
+                    continue
+                pl_data.append(self.data.package_level(move_line.package_level_id))
+                package_level_ids.append(move_line.package_level_id.id)
+            else:
+                location_data.setdefault("move_lines", []).append(
+                    self.data.move_line(move_line)
+                )
         return data
 
     def _data_for_move_lines(self, lines, **kw):
@@ -115,16 +142,20 @@ class DeliveryShipment(Component):
     def scan_document(self, shipment_advice_id, barcode, picking_id=None):
         """Scan an operation, a package, a product or a lot.
 
-        If an operation is scanned, reload the screen with the related
-        planned content of this operation for this shipment advice.
+        If an operation is scanned, reload the screen with the related planned
+        content or full content of this operation for this shipment advice.
 
         If a package, a product or a lot is scanned, it will be loaded in the
         current shipment advice and the screen will be reloaded with the related
-        operation listing its planned content.
+        operation listing its planned or full content.
+
+        If all the planned content (if any) has been loaded, redirect the user
+        to the next state 'loading_list'.
 
         Transitions:
         * scan_document: once a good is loaded, or a operation has been
           scanned, or in case of error
+        * loading_list: all planned content (if any) have been processed
         * scan_dock: error (shipment not found...)
         """
         shipment_advice = (
@@ -141,9 +172,16 @@ class DeliveryShipment(Component):
                 return self._response_for_scan_document(
                     shipment_advice, message=self.msg_store.stock_picking_not_found()
                 )
+            message = self._check_picking_status(picking)
+            if message:
+                return self._response_for_scan_document(
+                    shipment_advice, message=message
+                )
         # TODO
-        # if scanned_picking:
-        #   return self._scan_picking(shipment_advice, scanned_picking)
+        search = self._actions_for("search")
+        scanned_picking = search.picking_from_scan(barcode)
+        if scanned_picking:
+            return self._scan_picking(shipment_advice, scanned_picking)
         # if scanned_package:
         #   return self._scan_package(shipment_advice, scanned_package)
         # if scanned_lot:
@@ -153,6 +191,31 @@ class DeliveryShipment(Component):
         return self._response_for_scan_document(
             shipment_advice, picking, message=self.msg_store.barcode_not_found()
         )
+
+    def _scan_picking(self, shipment_advice, picking):
+        """Return the planned or full content of the scanned delivery for the
+        current shipment advice.
+
+        If the shipment advice had planned content and that the scanned delivery
+        is not part of it, returns an error message.
+        """
+        if shipment_advice.planned_picking_ids:
+            if picking not in shipment_advice.planned_picking_ids:
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    message=self.msg_store.picking_not_planned_in_shipment(
+                        picking, shipment_advice
+                    ),
+                )
+        else:
+            # Check carrier compatibility between shipment and picking
+            carriers = shipment_advice.carrier_ids
+            if carriers and not carriers & picking.carrier_id:
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    message=self.msg_store.carrier_not_allowed_by_shipment(picking),
+                )
+        return self._response_for_scan_document(shipment_advice, picking)
 
     def _scan_package(self, shipment_advice, package):
         """Load the package in the shipment advice.
@@ -295,6 +358,12 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
                 "schema": shipment_schema,
             },
             "picking": {"type": "dict", "nullable": True, "schema": picking_schema},
+            "content": {
+                "type": "dict",
+                "nullable": True,
+                # TODO
+                # "schema": shipment_schema,
+            },
         }
 
     @property

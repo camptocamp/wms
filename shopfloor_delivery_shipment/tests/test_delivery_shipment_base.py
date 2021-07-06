@@ -13,8 +13,10 @@ class DeliveryShipmentCommonCase(common.CommonCase):
             "shopfloor_delivery_shipment.shopfloor_menu_delivery_shipment"
         )
         cls.profile = cls.env.ref("shopfloor_base.profile_demo_1")
-        cls.picking_type = cls.menu.picking_type_ids
-        cls.wh = cls.picking_type.warehouse_id
+        # Change menu picking type to ease test (avoid to configure pick+pack+ship)
+        cls.wh = cls.menu.picking_type_ids.warehouse_id
+        cls.picking_type = cls.menu.sudo().picking_type_ids = cls.wh.out_type_id
+        cls.picking_type.sudo().show_entire_packs = True
         cls.dock = cls.env.ref("shipment_advice.stock_dock_demo")
         cls.dock.sudo().barcode = "DOCK"
 
@@ -78,9 +80,10 @@ class DeliveryShipmentCommonCase(common.CommonCase):
     ):
         data = {
             "shipment_advice": self._data_for_shipment_advice(shipment_advice),
+            "content": self.service._data_for_content_to_load(shipment_advice, picking),
         }
         if picking:
-            data["picking"] = self._data_for_stock_picking(picking) if picking else None
+            data["picking"] = self.service.data.picking(picking)
         self.assert_response(
             response, next_state="scan_document", data=data, message=message,
         )
