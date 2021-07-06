@@ -19,8 +19,34 @@ const DeliveryShipment = {
                 :input_placeholder="search_input_placeholder"
                 />
 
+            <v-card-text class="full" v-if="state_is('loading_list')">
+              <v-row align="center" justify="center" >
+                <v-col class="text-center" cols="12">
+                <v-btn-toggle v-model="filter_state">
+                  <v-btn color="default" value="lading">
+                    Lading
+                  </v-btn>
+                  <v-btn color="warning" value="dock">
+                    On Dock
+                  </v-btn>
+                </v-btn-toggle>
+                </v-col>
+              </v-row>
+            </v-card-text>
+            <div v-if="state_is('loading_list')">
+            filtering on {{ filter_state }} and {{ this.state.data.filter_name}}
+            </div>
+
+            <detail-picking
+                v-if="state_is('loading_list')"
+                v-for="picking in filter_pickings(pickings())"
+                :record="picking"
+                :key="make_component_key(['picking', picking.id])"
+                />
+
+
             <item-detail-card
-                v-if="state_in(['scan_document'])"
+                v-if="!_.isEmpty(picking())"
                 :key="make_state_component_key(['delivery-shipment-pick', picking().id])"
                 :record="picking()"
                 :options="{main: true, key_title: 'name', title_action_field: {action_val_path: 'barcode'}}"
@@ -69,11 +95,40 @@ const DeliveryShipment = {
         btnBackLabel: function() {
             return this.state.buttonBackLabel || "Back";
         },
+        // The current picking
         picking: function() {
             if (_.isEmpty(this.state.data.picking)) {
                 return {};
             }
             return this.state.data.picking;
+        },
+        // All pickings in the shipment advice
+        pickings: function() {
+            if (_.isEmpty(this.state.data.shipment_advice)){
+                return {};
+            }
+            if (_.isEmpty(this.state.data.shipment_advice.pickings)){
+                return {};
+            }
+            return this.state.data.shipment_advice.pickings;
+        },
+        filter_pickings: function(pickings) {
+            let res = pickings;
+            const nameFilter =  this.state.data.filter_name;
+            let stateFilter = [];
+            if (this.filter_state === "dock"){
+                stateFilter = ["all", "partial"]
+            } else if (this.filter_state === "lading") {
+                stateFilter = ["none"]
+            }
+            if (nameFilter) {
+                res = _.filter(pickings, (pick) => {return pick.name.indexOf(nameFilter) >= 0;});
+            }
+            if (stateFilter.length){
+                res = _.filter(res, (pick) => {return stateFilter.includes(pick.load_state);})
+            }
+            return res;
+
         },
         shipment: function() {
             if (_.isEmpty(this.state.data.shipment_advice)) {
@@ -87,6 +142,7 @@ const DeliveryShipment = {
         return {
             usage: "delivery_shipment",
             initial_state_key: "scan_dock",
+            filter_state: "dock",
             states: {
                 scan_dock: {
                     display_info: {
@@ -120,7 +176,12 @@ const DeliveryShipment = {
                         this.state_to("scan_dock");
                     },
                     on_go2loading_list: () => {
-                        this.state_to("loading_list");
+                        this.wait_call(
+                            this.odoo.call("loading_list", {
+                                shipment_advice_id: this.shipment().id,
+                            })
+                        );
+                        // this.state_to("loading_list");
                     },
                 },
                 loading_list: {
@@ -129,19 +190,19 @@ const DeliveryShipment = {
                         scan_placeholder: "Scan a document number",
                     },
                     on_scan: scanned => {
-                        this.wait_call(
-                            this.odoo.call("loading_list", {
-                                // barcode: scanned.text,
-                                shipment_advice_id: this.shipment().id,
-                            })
-                        );
+                        this.state_set_data({filter_name: scanned.text});
                     },
                     on_back: () => {
                         this.state_to("scan_document");
                     },
                     on_close_shipment: () => {
-                        console.log("Close Shipment !");
                         this.state_to("validate_shipment");
+                    },
+                    on_filter_lading:() => {
+                        // this.state_set_data({filter_state: "lading"});
+                    },
+                    on_filter_dock:() => {
+                        // this.state_set_data({filter_state: "dock"});
                     },
                 },
                 validate_shipment: {

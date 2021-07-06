@@ -15,6 +15,7 @@ const delivery_shipment_menu_id = demotools.addAppMenu({
     picking_types: [{id: 27, name: "Random type"}],
 });
 const pick = demotools.makePicking();
+const pack = demotools.makePack();
 const shipment = {
     id: 1,
     name: "SA/OUT/0000001",
@@ -23,30 +24,66 @@ const shipment = {
         id: 1,
         name: "Dock 01",
     },
+    pickings: [
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+    ]
 };
 const DELIVERY_SHIPMENT_CASE = {
     scan_dock: {
         next_state: "scan_document",
-        // message: {
-        //     message_type: "info",
-        //     body: "Scan dock state",
-        // },
         data: {
             scan_document: {
-                picking: _.cloneDeep(pick),
+                // picking: _.cloneDeep(pick),
                 shipment_advice: _.cloneDeep(shipment),
             },
         },
     },
     scan_document: {
+        OP1: {
+            next_state: "scan_document",
+            message: {
+                message_type: "info",
+                body: "Operation found",
+            },
+            data: {
+                scan_document: {
+                    picking: _.cloneDeep(pick),
+                    shipment_advice: _.cloneDeep(shipment),
+                },
+            },
+        },
+        PACK1: {
+            next_state: "scan_document",
+            message: {
+                message_type: "info",
+                body: "Pack found",
+            },
+            data: {
+                scan_document: {
+                    // picking: _.cloneDeep(pick),
+                    shipment_advice: _.cloneDeep(shipment),
+                    packaging: _.cloneDeep(pack),
+                },
+            },
+        },
+        // This is the default state if anything is scanned,
+        // To simulate the click on the Shimpment Advice button
+        // Which I do not know how to handle with demo data
         next_state: "loading_list",
-        // message: {
-        //     message_type: "info",
-        //     body: "Scan document_state",
-        // },
         data: {
             loading_list: {
-                picking: _.cloneDeep(pick),
+                // picking: _.cloneDeep(pick),
                 shipment_advice: _.cloneDeep(shipment),
             },
         },
@@ -59,7 +96,7 @@ const DELIVERY_SHIPMENT_CASE = {
         // },
         data: {
             validate_shipment: {
-                picking: _.cloneDeep(pick),
+                // picking: _.cloneDeep(pick),
                 shipment_advice: _.cloneDeep(shipment),
             },
         },
