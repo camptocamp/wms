@@ -43,7 +43,7 @@ class SaleOrderLine(models.Model):
                 record.expected_availability_date = False
                 record.available_qty = False
                 continue
-            if record.is_delivery:
+            elif record.is_delivery:
                 record.availability_status = "full"
                 record.expected_availability_date = False
                 record.available_qty = record.product_uom_qty
