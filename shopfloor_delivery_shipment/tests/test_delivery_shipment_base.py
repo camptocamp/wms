@@ -44,18 +44,22 @@ class DeliveryShipmentCommonCase(common.CommonCase):
             cls._fill_stock_for_moves(raw_move)
             picking.action_assign()
         # Create a shipment advice
-        cls.shipment = cls.env["shipment.advice"].create(
+        cls.shipment = cls._create_shipment()
+
+    def setUp(self):
+        super().setUp()
+        with self.work_on_services(menu=self.menu, profile=self.profile) as work:
+            self.service = work.component(usage="delivery_shipment")
+
+    @classmethod
+    def _create_shipment(cls):
+        return cls.env["shipment.advice"].create(
             {
                 "shipment_type": "outgoing",
                 "dock_id": cls.dock.id,
                 "arrival_date": fields.Datetime.now(),
             }
         )
-
-    def setUp(self):
-        super().setUp()
-        with self.work_on_services(menu=self.menu, profile=self.profile) as work:
-            self.service = work.component(usage="delivery_shipment")
 
     @classmethod
     def _plan_records_in_shipment(cls, shipment_advice, records):
@@ -80,10 +84,12 @@ class DeliveryShipmentCommonCase(common.CommonCase):
     ):
         data = {
             "shipment_advice": self._data_for_shipment_advice(shipment_advice),
-            "content": self.service._data_for_content_to_load(shipment_advice, picking),
         }
         if picking:
             data["picking"] = self.service.data.picking(picking)
+            data["content"] = self.service._data_for_content_to_load(
+                shipment_advice, picking
+            )
         self.assert_response(
             response, next_state="scan_document", data=data, message=message,
         )

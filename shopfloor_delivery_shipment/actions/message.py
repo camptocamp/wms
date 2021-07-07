@@ -22,10 +22,32 @@ class MessageAction(Component):
             ),
         }
 
+    def package_not_planned_in_shipment(self, package, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Package %s has not been planned in the shipment {}.").format(
+                package.name, shipment_advice.name,
+            ),
+        }
+
+    def unable_to_load_package_in_shipment(self, package, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Package %s can not been loaded in the shipment {}.").format(
+                package.name, shipment_advice.name,
+            ),
+        }
+
     def carrier_not_allowed_by_shipment(self, picking):
         return {
             "message_type": "error",
             "body": _(
                 "Delivery method {} not permitted for this shipment advice."
             ).format(picking.carrier_id.name,),
+        }
+
+    def no_delivery_content_to_load(self, picking):
+        return {
+            "message_type": "error",
+            "body": _("No more content to load from delivery {}.").format(picking.name),
         }
