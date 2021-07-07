@@ -30,6 +30,16 @@ class SaleOrderLine(models.Model):
     )
     def _compute_availability_status(self):
         for record in self:
+            if record.display_type:
+                record.availability_status = False
+                record.expected_availability_date = False
+                record.available_qty = False
+                continue
+            if record.is_delivery:
+                record.availability_status = "full"
+                record.expected_availability_date = False
+                record.available_qty = record.product_uom_qty
+                continue
             # Fallback values
             availability_status = "no"
             expected_availability_date = False
