@@ -41,7 +41,7 @@ class DeliveryShipmentCommonCase(common.CommonCase):
             pack_moves = picking.move_lines[:2]
             raw_move = picking.move_lines[2]
             cls._fill_stock_for_moves(pack_moves, in_package=True)
-            cls._fill_stock_for_moves(raw_move)
+            cls._fill_stock_for_moves(raw_move, in_lot=True)
             picking.action_assign()
         # Create a shipment advice
         cls.shipment = cls._create_shipment()

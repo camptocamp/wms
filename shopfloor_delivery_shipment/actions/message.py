@@ -30,11 +30,27 @@ class MessageAction(Component):
             ),
         }
 
+    def lot_not_planned_in_shipment(self, lot, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Lot %s has not been planned in the shipment {}.").format(
+                lot.name, shipment_advice.name,
+            ),
+        }
+
     def unable_to_load_package_in_shipment(self, package, shipment_advice):
         return {
             "message_type": "error",
             "body": _("Package %s can not been loaded in the shipment {}.").format(
                 package.name, shipment_advice.name,
+            ),
+        }
+
+    def unable_to_load_lot_in_shipment(self, lot, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Lot %s can not been loaded in the shipment {}.").format(
+                lot.name, shipment_advice.name,
             ),
         }
 

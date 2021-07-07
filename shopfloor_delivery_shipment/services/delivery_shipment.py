@@ -130,28 +130,34 @@ class DeliveryShipment(Component):
             )
         ).move_line_ids
 
-    def _find_move_lines_from_package(self, shipment_advice, package):
-        """Returns the move line corresponding to `package` for the given shipment."""
+    def _find_move_lines_domain(self, shipment_advice):
+        """Returns the base domain to look for move lines for a given shipment."""
         domain = [
             ("state", "in", ("assigned", "partially_available")),
             ("picking_code", "=", "outgoing"),
-            # FIXME should we check also result package here?
-            ("package_id", "=", package.id),
             "|",
             ("shipment_advice_id", "=", False),
             ("shipment_advice_id", "=", shipment_advice.id),
         ]
-        # Shipment with planned content
+        # Shipment with planned content, restrict the search to it
         if shipment_advice.planned_move_ids:
-            domain.extend(
-                [
-                    ("move_id.shipment_advice_id", "=", shipment_advice.id),
-                    ("move_id", "in", shipment_advice.planned_move_ids.ids),
-                ]
-            )
-            return self.env["stock.move.line"].search(domain)
-        # Shipment without planned content
-        domain.extend([("move_id.shipment_advice_id", "=", False)])
+            domain.append(("move_id.shipment_advice_id", "=", shipment_advice.id))
+        # Shipment without planned content, search for all unplanned moves
+        else:
+            domain.append(("move_id.shipment_advice_id", "=", False))
+        return domain
+
+    def _find_move_lines_from_package(self, shipment_advice, package):
+        """Returns the move line corresponding to `package` for the given shipment."""
+        domain = self._find_move_lines_domain(shipment_advice)
+        # FIXME should we check also result package here?
+        domain.append(("package_id", "=", package.id))
+        return self.env["stock.move.line"].search(domain)
+
+    def _find_move_lines_from_lot(self, shipment_advice, lot):
+        """Returns the move line corresponding to `lot` for the given shipment."""
+        domain = self._find_move_lines_domain(shipment_advice)
+        domain.append(("lot_id", "=", lot.id))
         return self.env["stock.move.line"].search(domain)
 
     def scan_dock(self, barcode):
@@ -227,9 +233,10 @@ class DeliveryShipment(Component):
         scanned_package = search.package_from_scan(barcode)
         if scanned_package:
             return self._scan_package(shipment_advice, scanned_package)
+        scanned_lot = search.lot_from_scan(barcode)
+        if scanned_lot:
+            return self._scan_lot(shipment_advice, scanned_lot)
         # TODO
-        # if scanned_lot:
-        #   return self._scan_product(shipment_advice, scanned_lot)
         # if scanned_product:
         #   return self._scan_product(shipment_advice, scanned_product)
         return self._response_for_scan_document(
@@ -322,12 +329,24 @@ class DeliveryShipment(Component):
         priority if any) corresponding to the scanned lot and load it.
         If no move line is found an error will be returned.
         """
-        # TODO
-        move_line = lot
-        message = None
-        return self._response_for_scan_document(
-            shipment_advice, move_line.picking_id, message=message
-        )
+        move_lines = self._find_move_lines_from_lot(shipment_advice, lot)
+        if move_lines:
+            # Check transfer status
+            message = self._check_picking_status(move_lines.picking_id, shipment_advice)
+            if message:
+                return self._response_for_scan_document(
+                    shipment_advice, message=message
+                )
+            # Load the lot
+            for move_line in move_lines:
+                move_line.qty_done = move_line.product_uom_qty
+            return self._response_for_scan_document(
+                shipment_advice, move_lines.picking_id,
+            )
+        message = self.msg_store.unable_to_load_lot_in_shipment(lot, shipment_advice)
+        if shipment_advice.planned_move_ids:
+            message = self.msg_store.lot_not_planned_in_shipment(lot, shipment_advice)
+        return self._response_for_scan_document(shipment_advice, message=message)
 
     def _scan_product(self, shipment_advice, product):
         """Load the product in the shipment advice.

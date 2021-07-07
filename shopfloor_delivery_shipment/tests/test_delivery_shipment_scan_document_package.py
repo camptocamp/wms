@@ -87,7 +87,7 @@ class DeliveryShipmentScanDocumentPackageCase(DeliveryShipmentCommonCase):
         location_src = self.picking_type.default_location_src_id.name
         content = response["data"]["scan_document"]["content"]
         self.assertIn(location_src, content)
-        #   'move_lines' key contains the only one product without package
+        #   'move_lines' key contains the lines available from the same delivery
         self.assertEqual(
             content[location_src]["move_lines"],
             self.service.data.move_lines(self.picking1.move_line_ids_without_package),
@@ -146,14 +146,15 @@ class DeliveryShipmentScanDocumentPackageCase(DeliveryShipmentCommonCase):
 
         Returns an error saying that the package could not be loaded.
         """
+        package_level = self.picking1.package_level_ids
+        scanned_package = package_level.package_id
         # Plan the package in a another shipment
         new_shipment = self._create_shipment()
         self._plan_records_in_shipment(
-            new_shipment, self.picking1.package_level_ids.move_line_ids.move_id,
+            new_shipment, package_level.move_line_ids.move_id
         )
         # Scan the package: an error is returned as this package has already
         # been planned in another shipment
-        scanned_package = self.picking1.package_level_ids.package_id
         response = self.service.dispatch(
             "scan_document",
             params={
