@@ -60,6 +60,28 @@ const DeliveryShipment = {
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
 
+
+            <div v-if="state_is('scan_document')" v-for="(value, name, index) in this.state.data.content">
+                <v-card color="blue lighten-1" class="message mt-10">
+                    {{ name }}
+                </v-card>
+                <item-detail-card
+                    v-for="packlevel in value.package_levels"
+                    :key="make_state_component_key(['shipment-pack', packlevel.id])"
+                    :record="packlevel.package_src"
+                    :options="{main: true, key_title: 'name'}"
+                    :card_color="utils.colors.color_for('screen_step_done')"
+                    />
+                <item-detail-card
+                    v-for="line in value.move_lines"
+                    :key="make_state_component_key(['shipment-product', line.product.id])"
+                    :record="line.product"
+                    :options="{main: true, key_title: 'display_name'}"
+                    :card_color="utils.colors.color_for('screen_step_done')"
+                    />
+            </div>
+
+
             <div class="button-list button-vertical-list full" v-if="!state_is('scan_dock')">
                 <v-row align="center" v-if="state_is('scan_document')">
                     <v-col class="text-center" cols="12">
@@ -136,6 +158,7 @@ const DeliveryShipment = {
             }
             return this.state.data.shipment_advice;
         },
+
     },
     data: function() {
         const self = this;
