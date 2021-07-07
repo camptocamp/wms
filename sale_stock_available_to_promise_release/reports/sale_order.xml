@@ -22,8 +22,8 @@
                 class="nowrap text-right"
             >
               <span
-                    t-if="line.availability_status == 'mto'"
-                    name="availability_status_mto"
+                    t-if="line.availability_status == 'on_order'"
+                    name="availability_status_on_order"
                 >On order</span>
               <span
                     t-elif="line.availability_status == 'full'"
