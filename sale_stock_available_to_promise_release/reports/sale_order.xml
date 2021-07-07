@@ -17,13 +17,13 @@
 
       <xpath expr="//td[@name='td_name']" position="after">
           <td
-                t-if="doc.state != 'draft'"
+                t-if="doc.state != 'draft' and not (line.display_type or line.is_delivery)"
                 name="td_is_available"
                 class="nowrap text-right"
             >
               <span
-                    t-if="line.availability_status == 'mto'"
-                    name="availability_status_mto"
+                    t-if="line.availability_status == 'on_order'"
+                    name="availability_status_on_order"
                 >On order</span>
               <span
                     t-elif="line.availability_status == 'full'"
