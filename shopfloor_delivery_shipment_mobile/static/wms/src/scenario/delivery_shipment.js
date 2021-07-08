@@ -69,15 +69,15 @@ const DeliveryShipment = {
                     v-for="packlevel in value.package_levels"
                     :key="make_state_component_key(['shipment-pack', packlevel.id])"
                     :record="packlevel.package_src"
-                    :options="{main: true, key_title: 'name'}"
-                    :card_color="utils.colors.color_for('screen_step_done')"
+                    :options="getPackOptions(packlevel)"
+                    :card_color="getPackColor(packlevel)"
                     />
                 <item-detail-card
                     v-for="line in value.move_lines"
                     :key="make_state_component_key(['shipment-product', line.product.id])"
                     :record="line.product"
-                    :options="{main: true, key_title: 'display_name'}"
-                    :card_color="utils.colors.color_for('screen_step_done')"
+                    :options="getLineOptions(line)"
+                    :card_color="getLineColor(line)"
                     />
             </div>
 
@@ -126,31 +126,34 @@ const DeliveryShipment = {
         },
         // All pickings in the shipment advice
         pickings: function() {
-            if (_.isEmpty(this.state.data.shipment_advice)){
+            if (_.isEmpty(this.state.data.shipment_advice)) {
                 return {};
             }
-            if (_.isEmpty(this.state.data.shipment_advice.pickings)){
+            if (_.isEmpty(this.state.data.shipment_advice.pickings)) {
                 return {};
             }
             return this.state.data.shipment_advice.pickings;
         },
         filter_pickings: function(pickings) {
             let res = pickings;
-            const nameFilter =  this.state.data.filter_name;
+            const nameFilter = this.state.data.filter_name;
             let stateFilter = [];
-            if (this.filter_state === "dock"){
-                stateFilter = ["all", "partial"]
+            if (this.filter_state === "dock") {
+                stateFilter = ["all", "partial"];
             } else if (this.filter_state === "lading") {
-                stateFilter = ["none"]
+                stateFilter = ["none"];
             }
             if (nameFilter) {
-                res = _.filter(pickings, (pick) => {return pick.name.indexOf(nameFilter) >= 0;});
+                res = _.filter(pickings, pick => {
+                    return pick.name.indexOf(nameFilter) >= 0;
+                });
             }
-            if (stateFilter.length){
-                res = _.filter(res, (pick) => {return stateFilter.includes(pick.load_state);})
+            if (stateFilter.length) {
+                res = _.filter(res, pick => {
+                    return stateFilter.includes(pick.load_state);
+                });
             }
             return res;
-
         },
         shipment: function() {
             if (_.isEmpty(this.state.data.shipment_advice)) {
@@ -158,7 +161,54 @@ const DeliveryShipment = {
             }
             return this.state.data.shipment_advice;
         },
-
+        getPackOptions: function(pack) {
+            const action = pack.is_done
+                ? () => {
+                      this.unloadBarcode(pack.barcode);
+                  }
+                : null;
+            return {
+                main: true,
+                key_title: "name",
+                on_title_action: action,
+                title_action_icon: "mdi-truck-delivery",
+            };
+        },
+        getPackColor: function(pack) {
+            const color = pack.is_done ? "screen_step_done" : "screen_step_todo";
+            return this.utils.colors.color_for(color);
+        },
+        getLineOptions: function(line) {
+            // that barcode can probably be a lot as well and what if multiple same product ?
+            const action =
+                line.qty_done == line.quantity
+                    ? () => {
+                          this.unloadBarcode(line.product.barcode);
+                      }
+                    : null;
+            return {
+                main: true,
+                key_title: "display_name",
+                on_title_action: action,
+                title_action_icon: "mdi-truck-delivery",
+            };
+        },
+        getLineColor: function(line) {
+            const color =
+                line.qty_done >= line.quantity
+                    ? "screen_step_done"
+                    : "screen_step_todo";
+            return this.utils.colors.color_for(color);
+        },
+        unloadBarcode: function(barcode) {
+            this.wait_call(
+                this.odoo.call("scan_document", {
+                    shipment_advice_id: this.shipment().id,
+                    picking_id: this.picking().id,
+                    barcode: barcode,
+                })
+            );
+        },
     },
     data: function() {
         const self = this;
@@ -191,7 +241,7 @@ const DeliveryShipment = {
                             this.odoo.call("scan_document", {
                                 barcode: scanned.text,
                                 shipment_advice_id: this.shipment().id,
-                                // picking_id
+                                picking_id: this.picking().id,
                             })
                         );
                     },
@@ -204,7 +254,6 @@ const DeliveryShipment = {
                                 shipment_advice_id: this.shipment().id,
                             })
                         );
-                        // this.state_to("loading_list");
                     },
                 },
                 loading_list: {
@@ -220,12 +269,6 @@ const DeliveryShipment = {
                     },
                     on_close_shipment: () => {
                         this.state_to("validate_shipment");
-                    },
-                    on_filter_lading:() => {
-                        // this.state_set_data({filter_state: "lading"});
-                    },
-                    on_filter_dock:() => {
-                        // this.state_set_data({filter_state: "dock"});
                     },
                 },
                 validate_shipment: {
