@@ -191,7 +191,20 @@ const DeliveryShipment = {
                 key_title: "display_name",
                 on_title_action: action,
                 title_action_icon: "mdi-truck-delivery",
+                fields: [
+                    {path: "name", renderer: ()=>{return this.lot_name(line)}, label: "Lot: "},
+                    {path: "name", renderer: ()=>{return this.getLineValue(line, "quantity")}, label: "Qty: "},
+                ]
             };
+        },
+        lot_name: function(line) {
+            if (line.lot){
+                return line.lot.name;
+            }
+            return "lsakdjflaksdf";
+        },
+        getLineValue: function(line, field) {
+            return line[field];
         },
         getLineColor: function(line) {
             const color =
