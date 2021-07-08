@@ -6,6 +6,29 @@ from .test_delivery_shipment_base import DeliveryShipmentCommonCase
 class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
     """Tests for '/scan_document' endpoint when scanning a product."""
 
+    def test_scan_document_product_without_picking(self):
+        """Scan a product without having scanned the related operation previously.
+
+        Returns an error telling the user to first scan an operation.
+        """
+        planned_move = self.picking1.move_lines.filtered(
+            lambda m: m.product_id == self.product_c
+        )
+        self._plan_records_in_shipment(self.shipment, planned_move)
+        scanned_product = self.product_d
+        response = self.service.dispatch(
+            "scan_document",
+            params={
+                "shipment_advice_id": self.shipment.id,
+                "barcode": scanned_product.barcode,
+            },
+        )
+        self.assert_response_scan_document(
+            response,
+            self.shipment,
+            message=self.service.msg_store.scan_operation_first(),
+        )
+
     def test_scan_document_shipment_planned_product_not_planned(self):
         """Scan a product not planned in the shipment advice.
 
@@ -21,6 +44,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )
@@ -48,6 +72,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )
@@ -80,6 +105,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )
@@ -120,6 +146,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )
@@ -128,6 +155,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )
@@ -171,6 +199,7 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             "scan_document",
             params={
                 "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
                 "barcode": scanned_product.barcode,
             },
         )

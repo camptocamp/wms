@@ -228,7 +228,7 @@ class DeliveryShipment(Component):
                 return self._response_for_scan_document(
                     shipment_advice, message=self.msg_store.stock_picking_not_found()
                 )
-            message = self._check_picking_status(picking)
+            message = self._check_picking_status(picking, shipment_advice)
             if message:
                 return self._response_for_scan_document(
                     shipment_advice, message=message
@@ -245,7 +245,7 @@ class DeliveryShipment(Component):
             return self._scan_lot(shipment_advice, scanned_lot)
         scanned_product = search.product_from_scan(barcode)
         if scanned_product:
-            return self._scan_product(shipment_advice, scanned_product)
+            return self._scan_product(shipment_advice, scanned_product, picking)
         return self._response_for_scan_document(
             shipment_advice, picking, message=self.msg_store.barcode_not_found()
         )
@@ -355,13 +355,17 @@ class DeliveryShipment(Component):
             message = self.msg_store.lot_not_planned_in_shipment(lot, shipment_advice)
         return self._response_for_scan_document(shipment_advice, message=message)
 
-    def _scan_product(self, shipment_advice, product):
+    def _scan_product(self, shipment_advice, product, picking):
         """Load the product in the shipment advice.
 
         Find the first move line (of the planned shipment advice in
         priority if any) corresponding to the scanned product and load it.
         If no move line is found an error will be returned.
         """
+        if not picking:
+            return self._response_for_scan_document(
+                shipment_advice, message=self.msg_store.scan_operation_first(),
+            )
         move_lines = self._find_move_lines_from_product(shipment_advice, product)
         if move_lines:
             # Restrict lines to the first picking having move lines not yet loaded
@@ -378,6 +382,7 @@ class DeliveryShipment(Component):
                     shipment_advice, message=message
                 )
             # Check if product lines are linked to a package or a lot
+            # if product.tracking != "none":
             # TODO
             # Load the lines
             for move_line in move_lines:

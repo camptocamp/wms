@@ -83,3 +83,9 @@ class MessageAction(Component):
             "message_type": "error",
             "body": _("No more content to load from delivery {}.").format(picking.name),
         }
+
+    def scan_operation_first(self):
+        return {
+            "message_type": "error",
+            "body": _("Please first scan the operation."),
+        }
