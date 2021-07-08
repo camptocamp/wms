@@ -161,10 +161,14 @@ class DeliveryShipment(Component):
         domain.append(("lot_id", "=", lot.id))
         return self.env["stock.move.line"].search(domain)
 
-    def _find_move_lines_from_product(self, shipment_advice, product):
-        """Returns the move line corresponding to `product` for the given shipment."""
+    def _find_move_lines_from_product(self, shipment_advice, product, picking):
+        """Returns the move line corresponding to `product` and `picking`
+        for the given shipment.
+        """
         domain = self._find_move_lines_domain(shipment_advice)
-        domain.append(("product_id", "=", product.id))
+        domain.extend(
+            [("product_id", "=", product.id), ("picking_id", "=", picking.id)]
+        )
         return self.env["stock.move.line"].search(domain)
 
     def scan_dock(self, barcode):
@@ -316,7 +320,7 @@ class DeliveryShipment(Component):
                     shipment_advice, message=message
                 )
             # Load the package
-            move_lines.package_level_id.is_done = True
+            move_lines.package_level_id._load_in_shipment(shipment_advice)
             return self._response_for_scan_document(
                 shipment_advice, move_lines.picking_id,
             )
@@ -345,8 +349,7 @@ class DeliveryShipment(Component):
                     shipment_advice, message=message
                 )
             # Load the lot
-            for move_line in move_lines:
-                move_line.qty_done = move_line.product_uom_qty
+            move_lines._load_in_shipment(shipment_advice)
             return self._response_for_scan_document(
                 shipment_advice, move_lines.picking_id,
             )
@@ -366,15 +369,10 @@ class DeliveryShipment(Component):
             return self._response_for_scan_document(
                 shipment_advice, message=self.msg_store.scan_operation_first(),
             )
-        move_lines = self._find_move_lines_from_product(shipment_advice, product)
+        move_lines = self._find_move_lines_from_product(
+            shipment_advice, product, picking
+        )
         if move_lines:
-            # Restrict lines to the first picking having move lines not yet loaded
-            # as the scanned product could belong to several deliveries to process
-            move_lines_not_loaded = move_lines.filtered(
-                lambda ml: not ml.shipment_advice_id
-            )
-            picking = fields.first(move_lines_not_loaded.picking_id)
-            move_lines = move_lines & picking.move_line_ids
             # Check transfer status
             message = self._check_picking_status(move_lines.picking_id, shipment_advice)
             if message:
@@ -385,8 +383,7 @@ class DeliveryShipment(Component):
             # if product.tracking != "none":
             # TODO
             # Load the lines
-            for move_line in move_lines:
-                move_line.qty_done = move_line.product_uom_qty
+            move_lines._load_in_shipment(shipment_advice)
             return self._response_for_scan_document(
                 shipment_advice, move_lines.picking_id,
             )
@@ -398,6 +395,48 @@ class DeliveryShipment(Component):
                 product, shipment_advice
             )
         return self._response_for_scan_document(shipment_advice, message=message)
+
+    def unload_move_line(self, shipment_advice_id, move_line_id):
+        """Unload a move line from a shipment advice.
+
+        Transitions:
+        * scan_document: reload the screen once the move line is unloaded
+        * scan_dock: error (record ID not found...)
+        """
+        shipment_advice = (
+            self.env["shipment.advice"].browse(shipment_advice_id).exists()
+        )
+        move_line = self.env["stock.move.line"].browse(move_line_id).exists()
+        if not shipment_advice or not move_line:
+            return self._response_for_scan_dock(
+                message=self.msg_store.record_not_found()
+            )
+        # Unload the move line
+        move_line._unload_from_shipment()
+        return self._response_for_scan_document(shipment_advice, move_line.picking_id)
+
+    def unload_package_level(self, shipment_advice_id, package_level_id):
+        """Unload a package level from a shipment advice.
+
+        Transitions:
+        * scan_document: reload the screen once the package level is unloaded
+        * scan_dock: error (record ID not found...)
+        """
+        shipment_advice = (
+            self.env["shipment.advice"].browse(shipment_advice_id).exists()
+        )
+        package_level = (
+            self.env["stock.package_level"].browse(package_level_id).exists()
+        )
+        if not shipment_advice or not package_level:
+            return self._response_for_scan_dock(
+                message=self.msg_store.record_not_found()
+            )
+        # Unload the package level
+        package_level._unload_from_shipment()
+        return self._response_for_scan_document(
+            shipment_advice, package_level.picking_id
+        )
 
     def loading_list(self, shipment_advice_id):
         # TODO
@@ -432,6 +471,30 @@ class ShopfloorDeliveryShipmentValidator(Component):
                 "coerce": to_int,
                 "required": False,
                 "nullable": True,
+                "type": "integer",
+            },
+        }
+
+    def unload_move_line(self):
+        return {
+            "shipment_advice_id": {
+                "coerce": to_int,
+                "required": True,
+                "type": "integer",
+            },
+            "move_line_id": {"coerce": to_int, "required": True, "type": "integer"},
+        }
+
+    def unload_package_level(self):
+        return {
+            "shipment_advice_id": {
+                "coerce": to_int,
+                "required": True,
+                "type": "integer",
+            },
+            "package_level_id": {
+                "coerce": to_int,
+                "required": True,
                 "type": "integer",
             },
         }
