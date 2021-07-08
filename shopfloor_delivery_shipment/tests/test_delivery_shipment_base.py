@@ -32,16 +32,20 @@ class DeliveryShipmentCommonCase(common.CommonCase):
                     # we'll put A and B in a single package
                     (cls.product_a, 10),
                     (cls.product_b, 10),
-                    # C as raw product
+                    # C as raw product in a lot
                     (cls.product_c, 10),
+                    # D as raw product
+                    (cls.product_d, 10),
                 ],
             )
             cls.pickings |= picking
             setattr(cls, f"picking{i}", picking)
             pack_moves = picking.move_lines[:2]
-            raw_move = picking.move_lines[2]
+            lot_move = picking.move_lines[2]
+            raw_move = picking.move_lines[3]
             cls._fill_stock_for_moves(pack_moves, in_package=True)
-            cls._fill_stock_for_moves(raw_move, in_lot=True)
+            cls._fill_stock_for_moves(lot_move, in_lot=True)
+            cls._fill_stock_for_moves(raw_move)
             picking.action_assign()
         # Create a shipment advice
         cls.shipment = cls._create_shipment()

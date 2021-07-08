@@ -121,6 +121,7 @@ class DeliveryShipment(Component):
 
     def _find_move_lines_to_process_from_picking(self, shipment_advice, picking):
         """Returns the moves to load or unload for the given shipment and delivery."""
+        picking.ensure_one()
         return picking.move_lines.filtered(
             lambda m: not m.shipment_advice_id
             and m.state in ("assigned", "partially_available")
@@ -158,6 +159,12 @@ class DeliveryShipment(Component):
         """Returns the move line corresponding to `lot` for the given shipment."""
         domain = self._find_move_lines_domain(shipment_advice)
         domain.append(("lot_id", "=", lot.id))
+        return self.env["stock.move.line"].search(domain)
+
+    def _find_move_lines_from_product(self, shipment_advice, product):
+        """Returns the move line corresponding to `product` for the given shipment."""
+        domain = self._find_move_lines_domain(shipment_advice)
+        domain.append(("product_id", "=", product.id))
         return self.env["stock.move.line"].search(domain)
 
     def scan_dock(self, barcode):
@@ -236,9 +243,9 @@ class DeliveryShipment(Component):
         scanned_lot = search.lot_from_scan(barcode)
         if scanned_lot:
             return self._scan_lot(shipment_advice, scanned_lot)
-        # TODO
-        # if scanned_product:
-        #   return self._scan_product(shipment_advice, scanned_product)
+        scanned_product = search.product_from_scan(barcode)
+        if scanned_product:
+            return self._scan_product(shipment_advice, scanned_product)
         return self._response_for_scan_document(
             shipment_advice, picking, message=self.msg_store.barcode_not_found()
         )
@@ -355,12 +362,37 @@ class DeliveryShipment(Component):
         priority if any) corresponding to the scanned product and load it.
         If no move line is found an error will be returned.
         """
-        # TODO
-        move_line = product
-        message = None
-        return self._response_for_scan_document(
-            shipment_advice, move_line.picking_id, message=message
+        move_lines = self._find_move_lines_from_product(shipment_advice, product)
+        if move_lines:
+            # Restrict lines to the first picking having move lines not yet loaded
+            # as the scanned product could belong to several deliveries to process
+            move_lines_not_loaded = move_lines.filtered(
+                lambda ml: not ml.shipment_advice_id
+            )
+            picking = fields.first(move_lines_not_loaded.picking_id)
+            move_lines = move_lines & picking.move_line_ids
+            # Check transfer status
+            message = self._check_picking_status(move_lines.picking_id, shipment_advice)
+            if message:
+                return self._response_for_scan_document(
+                    shipment_advice, message=message
+                )
+            # Check if product lines are linked to a package or a lot
+            # TODO
+            # Load the lines
+            for move_line in move_lines:
+                move_line.qty_done = move_line.product_uom_qty
+            return self._response_for_scan_document(
+                shipment_advice, move_lines.picking_id,
+            )
+        message = self.msg_store.unable_to_load_product_in_shipment(
+            product, shipment_advice
         )
+        if shipment_advice.planned_move_ids:
+            message = self.msg_store.product_not_planned_in_shipment(
+                product, shipment_advice
+            )
+        return self._response_for_scan_document(shipment_advice, message=message)
 
     def loading_list(self, shipment_advice_id):
         # TODO

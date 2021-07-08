@@ -17,7 +17,7 @@ class MessageAction(Component):
     def picking_not_planned_in_shipment(self, picking, shipment_advice):
         return {
             "message_type": "error",
-            "body": _("Transfer %s has not been planned in the shipment {}.").format(
+            "body": _("Transfer {} has not been planned in the shipment {}.").format(
                 picking.name, shipment_advice.name,
             ),
         }
@@ -25,7 +25,7 @@ class MessageAction(Component):
     def package_not_planned_in_shipment(self, package, shipment_advice):
         return {
             "message_type": "error",
-            "body": _("Package %s has not been planned in the shipment {}.").format(
+            "body": _("Package {} has not been planned in the shipment {}.").format(
                 package.name, shipment_advice.name,
             ),
         }
@@ -33,15 +33,23 @@ class MessageAction(Component):
     def lot_not_planned_in_shipment(self, lot, shipment_advice):
         return {
             "message_type": "error",
-            "body": _("Lot %s has not been planned in the shipment {}.").format(
+            "body": _("Lot {} has not been planned in the shipment {}.").format(
                 lot.name, shipment_advice.name,
+            ),
+        }
+
+    def product_not_planned_in_shipment(self, product, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Product {} has not been planned in the shipment {}.").format(
+                product.barcode, shipment_advice.name,
             ),
         }
 
     def unable_to_load_package_in_shipment(self, package, shipment_advice):
         return {
             "message_type": "error",
-            "body": _("Package %s can not been loaded in the shipment {}.").format(
+            "body": _("Package {} can not been loaded in the shipment {}.").format(
                 package.name, shipment_advice.name,
             ),
         }
@@ -49,8 +57,16 @@ class MessageAction(Component):
     def unable_to_load_lot_in_shipment(self, lot, shipment_advice):
         return {
             "message_type": "error",
-            "body": _("Lot %s can not been loaded in the shipment {}.").format(
+            "body": _("Lot {} can not been loaded in the shipment {}.").format(
                 lot.name, shipment_advice.name,
+            ),
+        }
+
+    def unable_to_load_product_in_shipment(self, product, shipment_advice):
+        return {
+            "message_type": "error",
+            "body": _("Product {} can not been loaded in the shipment {}.").format(
+                product.barcode, shipment_advice.name,
             ),
         }
 
