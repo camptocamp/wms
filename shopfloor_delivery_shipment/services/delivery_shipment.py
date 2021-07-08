@@ -161,7 +161,14 @@ class DeliveryShipment(Component):
         domain.append(("lot_id", "=", lot.id))
         return self.env["stock.move.line"].search(domain)
 
-    def _find_move_lines_from_product(self, shipment_advice, product, picking):
+    def _find_move_lines_from_product(
+        self,
+        shipment_advice,
+        product,
+        picking,
+        in_package_not_loaded=False,
+        in_lot=False,
+    ):
         """Returns the move line corresponding to `product` and `picking`
         for the given shipment.
         """
@@ -169,6 +176,13 @@ class DeliveryShipment(Component):
         domain.extend(
             [("product_id", "=", product.id), ("picking_id", "=", picking.id)]
         )
+        if in_package_not_loaded:
+            domain.append(
+                ("package_level_id", "!=", False),
+                ("package_level_id.is_done", "=", False),
+            )
+        if in_lot:
+            domain.append(("lot_id", "!=", False))
         return self.env["stock.move.line"].search(domain)
 
     def scan_dock(self, barcode):
@@ -379,9 +393,38 @@ class DeliveryShipment(Component):
                 return self._response_for_scan_document(
                     shipment_advice, message=message
                 )
-            # Check if product lines are linked to a package or a lot
-            # if product.tracking != "none":
-            # TODO
+            # Check if product lines are linked to some packages
+            # In this case we want to process the package as a whole
+            package_levels_not_loaded = move_lines.package_level_id.filtered(
+                lambda pl: not pl.is_done
+            )
+            if package_levels_not_loaded:
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    picking,
+                    message=self.msg_store.product_owned_by_packages(
+                        package_levels_not_loaded.package_id
+                    ),
+                )
+            # Check if product lines are linked to a lot
+            # If there are several lots corresponding to this product, we want
+            # to scan a lot instead of a product
+            if product.tracking != "none":
+                lots_not_loaded = move_lines.filtered(
+                    lambda ml: (
+                        not ml.package_level_id
+                        and ml.qty_done != ml.product_uom_qty
+                        and ml.lot_id
+                    )
+                )
+                if len(lots_not_loaded) > 1:
+                    return self._response_for_scan_document(
+                        shipment_advice,
+                        picking,
+                        message=self.msg_store.product_owned_by_lots(
+                            lots_not_loaded.lot_id
+                        ),
+                    )
             # Load the lines
             move_lines._load_in_shipment(shipment_advice)
             return self._response_for_scan_document(

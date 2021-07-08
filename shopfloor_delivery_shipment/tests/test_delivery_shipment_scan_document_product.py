@@ -210,3 +210,72 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
                 scanned_product, self.shipment
             ),
         )
+
+    def test_scan_document_product_owned_by_package(self):
+        """Scan a product owned by a package..
+
+        Returns an error telling the user to scan the relevant packages.
+        """
+        move_line = self.picking1.move_line_ids.filtered(
+            lambda ml: ml.product_id == self.product_a
+        )
+        scanned_product = move_line.product_id
+        response = self.service.dispatch(
+            "scan_document",
+            params={
+                "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
+                "barcode": scanned_product.barcode,
+            },
+        )
+        self.assert_response_scan_document(
+            response,
+            self.shipment,
+            self.picking1,
+            message=self.service.msg_store.product_owned_by_packages(
+                move_line.package_level_id.package_id
+            ),
+        )
+
+    def test_scan_document_product_owned_by_lots(self):
+        """Scan a product owned by several lots.
+
+        Returns an error telling the user to scan the relevant lots.
+        """
+        self.pickings.do_unreserve()
+        scanned_product = self.product_d
+        scanned_product.tracking = "lot"
+        move = self.picking1.move_lines.filtered(
+            lambda m: m.product_id == scanned_product
+        )
+        # Put two lots in stock
+        lot1 = self.env["stock.production.lot"].create(
+            {"product_id": scanned_product.id, "company_id": self.env.company.id}
+        )
+        lot2 = self.env["stock.production.lot"].create(
+            {"product_id": scanned_product.id, "company_id": self.env.company.id}
+        )
+        self.env["stock.quant"]._update_available_quantity(
+            scanned_product, move.location_id, 5, lot_id=lot1
+        )
+        self.env["stock.quant"]._update_available_quantity(
+            scanned_product, move.location_id, 5, lot_id=lot2
+        )
+        # Reserve them for a delivery and scan the related product
+        self.picking1.action_assign()
+        move_lines = move.move_line_ids
+        self.assertTrue(move_lines.lot_id)
+        response = self.service.dispatch(
+            "scan_document",
+            params={
+                "shipment_advice_id": self.shipment.id,
+                "picking_id": self.picking1.id,
+                "barcode": scanned_product.barcode,
+            },
+        )
+        self.assert_response_scan_document(
+            response,
+            self.shipment,
+            self.picking1,
+            message=self.service.msg_store.product_owned_by_lots(move_lines.lot_id),
+        )

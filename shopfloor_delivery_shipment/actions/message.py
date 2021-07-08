@@ -89,3 +89,19 @@ class MessageAction(Component):
             "message_type": "error",
             "body": _("Please first scan the operation."),
         }
+
+    def product_owned_by_packages(self, packages):
+        return {
+            "message_type": "error",
+            "body": _("Please scan package(s) {} where this product is.").format(
+                ", ".join(packages.mapped("name"))
+            ),
+        }
+
+    def product_owned_by_lots(self, lots):
+        return {
+            "message_type": "error",
+            "body": _("Please scan lot(s) {} where this product is.").format(
+                ", ".join(lots.mapped("name"))
+            ),
+        }

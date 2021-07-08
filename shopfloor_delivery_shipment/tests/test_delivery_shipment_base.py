@@ -24,6 +24,7 @@ class DeliveryShipmentCommonCase(common.CommonCase):
     def setUpClassBaseData(cls, *args, **kwargs):
         super().setUpClassBaseData(*args, **kwargs)
         # Create 3 deliveries
+        cls.product_c.tracking = "lot"
         cls.pickings = cls.env["stock.picking"]
         for i in range(1, 4):
             picking = cls._create_picking(
