@@ -34,7 +34,7 @@ class DeliveryShipmentScanDocumentLotCase(DeliveryShipmentCommonCase):
 
         The shipment advice has some content planned and the user scans an
         expected one, loading the lot and returning the loading list of the
-        shipmentas the it is now fully loaded.
+        shipment as it is now fully loaded.
         """
         move_line = self.picking1.move_line_ids.filtered(
             lambda ml: ml.product_id == self.product_c

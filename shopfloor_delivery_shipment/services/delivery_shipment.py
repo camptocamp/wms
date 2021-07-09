@@ -144,20 +144,9 @@ class DeliveryShipment(Component):
 
         The deliveries are not loaded at all in the shipment.
         """
-        pickings_loaded = shipment_advice.loaded_picking_ids.filtered(
-            lambda p: p.picking_type_id & self.picking_types
+        return self.data.pickings(
+            self._find_pickings_not_loaded_from_shipment(shipment_advice)
         )
-        # Shipment with planned content
-        if shipment_advice.planned_move_ids:
-            pickings_planned = shipment_advice.planned_picking_ids.filtered(
-                lambda p: p.picking_type_id & self.picking_types
-            )
-            pickings_not_loaded = pickings_planned - pickings_loaded
-        # Shipment without planned content
-        else:
-            # TODO
-            pickings_not_loaded = pickings_loaded.browse()
-        return self.data.pickings(pickings_not_loaded)
 
     def _find_shipment_advice_from_dock(self, dock):
         return self.env["shipment.advice"].search(
@@ -227,7 +216,7 @@ class DeliveryShipment(Component):
         in_package_not_loaded=False,
         in_lot=False,
     ):
-        """Returns the move line corresponding to `product` and `picking`
+        """Returns the move lines corresponding to `product` and `picking`
         for the given shipment.
         """
         domain = self._find_move_lines_domain(shipment_advice)
@@ -242,6 +231,35 @@ class DeliveryShipment(Component):
         if in_lot:
             domain.append(("lot_id", "!=", False))
         return self.env["stock.move.line"].search(domain)
+
+    def _find_move_lines_not_loaded_from_shipment(self, shipment_advice):
+        """Returns the move lines not loaded at all from the shipment advice."""
+        domain = self._find_move_lines_domain(shipment_advice)
+        domain.append(("qty_done", "=", 0))
+        return self.env["stock.move.line"].search(domain)
+
+    def _find_pickings_not_loaded_from_shipment(self, shipment_advice):
+        """Returns the deliveries that are not loaded for the given shipment."""
+        pickings_loaded = shipment_advice.loaded_picking_ids.filtered(
+            lambda p: p.picking_type_id & self.picking_types
+        )
+        # Shipment with planned content
+        if shipment_advice.planned_move_ids:
+            pickings_planned = shipment_advice.planned_picking_ids.filtered(
+                lambda p: p.picking_type_id & self.picking_types
+            )
+            pickings_not_loaded = pickings_planned - pickings_loaded
+        # Shipment without planned content
+        else:
+            # Deliveries not loaded have all their move lines not loaded at all
+            # (even partially)
+            move_lines_not_loaded = self._find_move_lines_not_loaded_from_shipment(
+                shipment_advice
+            )
+            pickings_not_loaded = (
+                move_lines_not_loaded.picking_id - shipment_advice.loaded_picking_ids
+            )
+        return pickings_not_loaded
 
     def scan_dock(self, barcode):
         """Scan a loading dock.
@@ -694,16 +712,11 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
     def _schema_loading_list(self):
         shipment_schema = self.schemas.shipment_advice()
         picking_loaded_schema = self.schemas.picking_loaded()
+        picking_schema = self.schemas.picking()
         return {
             "shipment_advice": self.schemas._schema_dict_of(shipment_schema),
             "lading": self.schemas._schema_list_of(picking_loaded_schema),
-            # TODO use self.schemas._schema_list_of(picking_on_dock_schema)
-            "on_dock": {
-                "type": "list",
-                "nullable": True,
-                # TODO
-                # "schema": shipment_schema,
-            },
+            "on_dock": self.schemas._schema_list_of(picking_schema),
         }
 
     @property

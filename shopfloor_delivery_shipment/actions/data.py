@@ -42,11 +42,7 @@ class DataAction(Component):
 
     @ensure_model("stock.picking")
     def picking_loaded(self, record, **kw):
-        return self._jsonify(
-            record.with_context(picking_loaded=record.id),
-            self._picking_loaded_parser,
-            **kw
-        )
+        return self._jsonify(record, self._picking_loaded_parser, **kw)
 
     def pickings_loaded(self, record, **kw):
         return self.picking_loaded(record, multi=True)

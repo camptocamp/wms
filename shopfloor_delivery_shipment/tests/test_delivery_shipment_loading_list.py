@@ -15,33 +15,77 @@ class DeliveryShipmentLoadingListCase(DeliveryShipmentCommonCase):
         )
 
     def test_loading_list_shipment_planned_partially_loaded(self):
+        """Get the loading list of a planned shipment with part of it loaded."""
+        # Plan some content in the shipment
+        self._plan_records_in_shipment(self.shipment, self.pickings.move_lines)
+        # Load a part of it
+        #   - part of picking1
+        move_line_d = self.picking1.move_line_ids.filtered(
+            lambda ml: ml.product_id == self.product_d
+        )
+        move_line_d._load_in_shipment(self.shipment)
+        #   - all content of picking2
+        self.picking2._load_in_shipment(self.shipment)
+        #   - nothing from picking3
+        # Get the loading list
         response = self.service.dispatch(
             "loading_list", params={"shipment_advice_id": self.shipment.id}
         )
         self.assert_response_loading_list(response, self.shipment)
         # Check returned content
-        # TODO
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains picking1 and picking2
+        self.assertEqual(
+            lading, self.service.data.pickings_loaded(self.picking1 | self.picking2)
+        )
+        #   'on_dock' key contains picking3
+        self.assertEqual(on_dock, self.service.data.pickings(self.picking3))
 
     def test_loading_list_shipment_planned_fully_loaded(self):
+        """Get the loading list of a planned shipment fully loaded."""
+        # Plan some content in the shipment
+        self._plan_records_in_shipment(self.shipment, self.pickings.move_lines)
+        # Load everything
+        self.pickings._load_in_shipment(self.shipment)
+        # Get the loading list
         response = self.service.dispatch(
             "loading_list", params={"shipment_advice_id": self.shipment.id}
         )
         self.assert_response_loading_list(response, self.shipment)
         # Check returned content
-        # TODO
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains picking1 and picking2
+        self.assertEqual(lading, self.service.data.pickings_loaded(self.pickings))
+        #   'on_dock' key is empty
+        self.assertFalse(on_dock)
 
     def test_loading_list_shipment_not_planned_partially_loaded(self):
+        """Get the loading list of a unplanned shipment with some content loaded."""
+        # Load a part of it
+        #   - part of picking1
+        move_line_d = self.picking1.move_line_ids.filtered(
+            lambda ml: ml.product_id == self.product_d
+        )
+        move_line_d._load_in_shipment(self.shipment)
+        #   - all content of picking2
+        self.picking2._load_in_shipment(self.shipment)
+        #   - nothing from picking3
+        # Get the loading list
         response = self.service.dispatch(
             "loading_list", params={"shipment_advice_id": self.shipment.id}
         )
         self.assert_response_loading_list(response, self.shipment)
         # Check returned content
-        # TODO
-
-    def test_loading_list_shipment_not_planned_fully_loaded(self):
-        response = self.service.dispatch(
-            "loading_list", params={"shipment_advice_id": self.shipment.id}
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains picking1 and picking2
+        self.assertEqual(
+            lading, self.service.data.pickings_loaded(self.picking1 | self.picking2)
         )
-        self.assert_response_loading_list(response, self.shipment)
-        # Check returned content
-        # TODO
+        #   'on_dock' key contains at least picking3
+        on_dock_picking_ids = [d["id"] for d in on_dock]
+        self.assertIn(self.picking3.id, on_dock_picking_ids)
+        self.assertNotIn(self.picking1.id, on_dock_picking_ids)
+        self.assertNotIn(self.picking2.id, on_dock_picking_ids)

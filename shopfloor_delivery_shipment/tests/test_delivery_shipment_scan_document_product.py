@@ -60,8 +60,8 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
         """Scan a product planned in the shipment advice.
 
         The shipment advice has some content planned and the user scans an
-        expected one, loading the product and returning the planned content
-        of this delivery for the current shipment.
+        expected one, loading the product and returning the loading list of the
+        shipment as it is now fully loaded.
         """
         move_line = self.picking1.move_line_ids.filtered(
             lambda ml: ml.product_id == self.product_d
@@ -76,20 +76,20 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
                 "barcode": scanned_product.barcode,
             },
         )
-        self.assert_response_scan_document(response, self.shipment, self.picking1)
+        self.assert_response_loading_list(
+            response,
+            self.shipment,
+            message=self.service.msg_store.shipment_planned_content_fully_loaded(),
+        )
         # Check product line status
         self.assertEqual(move_line.qty_done, move_line.product_uom_qty)
         # Check returned content
-        location_src = self.picking_type.default_location_src_id.name
-        content = response["data"]["scan_document"]["content"]
-        self.assertIn(location_src, content)
-        #   'move_lines' key contains the product scanned
-        self.assertEqual(
-            content[location_src]["move_lines"],
-            self.service.data.move_lines(move_line),
-        )
-        #   'package_levels' key doesn't exist (not planned for this shipment)
-        self.assertNotIn("package_levels", content[location_src])
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains the related delivery
+        self.assertEqual(lading, self.service.data.pickings_loaded(self.picking1))
+        #   'on_dock' key is empty as there is no other delivery planned
+        self.assertFalse(on_dock)
 
     def test_scan_document_shipment_not_planned_product_not_planned(self):
         """Scan a product not planned for a shipment not planned.
