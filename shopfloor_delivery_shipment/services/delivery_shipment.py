@@ -134,18 +134,30 @@ class DeliveryShipment(Component):
         The deliveries could be partially or fully loaded. For each of them a %
         of content loaded is computed (either based on bulk content or packages).
         """
-        data = []
-        # FIXME filter on menu operation type
-        pickings = shipment_advice.loaded_picking_ids.sorted("loaded_progress_f")
-        for picking in pickings:
-            picking_data = self.data.picking_loaded(picking)
-            data.append(picking_data)
-        return data
+        pickings = shipment_advice.loaded_picking_ids.filtered(
+            lambda p: p.picking_type_id & self.picking_types
+        ).sorted("loaded_progress_f")
+        return self.data.pickings_loaded(pickings)
 
     def _data_for_on_dock(self, shipment_advice):
-        # TODO
-        data = []
-        return data
+        """Return a list of deliveries not loaded in the shipment advice.
+
+        The deliveries are not loaded at all in the shipment.
+        """
+        pickings_loaded = shipment_advice.loaded_picking_ids.filtered(
+            lambda p: p.picking_type_id & self.picking_types
+        )
+        # Shipment with planned content
+        if shipment_advice.planned_move_ids:
+            pickings_planned = shipment_advice.planned_picking_ids.filtered(
+                lambda p: p.picking_type_id & self.picking_types
+            )
+            pickings_not_loaded = pickings_planned - pickings_loaded
+        # Shipment without planned content
+        else:
+            # TODO
+            pickings_not_loaded = pickings_loaded.browse()
+        return self.data.pickings(pickings_not_loaded)
 
     def _find_shipment_advice_from_dock(self, dock):
         return self.env["shipment.advice"].search(
@@ -539,8 +551,17 @@ class DeliveryShipment(Component):
         )
 
     def loading_list(self, shipment_advice_id):
-        # TODO
-        pass
+        """Redirect to the 'loading_list' state listing the loaded (with their
+        loading progress) and not loaded deliveries for the given shipment.
+        """
+        shipment_advice = (
+            self.env["shipment.advice"].browse(shipment_advice_id).exists()
+        )
+        if not shipment_advice:
+            return self._response_for_scan_dock(
+                message=self.msg_store.record_not_found()
+            )
+        return self._response_for_loading_list(shipment_advice)
 
     def validate_shipment(self, shipment_advice_id, confirm=False):
         # TODO
