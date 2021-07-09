@@ -75,7 +75,7 @@ const DeliveryShipment = {
                 <item-detail-card
                     v-for="line in value.move_lines"
                     :key="make_state_component_key(['shipment-product', line.product.id])"
-                    :record="line.product"
+                    :record="line"
                     :options="getLineOptions(line)"
                     :card_color="getLineColor(line)"
                     />
@@ -164,7 +164,7 @@ const DeliveryShipment = {
         getPackOptions: function(pack) {
             const action = pack.is_done
                 ? () => {
-                      this.unloadBarcode(pack.barcode);
+                      this.unloadPack(pack);
                   }
                 : null;
             return {
@@ -179,32 +179,22 @@ const DeliveryShipment = {
             return this.utils.colors.color_for(color);
         },
         getLineOptions: function(line) {
-            // that barcode can probably be a lot as well and what if multiple same product ?
             const action =
                 line.qty_done == line.quantity
                     ? () => {
-                          this.unloadBarcode(line.product.barcode);
+                          this.unloadLine(line);
                       }
                     : null;
             return {
                 main: true,
-                key_title: "display_name",
+                key_title: "product.display_name",
                 on_title_action: action,
                 title_action_icon: "mdi-truck-delivery",
                 fields: [
-                    {path: "name", renderer: ()=>{return this.lot_name(line)}, label: "Lot: "},
-                    {path: "name", renderer: ()=>{return this.getLineValue(line, "quantity")}, label: "Qty: "},
+                    {path: "lot.name", label: "Lot"},
+                    {path: "quantity", label: "Qty"}
                 ]
             };
-        },
-        lot_name: function(line) {
-            if (line.lot){
-                return line.lot.name;
-            }
-            return "lsakdjflaksdf";
-        },
-        getLineValue: function(line, field) {
-            return line[field];
         },
         getLineColor: function(line) {
             const color =
@@ -213,12 +203,19 @@ const DeliveryShipment = {
                     : "screen_step_todo";
             return this.utils.colors.color_for(color);
         },
-        unloadBarcode: function(barcode) {
+        unloadLine: function(line) {
             this.wait_call(
-                this.odoo.call("scan_document", {
+                this.odoo.call("unload_move_line", {
                     shipment_advice_id: this.shipment().id,
-                    picking_id: this.picking().id,
-                    barcode: barcode,
+                    move_line_id: line.id,
+                })
+            );
+        },
+        unloadPack: function(pack) {
+            this.wait_call(
+                this.odoo.call("unload_package_level", {
+                    shipment_advice_id: this.shipment().id,
+                    package_level_id: pack.id,
                 })
             );
         },
@@ -246,8 +243,13 @@ const DeliveryShipment = {
                 scan_document: {
                     display_info: {
                         title: "Scan some shipment's content",
-                        scan_placeholder:
-                            "Scan a lot, a product, a pack or an operation",
+                        scan_placeholder: () => {
+                            if (_.isEmpty(this.picking())){
+                                return "Scan a lot, a pack or an operation";
+                            } else {
+                                return "Scan a lot, a product, a pack or an operation";
+                            }
+                        }
                     },
                     on_scan: scanned => {
                         this.wait_call(
