@@ -29,17 +29,52 @@ class DeliveryShipmentScanDocumentLotCase(DeliveryShipmentCommonCase):
             ),
         )
 
-    def test_scan_document_shipment_planned_lot_planned(self):
+    def test_scan_document_shipment_planned_lot_planned_fully_loaded(self):
         """Scan a lot planned in the shipment advice.
 
         The shipment advice has some content planned and the user scans an
-        expected one, loading the lot and returning the planned content
-        of this delivery for the current shipment.
+        expected one, loading the lot and returning the loading list of the
+        shipmentas the it is now fully loaded.
         """
         move_line = self.picking1.move_line_ids.filtered(
             lambda ml: ml.product_id == self.product_c
         )
         self._plan_records_in_shipment(self.shipment, move_line.move_id)
+        scanned_lot = move_line.lot_id
+        response = self.service.dispatch(
+            "scan_document",
+            params={
+                "shipment_advice_id": self.shipment.id,
+                "barcode": scanned_lot.name,
+            },
+        )
+        self.assert_response_loading_list(
+            response,
+            self.shipment,
+            message=self.service.msg_store.shipment_planned_content_fully_loaded(),
+        )
+        # Check lot status
+        self.assertEqual(move_line.qty_done, move_line.product_uom_qty)
+        # Check returned content
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains the related delivery
+        self.assertEqual(lading, self.service.data.pickings_loaded(self.picking1))
+        #   'on_dock' key is empty as there is no other delivery planned
+        self.assertFalse(on_dock)
+
+    def test_scan_document_shipment_planned_lot_planned_partially_loaded(self):
+        """Scan a lot planned in the shipment advice.
+
+        The shipment advice has several content planned and the user scans an
+        expected one, loading the lot and returning the planned content
+        of this delivery for the current shipment (shipment partially loaded).
+        """
+        planned_moves = self.picking1.move_ids_without_package
+        self._plan_records_in_shipment(self.shipment, planned_moves)
+        move_line = self.picking1.move_line_ids.filtered(
+            lambda ml: ml.product_id == self.product_c
+        )
         scanned_lot = move_line.lot_id
         response = self.service.dispatch(
             "scan_document",
@@ -55,10 +90,10 @@ class DeliveryShipmentScanDocumentLotCase(DeliveryShipmentCommonCase):
         location_src = self.picking_type.default_location_src_id.name
         content = response["data"]["scan_document"]["content"]
         self.assertIn(location_src, content)
-        #   'move_lines' key contains the lot scanned
+        #   'move_lines' key contains the planned content including the lot scanned
         self.assertEqual(
             content[location_src]["move_lines"],
-            self.service.data.move_lines(move_line),
+            self.service.data.move_lines(planned_moves.move_line_ids),
         )
         #   'package_levels' key doesn't exist (not planned for this shipment)
         self.assertNotIn("package_levels", content[location_src])

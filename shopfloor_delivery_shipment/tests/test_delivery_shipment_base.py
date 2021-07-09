@@ -98,3 +98,13 @@ class DeliveryShipmentCommonCase(common.CommonCase):
         self.assert_response(
             response, next_state="scan_document", data=data, message=message,
         )
+
+    def assert_response_loading_list(self, response, shipment_advice, message=None):
+        data = {
+            "shipment_advice": self._data_for_shipment_advice(shipment_advice),
+            "lading": self.service._data_for_lading(shipment_advice),
+            "on_dock": self.service._data_for_on_dock(shipment_advice),
+        }
+        self.assert_response(
+            response, next_state="loading_list", data=data, message=message,
+        )

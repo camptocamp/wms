@@ -55,6 +55,33 @@ class DeliveryShipment(Component):
             )
         return self._response(next_state="scan_document", data=data, message=message,)
 
+    def _response_for_loading_list(self, shipment_advice, message=None):
+        data = {
+            "shipment_advice": self.data.shipment_advice(shipment_advice),
+            "lading": self._data_for_lading(shipment_advice),
+            "on_dock": self._data_for_on_dock(shipment_advice),
+        }
+        return self._response(next_state="loading_list", data=data, message=message,)
+
+    def _response_for_scan_document_or_loading_list(
+        self, shipment_advice, picking, message=None
+    ):
+        """Route on 'scan_document' or 'loading_list' states.
+
+        If all planned moves of the shipment are loaded, route to 'loading_list',
+        state otherwise redirect to 'scan_document'.
+        """
+        planned_moves = shipment_advice.planned_move_ids
+        loaded_move_lines = shipment_advice.loaded_move_line_ids
+        if planned_moves and planned_moves.move_line_ids == loaded_move_lines:
+            return self._response_for_loading_list(
+                shipment_advice,
+                message=self.msg_store.shipment_planned_content_fully_loaded(),
+            )
+        return self._response_for_scan_document(
+            shipment_advice, picking, message=message
+        )
+
     def _data_for_content_to_load(self, shipment_advice, picking):
         """Return a tuple list of dictionaries where keys are source locations
         and values are dictionaries listing package_levels and move_lines
@@ -99,6 +126,25 @@ class DeliveryShipment(Component):
                 location_data.setdefault("move_lines", []).append(
                     self.data.move_line(move_line)
                 )
+        return data
+
+    def _data_for_lading(self, shipment_advice):
+        """Return a list of deliveries loaded in the shipment advice.
+
+        The deliveries could be partially or fully loaded. For each of them a %
+        of content loaded is computed (either based on bulk content or packages).
+        """
+        data = []
+        # FIXME filter on menu operation type
+        pickings = shipment_advice.loaded_picking_ids.sorted("loaded_progress_f")
+        for picking in pickings:
+            picking_data = self.data.picking_loaded(picking)
+            data.append(picking_data)
+        return data
+
+    def _data_for_on_dock(self, shipment_advice):
+        # TODO
+        data = []
         return data
 
     def _find_shipment_advice_from_dock(self, dock):
@@ -275,6 +321,8 @@ class DeliveryShipment(Component):
         If the shipment advice had planned content and that the scanned delivery
         is not part of it, returns an error message.
         """
+        # Check if the operation type can be processed by the current menu
+        # TODO
         # Shipment with planned content
         if shipment_advice.planned_picking_ids:
             # Check if the delivery belongs to it
@@ -333,9 +381,11 @@ class DeliveryShipment(Component):
                 return self._response_for_scan_document(
                     shipment_advice, message=message
                 )
+            # Check that the product isn't already loaded
+            # TODO: (qty done != reserved) "This package has already been processed"
             # Load the package
             move_lines.package_level_id._load_in_shipment(shipment_advice)
-            return self._response_for_scan_document(
+            return self._response_for_scan_document_or_loading_list(
                 shipment_advice, move_lines.picking_id,
             )
         message = self.msg_store.unable_to_load_package_in_shipment(
@@ -362,9 +412,14 @@ class DeliveryShipment(Component):
                 return self._response_for_scan_document(
                     shipment_advice, message=message
                 )
+            # Check that the lot doesn't belong to a package
+            # TODO: "Please scan the %PACK_NAME(s)” %list of concerned pack"
+            # message=self.msg_store.lot_owned_by_packages(packages)
+            # Check that the lot isn't already loaded
+            # TODO: (qty done != reserved) "This lot has already been processed"
             # Load the lot
             move_lines._load_in_shipment(shipment_advice)
-            return self._response_for_scan_document(
+            return self._response_for_scan_document_or_loading_list(
                 shipment_advice, move_lines.picking_id,
             )
         message = self.msg_store.unable_to_load_lot_in_shipment(lot, shipment_advice)
@@ -425,9 +480,11 @@ class DeliveryShipment(Component):
                             lots_not_loaded.lot_id
                         ),
                     )
+            # Check that the product isn't already loaded
+            # TODO: (qty done != reserved) "This product has already been processed"
             # Load the lines
             move_lines._load_in_shipment(shipment_advice)
-            return self._response_for_scan_document(
+            return self._response_for_scan_document_or_loading_list(
                 shipment_advice, move_lines.picking_id,
             )
         message = self.msg_store.unable_to_load_product_in_shipment(
@@ -615,12 +672,16 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
     @property
     def _schema_loading_list(self):
         shipment_schema = self.schemas.shipment_advice()
-        # TODO
+        picking_loaded_schema = self.schemas.picking_loaded()
         return {
-            "shipment_advice": {
-                "type": "dict",
-                "nullable": False,
-                "schema": shipment_schema,
+            "shipment_advice": self.schemas._schema_dict_of(shipment_schema),
+            "lading": self.schemas._schema_list_of(picking_loaded_schema),
+            # TODO use self.schemas._schema_list_of(picking_on_dock_schema)
+            "on_dock": {
+                "type": "list",
+                "nullable": True,
+                # TODO
+                # "schema": shipment_schema,
             },
         }
 
@@ -640,7 +701,9 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         return self._response_schema(next_states={"scan_document", "scan_dock"})
 
     def scan_document(self):
-        return self._response_schema(next_states={"scan_document", "scan_dock"})
+        return self._response_schema(
+            next_states={"scan_document", "scan_dock", "loading_list"}
+        )
 
     def loading_list(self):
         return self._response_schema(next_states={"loading_list", "scan_dock"})

@@ -11,11 +11,37 @@ class ShopfloorSchemaAction(Component):
         return {
             "id": {"required": True, "type": "integer"},
             "name": {"type": "string", "nullable": False, "required": True},
+            "dock": self._schema_dict_of(self.dock()),
             "state": {"type": "string", "nullable": False, "required": True},
         }
 
     def dock(self):
-        return {
-            "id": {"required": True, "type": "integer"},
-            "name": {"type": "string", "nullable": False, "required": True},
-        }
+        return self._simple_record()
+
+    def picking_loaded(self):
+        schema = self.picking()
+        schema.update(
+            {
+                "loaded_progress_f": {
+                    "type": "float",
+                    "nullable": False,
+                    "required": True,
+                },
+                "loaded_progress": {
+                    "type": "string",
+                    "nullable": False,
+                    "required": True,
+                },
+                "is_fully_loaded": {
+                    "type": "boolean",
+                    "nullable": False,
+                    "required": True,
+                },
+                "is_partially_loaded": {
+                    "type": "boolean",
+                    "nullable": False,
+                    "required": True,
+                },
+            }
+        )
+        return schema

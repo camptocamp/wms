@@ -23,6 +23,7 @@ class DataAction(Component):
         return [
             "id",
             "name",
+            ("dock_id:dock", self._dock_parser),
             "state",
         ]
 
@@ -37,7 +38,24 @@ class DataAction(Component):
 
     @property
     def _dock_parser(self):
-        return [
-            "id",
-            "name",
+        return self._simple_record_parser()
+
+    @ensure_model("stock.picking")
+    def picking_loaded(self, record, **kw):
+        return self._jsonify(
+            record.with_context(picking_loaded=record.id),
+            self._picking_loaded_parser,
+            **kw
+        )
+
+    def pickings_loaded(self, record, **kw):
+        return self.picking_loaded(record, multi=True)
+
+    @property
+    def _picking_loaded_parser(self):
+        return self._picking_parser + [
+            "loaded_progress_f",
+            "loaded_progress",
+            "is_fully_loaded_in_shipment:is_fully_loaded",
+            "is_partially_loaded_in_shipment:is_partially_loaded",
         ]

@@ -105,3 +105,17 @@ class MessageAction(Component):
                 ", ".join(lots.mapped("name"))
             ),
         }
+
+    def lot_owned_by_packages(self, packages):
+        return {
+            "message_type": "error",
+            "body": _("Please scan package(s) {} where this lot is.").format(
+                ", ".join(packages.mapped("name"))
+            ),
+        }
+
+    def shipment_planned_content_fully_loaded(self):
+        return {
+            "message_type": "info",
+            "body": _("Planned content has been fully loaded."),
+        }
