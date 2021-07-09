@@ -119,3 +119,9 @@ class MessageAction(Component):
             "message_type": "info",
             "body": _("Planned content has been fully loaded."),
         }
+
+    def shipment_validated(self, shipment_advice):
+        return {
+            "message_type": "info",
+            "body": _("Shipment {} is validated."),
+        }

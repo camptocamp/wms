@@ -38,8 +38,8 @@ scan_document -> scan_document: **/unload_package_level**(shipment_advice_id, pa
 == /loading_list ==
 scan_document -> loading_list: **/loading_list**(shipment_advice_id)
 
-== /validate_shipment ==
-loading_list -> validate_shipment: **/validate_shipment**(shipment_advice_id)
-validate_shipment -> scan_dock: **/validate_shipment**(shipment_advice_id, confirm=True)
+== /validate==
+loading_list -> validate: **/validate**(shipment_advice_id)
+validate-> scan_dock: **/validate**(shipment_advice_id, confirm=True)
 
 @enduml

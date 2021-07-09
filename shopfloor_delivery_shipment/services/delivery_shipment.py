@@ -53,7 +53,7 @@ class DeliveryShipment(Component):
                 picking=self.data.picking(picking),
                 content=self._data_for_content_to_load(shipment_advice, picking),
             )
-        return self._response(next_state="scan_document", data=data, message=message,)
+        return self._response(next_state="scan_document", data=data, message=message)
 
     def _response_for_loading_list(self, shipment_advice, message=None):
         data = {
@@ -61,7 +61,7 @@ class DeliveryShipment(Component):
             "lading": self._data_for_lading(shipment_advice),
             "on_dock": self._data_for_on_dock(shipment_advice),
         }
-        return self._response(next_state="loading_list", data=data, message=message,)
+        return self._response(next_state="loading_list", data=data, message=message)
 
     def _response_for_scan_document_or_loading_list(
         self, shipment_advice, picking, message=None
@@ -81,6 +81,14 @@ class DeliveryShipment(Component):
         return self._response_for_scan_document(
             shipment_advice, picking, message=message
         )
+
+    def _response_for_validate(self, shipment_advice, message=None):
+        data = {
+            "shipment_advice": self.data.shipment_advice(shipment_advice),
+            "lading": self._data_for_lading_summary(shipment_advice),
+            "on_dock": self._data_for_on_dock_summary(shipment_advice),
+        }
+        return self._response(next_state="validate", data=data, message=message)
 
     def _data_for_content_to_load(self, shipment_advice, picking):
         """Return a tuple list of dictionaries where keys are source locations
@@ -139,6 +147,18 @@ class DeliveryShipment(Component):
         ).sorted("loaded_progress_f")
         return self.data.pickings_loaded(pickings)
 
+    def _data_for_lading_summary(self, shipment_advice):
+        """Return the number of deliveries/packages/bulk lines loaded."""
+        pickings = shipment_advice.loaded_picking_ids.filtered(
+            lambda p: p.picking_type_id & self.picking_types
+        ).sorted("loaded_progress_f")
+        return {
+            "pickings_count": len(pickings),
+            "packages_count": sum(pickings.mapped("loaded_packages_count")),
+            "bulk_lines_count": sum(pickings.mapped("loaded_move_lines_count")),
+            "total_load": sum(pickings.mapped("loaded_weight")),
+        }
+
     def _data_for_on_dock(self, shipment_advice):
         """Return a list of deliveries not loaded in the shipment advice.
 
@@ -147,6 +167,15 @@ class DeliveryShipment(Component):
         return self.data.pickings(
             self._find_pickings_not_loaded_from_shipment(shipment_advice)
         )
+
+    def _data_for_on_dock_summary(self, shipment_advice):
+        """Return the number of deliveries/packages/bulk lines not loaded."""
+        pickings = self._find_pickings_not_loaded_from_shipment(shipment_advice)
+        return {
+            "pickings_count": len(pickings),
+            "packages_count": len(pickings.package_level_ids.package_id),
+            "bulk_lines_count": len(pickings.move_line_ids_without_package),
+        }
 
     def _find_shipment_advice_from_dock(self, dock):
         return self.env["shipment.advice"].search(
@@ -581,9 +610,25 @@ class DeliveryShipment(Component):
             )
         return self._response_for_loading_list(shipment_advice)
 
-    def validate_shipment(self, shipment_advice_id, confirm=False):
-        # TODO
-        pass
+    def validate(self, shipment_advice_id, confirm=False):
+        """Validate the shipment advice.
+
+        When called the first time with `confirm=False`, it returns a summary
+        of the deliveries (loaded or that can still be loaded) for that shipment.
+        """
+        shipment_advice = (
+            self.env["shipment.advice"].browse(shipment_advice_id).exists()
+        )
+        if not shipment_advice:
+            return self._response_for_scan_dock(
+                message=self.msg_store.record_not_found()
+            )
+        if not confirm:
+            return self._response_for_validate(shipment_advice)
+        shipment_advice.action_done()
+        return self._response_for_scan_dock(
+            message=self.msg_store.shipment_validated(shipment_advice)
+        )
 
 
 class ShopfloorDeliveryShipmentValidator(Component):
@@ -647,7 +692,7 @@ class ShopfloorDeliveryShipmentValidator(Component):
             },
         }
 
-    def validate_shipment(self):
+    def validate(self):
         return {
             "shipment_advice_id": {
                 "coerce": to_int,
@@ -682,7 +727,7 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
             "scan_dock": self._schema_scan_dock,
             "scan_document": self._schema_scan_document,
             "loading_list": self._schema_loading_list,
-            "validate_shipment": self._schema_validate_shipment,
+            "validate": self._schema_validate,
         }
 
     @property
@@ -720,15 +765,18 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
         }
 
     @property
-    def _schema_validate_shipment(self):
+    def _schema_validate(self):
         shipment_schema = self.schemas.shipment_advice()
-        # TODO
+        shipment_lading_summary_schema = self.schemas.shipment_lading_summary()
+        shipment_on_dock_summary_schema = self.schemas.shipment_on_dock_summary()
         return {
             "shipment_advice": {
                 "type": "dict",
                 "nullable": False,
                 "schema": shipment_schema,
             },
+            "lading": self.schemas._schema_dict_of(shipment_lading_summary_schema),
+            "on_dock": self.schemas._schema_dict_of(shipment_on_dock_summary_schema),
         }
 
     def scan_dock(self):
@@ -742,5 +790,5 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
     def loading_list(self):
         return self._response_schema(next_states={"loading_list", "scan_dock"})
 
-    def validate_shipment(self):
-        return self._response_schema(next_states={"validate_shipment", "scan_dock"})
+    def validate(self):
+        return self._response_schema(next_states={"validate", "scan_dock"})

@@ -61,7 +61,7 @@ class DeliveryShipmentLoadingListCase(DeliveryShipmentCommonCase):
         #   'on_dock' key is empty
         self.assertFalse(on_dock)
 
-    def test_loading_list_shipment_not_planned_partially_loaded(self):
+    def test_loading_list_shipment_not_planned_loaded(self):
         """Get the loading list of a unplanned shipment with some content loaded."""
         # Load a part of it
         #   - part of picking1

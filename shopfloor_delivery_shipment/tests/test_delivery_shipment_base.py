@@ -46,7 +46,11 @@ class DeliveryShipmentCommonCase(common.CommonCase):
             raw_move = picking.move_lines[3]
             cls._fill_stock_for_moves(pack_moves, in_package=True)
             cls._fill_stock_for_moves(lot_move, in_lot=True)
-            cls._fill_stock_for_moves(raw_move)
+            # For raw move, add stock to the current one (if any)
+            # so we do not use '_fill_stock_for_moves' method
+            cls.env["stock.quant"]._update_available_quantity(
+                raw_move.product_id, raw_move.location_id, raw_move.product_uom_qty
+            )
             picking.action_assign()
         # Create a shipment advice
         cls.shipment = cls._create_shipment()
@@ -107,4 +111,14 @@ class DeliveryShipmentCommonCase(common.CommonCase):
         }
         self.assert_response(
             response, next_state="loading_list", data=data, message=message,
+        )
+
+    def assert_response_validate(self, response, shipment_advice, message=None):
+        data = {
+            "shipment_advice": self._data_for_shipment_advice(shipment_advice),
+            "lading": self.service._data_for_lading_summary(shipment_advice),
+            "on_dock": self.service._data_for_on_dock_summary(shipment_advice),
+        }
+        self.assert_response(
+            response, next_state="validate", data=data, message=message,
         )

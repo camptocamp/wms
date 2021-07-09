@@ -6,3 +6,4 @@ from . import test_delivery_shipment_scan_document_lot
 from . import test_delivery_shipment_scan_document_product
 from . import test_delivery_shipment_unload
 from . import test_delivery_shipment_loading_list
+from . import test_delivery_shipment_validate

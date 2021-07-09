@@ -45,3 +45,26 @@ class ShopfloorSchemaAction(Component):
             }
         )
         return schema
+
+    def shipment_lading_summary(self):
+        return {
+            "pickings_count": {"type": "integer", "nullable": False, "required": True},
+            "packages_count": {"type": "integer", "nullable": False, "required": True},
+            "bulk_lines_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "total_load": {"type": "integer", "nullable": False, "required": True},
+        }
+
+    def shipment_on_dock_summary(self):
+        return {
+            "pickings_count": {"type": "integer", "nullable": False, "required": True},
+            "packages_count": {"type": "integer", "nullable": False, "required": True},
+            "bulk_lines_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+        }
