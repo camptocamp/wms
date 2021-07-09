@@ -49,21 +49,21 @@ const DeliveryShipment = {
                 v-if="!_.isEmpty(picking())"
                 :key="make_state_component_key(['delivery-shipment-pick', picking().id])"
                 :record="picking()"
-                :options="{main: true, key_title: 'name', title_action_field: {action_val_path: 'barcode'}}"
+                :options="{main: true, key_title: 'name', title_action_field: {path: 'name', action_val_path: 'name'}}"
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
             <item-detail-card
                 v-if="state_in(['scan_document'])"
                 :key="make_state_component_key(['delivery-shipment-shipment', shipment().id])"
                 :record="shipment()"
-                :options="{main: true, key_title: 'name', title_action_field: {action_val_path: 'barcode'}, fields: [{path: 'dock.name', label: 'Dock'}]}"
+                :options="{main: true, key_title: 'name', fields: [{path: 'dock.name', label: 'Dock'}]}"
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
 
 
             <div v-if="state_is('scan_document')" v-for="(value, name, index) in this.state.data.content">
-                <v-card color="blue lighten-1" class="message mt-10">
-                    {{ name }}
+                <v-card color="blue lighten-1" class="detail v-card mt-5 main">
+                    <v-card-title>{{ name }}</v-card-title>
                 </v-card>
                 <item-detail-card
                     v-for="packlevel in value.package_levels"
@@ -168,7 +168,7 @@ const DeliveryShipment = {
                   }
                 : null;
             return {
-                main: true,
+                // main: true,
                 key_title: "name",
                 on_title_action: action,
                 title_action_icon: "mdi-truck-delivery",
@@ -186,7 +186,7 @@ const DeliveryShipment = {
                       }
                     : null;
             return {
-                main: true,
+                // main: true,
                 key_title: "product.display_name",
                 on_title_action: action,
                 title_action_icon: "mdi-truck-delivery",
