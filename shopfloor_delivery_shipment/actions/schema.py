@@ -48,21 +48,47 @@ class ShopfloorSchemaAction(Component):
 
     def shipment_lading_summary(self):
         return {
-            "pickings_count": {"type": "integer", "nullable": False, "required": True},
-            "packages_count": {"type": "integer", "nullable": False, "required": True},
-            "bulk_lines_count": {
+            "loaded_pickings_count": {
                 "type": "integer",
                 "nullable": False,
                 "required": True,
             },
-            "total_load": {"type": "integer", "nullable": False, "required": True},
+            "loaded_packages_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "total_packages_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "loaded_bulk_lines_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "total_bulk_lines_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "loaded_weight": {"type": "integer", "nullable": False, "required": True},
         }
 
     def shipment_on_dock_summary(self):
         return {
-            "pickings_count": {"type": "integer", "nullable": False, "required": True},
-            "packages_count": {"type": "integer", "nullable": False, "required": True},
-            "bulk_lines_count": {
+            "total_pickings_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "total_packages_count": {
+                "type": "integer",
+                "nullable": False,
+                "required": True,
+            },
+            "total_bulk_lines_count": {
                 "type": "integer",
                 "nullable": False,
                 "required": True,

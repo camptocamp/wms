@@ -153,10 +153,12 @@ class DeliveryShipment(Component):
             lambda p: p.picking_type_id & self.picking_types
         ).sorted("loaded_progress_f")
         return {
-            "pickings_count": len(pickings),
-            "packages_count": sum(pickings.mapped("loaded_packages_count")),
-            "bulk_lines_count": sum(pickings.mapped("loaded_move_lines_count")),
-            "total_load": sum(pickings.mapped("loaded_weight")),
+            "loaded_pickings_count": len(pickings),
+            "loaded_packages_count": sum(pickings.mapped("loaded_packages_count")),
+            "total_packages_count": sum(pickings.mapped("total_packages_count")),
+            "loaded_bulk_lines_count": sum(pickings.mapped("loaded_move_lines_count")),
+            "total_bulk_lines_count": sum(pickings.mapped("total_move_lines_count")),
+            "loaded_weight": sum(pickings.mapped("loaded_weight")),
         }
 
     def _data_for_on_dock(self, shipment_advice):
@@ -172,9 +174,9 @@ class DeliveryShipment(Component):
         """Return the number of deliveries/packages/bulk lines not loaded."""
         pickings = self._find_pickings_not_loaded_from_shipment(shipment_advice)
         return {
-            "pickings_count": len(pickings),
-            "packages_count": len(pickings.package_level_ids.package_id),
-            "bulk_lines_count": len(pickings.move_line_ids_without_package),
+            "total_pickings_count": len(pickings),
+            "total_packages_count": sum(pickings.mapped("total_packages_count")),
+            "total_bulk_lines_count": sum(pickings.mapped("total_move_lines_count")),
         }
 
     def _find_shipment_advice_from_dock(self, dock):

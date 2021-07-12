@@ -14,7 +14,7 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
 
     def test_validate_shipment_planned_partially_loaded(self):
         """Validate a planned shipment with part of it loaded."""
-        # Plan some content in the shipment
+        # Plan 3 deliveries in the shipment
         self._plan_records_in_shipment(self.shipment, self.pickings.move_lines)
         self.shipment.action_confirm()
         self.shipment.action_in_progress()
@@ -36,14 +36,15 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         lading = response["data"]["validate"]["lading"]
         on_dock = response["data"]["validate"]["on_dock"]
         #   'lading' key contains loaded goods
-        # FIXME check totals
-        self.assertEqual(lading["pickings_count"], 2)
-        self.assertEqual(lading["packages_count"], 1)
-        self.assertEqual(lading["bulk_lines_count"], 3)
+        self.assertEqual(lading["loaded_pickings_count"], 2)
+        self.assertEqual(lading["loaded_packages_count"], 1)
+        self.assertEqual(lading["loaded_bulk_lines_count"], 3)
+        self.assertEqual(lading["total_packages_count"], 2)
+        self.assertEqual(lading["total_bulk_lines_count"], 4)
         #   'on_dock' key contains picking3
-        self.assertEqual(on_dock["pickings_count"], 1)
-        self.assertEqual(on_dock["packages_count"], 1)
-        self.assertEqual(on_dock["bulk_lines_count"], 2)
+        self.assertEqual(on_dock["total_pickings_count"], 1)
+        self.assertEqual(on_dock["total_packages_count"], 1)
+        self.assertEqual(on_dock["total_bulk_lines_count"], 2)
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
@@ -60,7 +61,7 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
 
     def test_validate_shipment_planned_fully_loaded(self):
         """Validate a planned shipment fully loaded."""
-        # Plan some content in the shipment
+        # Plan 3 deliveries in the shipment
         self._plan_records_in_shipment(self.shipment, self.pickings.move_lines)
         self.shipment.action_confirm()
         self.shipment.action_in_progress()
@@ -75,14 +76,15 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         lading = response["data"]["validate"]["lading"]
         on_dock = response["data"]["validate"]["on_dock"]
         #   'lading' key contains loaded goods
-        # FIXME check totals
-        self.assertEqual(lading["pickings_count"], 3)
-        self.assertEqual(lading["packages_count"], 3)
-        self.assertEqual(lading["bulk_lines_count"], 6)
-        #   'on_dock' key contains picking3
-        self.assertEqual(on_dock["pickings_count"], 0)
-        self.assertEqual(on_dock["packages_count"], 0)
-        self.assertEqual(on_dock["bulk_lines_count"], 0)
+        self.assertEqual(lading["loaded_pickings_count"], 3)
+        self.assertEqual(lading["loaded_packages_count"], 3)
+        self.assertEqual(lading["total_packages_count"], 3)
+        self.assertEqual(lading["loaded_bulk_lines_count"], 6)
+        self.assertEqual(lading["total_bulk_lines_count"], 6)
+        #   'on_dock' key is empty as everything has been loaded
+        self.assertEqual(on_dock["total_pickings_count"], 0)
+        self.assertEqual(on_dock["total_packages_count"], 0)
+        self.assertEqual(on_dock["total_bulk_lines_count"], 0)
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
@@ -118,15 +120,16 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         lading = response["data"]["validate"]["lading"]
         on_dock = response["data"]["validate"]["on_dock"]
         #   'lading' key contains loaded goods
-        # FIXME check totals
-        self.assertEqual(lading["pickings_count"], 2)
-        self.assertEqual(lading["packages_count"], 1)
-        self.assertEqual(lading["bulk_lines_count"], 3)
+        self.assertEqual(lading["loaded_pickings_count"], 2)
+        self.assertEqual(lading["loaded_packages_count"], 1)
+        self.assertEqual(lading["total_packages_count"], 2)
+        self.assertEqual(lading["loaded_bulk_lines_count"], 3)
+        self.assertEqual(lading["total_bulk_lines_count"], 4)
         #   'on_dock' key contains picking3 (at least, as there is others
         # existing deliveries in the demo data)
-        self.assertTrue(on_dock["pickings_count"] >= 1)
-        self.assertTrue(on_dock["packages_count"] >= 1)
-        self.assertTrue(on_dock["bulk_lines_count"] >= 2)
+        self.assertTrue(on_dock["total_pickings_count"] >= 1)
+        self.assertTrue(on_dock["total_packages_count"] >= 1)
+        self.assertTrue(on_dock["total_bulk_lines_count"] >= 2)
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
