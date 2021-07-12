@@ -24,21 +24,21 @@ const shipment = {
         id: 1,
         name: "Dock 01",
     },
-    pickings: [
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
-    ]
 };
+const lading = [
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+];
+const on_dock = [
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+        demotools.makePicking({load_state: _.sample(["all", "partial", "none"])}),
+];
 const DELIVERY_SHIPMENT_CASE = {
     scan_dock: {
         next_state: "scan_document",
@@ -85,6 +85,8 @@ const DELIVERY_SHIPMENT_CASE = {
             loading_list: {
                 // picking: _.cloneDeep(pick),
                 shipment_advice: _.cloneDeep(shipment),
+                lading: lading,
+                on_dock: on_dock,
             },
         },
     },
