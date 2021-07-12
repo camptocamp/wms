@@ -96,12 +96,11 @@ class DeliveryShipmentScanDocumentPackageCase(DeliveryShipmentCommonCase):
             self.service.data.package_levels(package_level),
         )
 
-    def test_scan_document_shipment_not_planned_package_not_planned_twice(self):
-        """Scan a package not planned twice for a shipment not planned.
+    def test_scan_document_package_already_loaded(self):
+        """Scan a package already loaded in the current shipment.
 
-        The second time a package is scanned should not change anything: it has
-        already been loaded during the first scan, the second scan returns
-        the available content to load/unload of the related delivery.
+        The second time a package is scanned an warning is returned saying that
+        the package has already been loaded.
         """
         package_level = self.picking1.package_level_ids
         scanned_package = package_level.package_id
@@ -121,7 +120,14 @@ class DeliveryShipmentScanDocumentPackageCase(DeliveryShipmentCommonCase):
                 "barcode": scanned_package.name,
             },
         )
-        self.assert_response_scan_document(response, self.shipment, self.picking1)
+        self.assert_response_scan_document(
+            response,
+            self.shipment,
+            self.picking1,
+            message=self.service.msg_store.package_already_loaded_in_shipment(
+                scanned_package, self.shipment,
+            ),
+        )
         # Check package level status
         self.assertTrue(package_level.is_done)
         # Check returned content

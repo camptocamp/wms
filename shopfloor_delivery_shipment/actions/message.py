@@ -70,12 +70,36 @@ class MessageAction(Component):
             ),
         }
 
+    def package_already_loaded_in_shipment(self, package, shipment_advice):
+        return {
+            "message_type": "warning",
+            "body": _("Package {} is already loaded in the shipment {}.").format(
+                package.name, shipment_advice.name,
+            ),
+        }
+
+    def lot_already_loaded_in_shipment(self, lot, shipment_advice):
+        return {
+            "message_type": "warning",
+            "body": _("Lot {} is already loaded in the shipment {}.").format(
+                lot.name, shipment_advice.name,
+            ),
+        }
+
+    def product_already_loaded_in_shipment(self, product, shipment_advice):
+        return {
+            "message_type": "warning",
+            "body": _("Product {} is already loaded in the shipment {}.").format(
+                product.name, shipment_advice.name,
+            ),
+        }
+
     def carrier_not_allowed_by_shipment(self, picking):
         return {
             "message_type": "error",
             "body": _(
                 "Delivery method {} not permitted for this shipment advice."
-            ).format(picking.carrier_id.name,),
+            ).format(picking.carrier_id.name),
         }
 
     def no_delivery_content_to_load(self, picking):
@@ -123,5 +147,5 @@ class MessageAction(Component):
     def shipment_validated(self, shipment_advice):
         return {
             "message_type": "info",
-            "body": _("Shipment {} is validated."),
+            "body": _("Shipment {} is validated.").format(shipment_advice.name),
         }

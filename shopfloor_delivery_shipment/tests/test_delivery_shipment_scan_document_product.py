@@ -130,12 +130,11 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
             self.service.data.package_levels(self.picking1.package_level_ids),
         )
 
-    def test_scan_document_shipment_not_planned_product_not_planned_twice(self):
-        """Scan a product not planned twice for a shipment not planned.
+    def test_scan_document_product_already_loaded(self):
+        """Scan a product already loaded in the current shipment.
 
-        The second time a product is scanned should not change anything: it has
-        already been loaded during the first scan, the second scan returns
-        the available content to load/unload of the related delivery.
+        The second time a product is scanned a warning is returned saying that
+        the product has already been loaded.
         """
         move_line = self.picking1.move_line_ids.filtered(
             lambda ml: ml.product_id == self.product_d
@@ -159,7 +158,14 @@ class DeliveryShipmentScanDocumentProductCase(DeliveryShipmentCommonCase):
                 "barcode": scanned_product.barcode,
             },
         )
-        self.assert_response_scan_document(response, self.shipment, self.picking1)
+        self.assert_response_scan_document(
+            response,
+            self.shipment,
+            self.picking1,
+            message=self.service.msg_store.product_already_loaded_in_shipment(
+                scanned_product, self.shipment,
+            ),
+        )
         # Check product line status
         self.assertEqual(move_line.qty_done, move_line.product_uom_qty)
         # Check returned content

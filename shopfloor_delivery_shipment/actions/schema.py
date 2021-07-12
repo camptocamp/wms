@@ -13,6 +13,7 @@ class ShopfloorSchemaAction(Component):
             "name": {"type": "string", "nullable": False, "required": True},
             "dock": self._schema_dict_of(self.dock()),
             "state": {"type": "string", "nullable": False, "required": True},
+            "is_planned": {"type": "boolean", "nullable": False, "required": True},
         }
 
     def dock(self):

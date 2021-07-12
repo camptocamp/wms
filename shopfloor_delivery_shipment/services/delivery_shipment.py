@@ -382,18 +382,9 @@ class DeliveryShipment(Component):
         If the shipment advice had planned content and that the scanned delivery
         is not part of it, returns an error message.
         """
-        # Check if the operation type can be processed by the current menu
-        # TODO
-        # Shipment with planned content
-        if shipment_advice.planned_picking_ids:
-            # Check if the delivery belongs to it
-            if picking not in shipment_advice.planned_picking_ids:
-                return self._response_for_scan_document(
-                    shipment_advice,
-                    message=self.msg_store.picking_not_planned_in_shipment(
-                        picking, shipment_advice
-                    ),
-                )
+        message = self._check_picking_status(picking, shipment_advice)
+        if message:
+            return self._response_for_scan_document(shipment_advice, message=message)
         # Shipment without planned content
         else:
             # Check that the delivery has unplanned and not loaded content to load
@@ -443,9 +434,17 @@ class DeliveryShipment(Component):
                     shipment_advice, message=message
                 )
             # Check that the product isn't already loaded
-            # TODO: (qty done != reserved) "This package has already been processed"
+            package_level = move_lines.package_level_id
+            if package_level._is_loaded_in_shipment():
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    move_lines.picking_id,
+                    message=self.msg_store.package_already_loaded_in_shipment(
+                        package, shipment_advice
+                    ),
+                )
             # Load the package
-            move_lines.package_level_id._load_in_shipment(shipment_advice)
+            package_level._load_in_shipment(shipment_advice)
             return self._response_for_scan_document_or_loading_list(
                 shipment_advice, move_lines.picking_id,
             )
@@ -474,10 +473,26 @@ class DeliveryShipment(Component):
                     shipment_advice, message=message
                 )
             # Check that the lot doesn't belong to a package
-            # TODO: "Please scan the %PACK_NAME(s)” %list of concerned pack"
-            # message=self.msg_store.lot_owned_by_packages(packages)
+            package_levels_not_loaded = move_lines.package_level_id.filtered(
+                lambda pl: not pl.is_done
+            )
+            if package_levels_not_loaded:
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    move_lines.picking_id,
+                    message=self.msg_store.lot_owned_by_packages(
+                        package_levels_not_loaded.package_id
+                    ),
+                )
             # Check that the lot isn't already loaded
-            # TODO: (qty done != reserved) "This lot has already been processed"
+            if move_lines._is_loaded_in_shipment():
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    move_lines.picking_id,
+                    message=self.msg_store.lot_already_loaded_in_shipment(
+                        lot, shipment_advice
+                    ),
+                )
             # Load the lot
             move_lines._load_in_shipment(shipment_advice)
             return self._response_for_scan_document_or_loading_list(
@@ -542,7 +557,14 @@ class DeliveryShipment(Component):
                         ),
                     )
             # Check that the product isn't already loaded
-            # TODO: (qty done != reserved) "This product has already been processed"
+            if move_lines._is_loaded_in_shipment():
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    picking,
+                    message=self.msg_store.product_already_loaded_in_shipment(
+                        product, shipment_advice
+                    ),
+                )
             # Load the lines
             move_lines._load_in_shipment(shipment_advice)
             return self._response_for_scan_document_or_loading_list(

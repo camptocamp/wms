@@ -9,11 +9,13 @@ class DataAction(Component):
 
     @ensure_model("shipment.advice")
     def shipment_advice(self, record, **kw):
-        return self._jsonify(
+        data = self._jsonify(
             record.with_context(shipment_advice=record.id),
             self._shipment_advice_parser,
             **kw
         )
+        data["is_planned"] = bool(record.planned_move_ids)
+        return data
 
     def shipment_advices(self, record, **kw):
         return self.shipment_advice(record, multi=True)
