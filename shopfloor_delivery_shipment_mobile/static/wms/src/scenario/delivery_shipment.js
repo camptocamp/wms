@@ -19,11 +19,10 @@ const DeliveryShipment = {
                 :input_placeholder="search_input_placeholder"
                 />
 
-            <v-card-text class="full" v-if="state_is('loading_list')">
-              <v-row align="center" justify="center" >
+              <v-row align="center" justify="center" v-if="state_is('loading_list')">
                 <v-col class="text-center" cols="12">
-                <v-btn-toggle v-model="filter_state">
-                  <v-btn color="default" value="lading">
+                <v-btn-toggle mandatory v-model="filter_state">
+                  <v-btn color="success" value="lading">
                     Lading
                   </v-btn>
                   <v-btn color="warning" value="dock">
@@ -32,18 +31,15 @@ const DeliveryShipment = {
                 </v-btn-toggle>
                 </v-col>
               </v-row>
-            </v-card-text>
-            <div v-if="state_is('loading_list')">
-            filtering on {{ filter_state }} and {{ this.state.data.filter_name}}
-            </div>
 
             <detail-picking
                 v-if="state_is('loading_list')"
                 v-for="picking in filter_pickings(pickings())"
                 :record="picking"
-                :key="make_component_key(['picking', picking.id])"
+                :options="{main: true, key_title: 'name', title_action_icon: 'mdi-help-circle', on_title_action: state.onBack2Picking, fields:[{path:'carrier.name', label: 'Carrier'}, {path:'move_line_count', label:'Lines'}]}"
+                :key="make_component_key(['shipment-picking', picking.id])"
+                :card_color="getOperationColor(picking)"
                 />
-
 
             <item-detail-card
                 v-if="!_.isEmpty(picking())"
@@ -52,8 +48,9 @@ const DeliveryShipment = {
                 :options="{main: true, key_title: 'name', title_action_field: {path: 'name', action_val_path: 'name'}}"
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
+
             <item-detail-card
-                v-if="state_in(['scan_document'])"
+                v-if="state_is('scan_document')"
                 :key="make_state_component_key(['delivery-shipment-shipment', shipment().id])"
                 :record="shipment()"
                 :options="{main: true, key_title: 'name', fields: [{path: 'dock.name', label: 'Dock'}]}"
@@ -81,6 +78,30 @@ const DeliveryShipment = {
                     />
             </div>
 
+            <v-card color="warning" class="detail v-card main mb-2" v-if="state_is('validate')">
+                <v-card-title>Are you sure you want to close the shipment ?</v-card-title>
+            </v-card>
+            <item-detail-card v-if="state_is('validate')"
+                :key="make_state_component_key(['lading-detail', 123])"
+                :record="state.data.lading"
+                :card_color="getShipmentSummaryColor(state.data.lading)"
+                :options="getShipmentSummary(state.data.lading)"
+                >
+                <template v-slot:title>
+                        <span>Lading</span>
+                </template>
+            </item-detail-card>
+            <item-detail-card v-if="state_is('validate')"
+                :key="make_state_component_key(['dock-detail', 123])"
+                :record="state.data.on_dock"
+                :card_color="getShipmentSummaryColor(state.data.on_dock)"
+                :options="getShipmentSummary(state.data.on_dock)"
+                >
+                <template v-slot:title>
+                        <span>On Dock</span>
+                </template>
+            </item-detail-card>
+
 
             <div class="button-list button-vertical-list full" v-if="!state_is('scan_dock')">
                 <v-row align="center" v-if="state_is('scan_document')">
@@ -93,7 +114,7 @@ const DeliveryShipment = {
                         <btn-action color="default" @click="state.on_close_shipment">Close Shipment</btn-action>
                     </v-col>
                 </v-row>
-                <v-row align="center" v-if="state_is('validate_shipment')">
+                <v-row align="center" v-if="state_is('validate')">
                     <v-col class="text-center" cols="12">
                         <btn-action color="default" @click="state.on_confirm">Confirm</btn-action>
                     </v-col>
@@ -109,10 +130,10 @@ const DeliveryShipment = {
         `,
     methods: {
         screen_title: function() {
-            if (_.isEmpty(this.state.data.picking)) {
+            if (_.isEmpty(this.state.data.shipment_advice)) {
                 return this.menu_item().name;
             }
-            return this.state.data.picking.name;
+            return this.state.data.shipment_advice.name;
         },
         btnBackLabel: function() {
             return this.state.buttonBackLabel || "Back";
@@ -124,33 +145,20 @@ const DeliveryShipment = {
             }
             return this.state.data.picking;
         },
-        // All pickings in the shipment advice
         pickings: function() {
-            if (_.isEmpty(this.state.data.shipment_advice)) {
-                return {};
+            if ((this.filter_state === "dock") && (!_.isEmpty(this.state.data.on_dock))) {
+                return this.state.data.on_dock;
+            } else if ((this.filter_state === "lading") && (!_.isEmpty(this.state.data.lading))) {
+                return this.state.data.lading;
             }
-            if (_.isEmpty(this.state.data.shipment_advice.pickings)) {
-                return {};
-            }
-            return this.state.data.shipment_advice.pickings;
+            return {};
         },
         filter_pickings: function(pickings) {
             let res = pickings;
             const nameFilter = this.state.data.filter_name;
-            let stateFilter = [];
-            if (this.filter_state === "dock") {
-                stateFilter = ["all", "partial"];
-            } else if (this.filter_state === "lading") {
-                stateFilter = ["none"];
-            }
             if (nameFilter) {
                 res = _.filter(pickings, pick => {
                     return pick.name.indexOf(nameFilter) >= 0;
-                });
-            }
-            if (stateFilter.length) {
-                res = _.filter(res, pick => {
-                    return stateFilter.includes(pick.load_state);
                 });
             }
             return res;
@@ -168,10 +176,9 @@ const DeliveryShipment = {
                   }
                 : null;
             return {
-                // main: true,
                 key_title: "name",
                 on_title_action: action,
-                title_action_icon: "mdi-truck-delivery",
+                title_action_icon: "mdi-upload",
             };
         },
         getPackColor: function(pack) {
@@ -189,7 +196,7 @@ const DeliveryShipment = {
                 // main: true,
                 key_title: "product.display_name",
                 on_title_action: action,
-                title_action_icon: "mdi-truck-delivery",
+                title_action_icon: "mdi-upload",
                 fields: [
                     {path: "lot.name", label: "Lot"},
                     {path: "quantity", label: "Qty"}
@@ -218,6 +225,50 @@ const DeliveryShipment = {
                     package_level_id: pack.id,
                 })
             );
+        },
+        getOperationColor: function(pick) {
+            var color = "";
+            if (pick.is_fully_loaded){
+                color = "success";
+            } else if (pick.is_partially_loaded) {
+                color = "warning";
+            } else {
+                color = "error"
+            }
+            return this.utils.colors.color_for(color);
+        },
+        getShipmentSummary: function(data) {
+            var fields = [
+                {path: "pickings_count", label: "Deliveries", display_no_value: true},
+                {path: "packages_count", label: "Package", display_no_value: true},
+                {path: "bulk_lines_count", label: "Bulk moves", display_no_value: true},
+            ];
+            if ("total_load" in data){
+                fields.unshift({
+                    path: "total_load",
+                    renderer: ()=>{return this.state.data.shipment_advice.dock.name;},
+                    label: "Loading dock"
+                });
+                fields.push(
+                    {path: "total_load", label: "Total load", display_no_value: true}
+                );
+            }
+            return {fields: fields};
+        },
+        getShipmentSummaryColor: function(data) {
+            const isLading = ("total_load"  in data);
+            var color = "";
+            if (isLading) {
+                //TODO need to know if planned or not
+                color = "screen_step_done";
+            } else {
+                if (data.pickings_count > 0) {
+                    color = "error";
+                } else {
+                    color = "success";
+                }
+            }
+            return this.utils.colors.color_for(color);
         },
     },
     data: function() {
@@ -282,22 +333,39 @@ const DeliveryShipment = {
                     on_back: () => {
                         this.state_to("scan_document");
                     },
+                    onBack2Picking: (picking) => {
+                        this.wait_call(
+                            this.odoo.call("scan_document", {
+                                barcode: picking.name,
+                                shipment_advice_id: this.shipment().id,
+                            })
+                        );
+                    },
                     on_close_shipment: () => {
-                        this.state_to("validate_shipment");
+                        this.wait_call(
+                            this.odoo.call("validate", {
+                                shipment_advice_id: this.shipment().id,
+                            })
+                        );
                     },
                 },
-                validate_shipment: {
+                validate: {
                     display_info: {
                         title: "Shipment closure confirmation",
                     },
                     buttonBackLabel: "Cancel",
                     on_back: () => {
-                        this.state_to("loading_list");
+                        this.wait_call(
+                            this.odoo.call("loading_list", {
+                                shipment_advice_id: this.shipment().id,
+                            })
+                        );
                     },
                     on_confirm: () => {
                         this.wait_call(
-                            this.odoo.call("validate_shipment", {
+                            this.odoo.call("validate", {
                                 shipment_advice_id: this.shipment().id,
+                                confirm: true,
                             })
                         );
                     },
