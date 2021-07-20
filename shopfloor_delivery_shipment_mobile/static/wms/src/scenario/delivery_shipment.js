@@ -178,11 +178,11 @@ const DeliveryShipment = {
                 key_title: "name",
                 title_action_icon: "mdi-help-circle",
                 on_title_action: state.on_back2picking,
-                fields:[
-                    {path:"carrier.name", label: "Carrier"},
-                    {path:"move_line_count", label:"Lines"}
-                ]
-            }
+                fields: [
+                    {path: "carrier.name", label: "Carrier"},
+                    {path: "move_line_count", label: "Lines"},
+                ],
+            };
         },
         pack_options: function(pack) {
             const action = pack.is_done
