@@ -41,7 +41,7 @@ class DeliveryShipment(Component):
     _usage = "delivery_shipment"
     _description = __doc__
 
-    def scan_dock(self, barcode):
+    def scan_dock(self, barcode, confirmation=False):
         """Scan a loading dock.
 
         Called at the beginning of the workflow to select the shipment advice
@@ -63,7 +63,12 @@ class DeliveryShipment(Component):
             if not shipment_advice:
                 if not self.work.menu.allow_shipment_advice_create:
                     return self._response_for_scan_dock(
-                        message=self.msg_store.no_shipment_in_progress(dock)
+                        message=self.msg_store.no_shipment_in_progress()
+                    )
+                if not confirmation:
+                    return self._response_for_scan_dock(
+                        message=self.msg_store.scan_dock_again_to_confirm(dock),
+                        confirmation_required=True,
                     )
                 shipment_advice = self._create_shipment_advice_from_dock(dock)
             return self._response_for_scan_document(shipment_advice)
@@ -369,10 +374,10 @@ class DeliveryShipment(Component):
             )
         return self._response_for_loading_list(shipment_advice)
 
-    def validate(self, shipment_advice_id, confirm=False):
+    def validate(self, shipment_advice_id, confirmation=False):
         """Validate the shipment advice.
 
-        When called the first time with `confirm=False`, it returns a summary
+        When called the first time with `confirmation=False`, it returns a summary
         of the deliveries (loaded or that can still be loaded) for that shipment.
         """
         shipment_advice = (
@@ -382,15 +387,24 @@ class DeliveryShipment(Component):
             return self._response_for_scan_dock(
                 message=self.msg_store.record_not_found()
             )
-        if not confirm:
+        if not confirmation:
             return self._response_for_validate(shipment_advice)
         shipment_advice.action_done()
         return self._response_for_scan_dock(
             message=self.msg_store.shipment_validated(shipment_advice)
         )
 
-    def _response_for_scan_dock(self, message=None):
-        return self._response(next_state="scan_dock", message=message)
+    def _response_for_scan_dock(self, message=None, confirmation_required=False):
+        """Transition to the 'scan_dock' state.
+
+        The client screen invite the user to scan a dock to find or create an
+        available shipment advice.
+
+        If `confirmation_required` is set, the client will ask to scan again
+        the dock to create a shipment advice.
+        """
+        data = {"confirmation_required": confirmation_required}
+        return self._response(next_state="scan_dock", data=data, message=message)
 
     def _response_for_scan_document(self, shipment_advice, picking=None, message=None):
         data = {
@@ -670,6 +684,12 @@ class ShopfloorDeliveryShipmentValidator(Component):
     def scan_dock(self):
         return {
             "barcode": {"required": True, "type": "string"},
+            "confirmation": {
+                "coerce": to_bool,
+                "required": False,
+                "nullable": True,
+                "type": "boolean",
+            },
         }
 
     def scan_document(self):
@@ -728,7 +748,7 @@ class ShopfloorDeliveryShipmentValidator(Component):
                 "required": True,
                 "type": "integer",
             },
-            "confirm": {
+            "confirmation": {
                 "coerce": to_bool,
                 "required": False,
                 "nullable": True,
@@ -761,7 +781,13 @@ class ShopfloorDeliveryShipmentValidatorResponse(Component):
 
     @property
     def _schema_scan_dock(self):
-        return {}
+        return {
+            "confirmation_required": {
+                "type": "boolean",
+                "nullable": True,
+                "required": False,
+            },
+        }
 
     @property
     def _schema_scan_document(self):

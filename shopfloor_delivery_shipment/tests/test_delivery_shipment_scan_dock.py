@@ -17,13 +17,23 @@ class DeliveryShipmentScanDockCase(DeliveryShipmentCommonCase):
             "scan_dock", params={"barcode": self.dock.barcode}
         )
         self.assert_response_scan_dock(
-            response, message=self.service.msg_store.no_shipment_in_progress(self.dock)
+            response, message=self.service.msg_store.no_shipment_in_progress()
         )
 
     def test_scan_dock_create_shipment_if_none(self):
         self.menu.sudo().allow_shipment_advice_create = True
+        # First scan, a confirmation is required to create a new shipment
         response = self.service.dispatch(
             "scan_dock", params={"barcode": self.dock.barcode}
+        )
+        self.assert_response_scan_dock(
+            response,
+            message=self.service.msg_store.scan_dock_again_to_confirm(self.dock),
+            confirmation_required=True,
+        )
+        # Second scan to confirm
+        response = self.service.dispatch(
+            "scan_dock", params={"barcode": self.dock.barcode, "confirmation": True}
         )
         new_shipment = self.env["shipment.advice"].search(
             [("state", "=", "in_progress"), ("dock_id", "=", self.dock.id)],

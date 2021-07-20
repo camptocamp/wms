@@ -8,10 +8,19 @@ from odoo.addons.component.core import Component
 class MessageAction(Component):
     _inherit = "shopfloor.message.action"
 
-    def no_shipment_in_progress(self, dock):
+    def no_shipment_in_progress(self):
         return {
             "message_type": "error",
-            "body": _("No shipment in progress found for dock {}.").format(dock.name),
+            "body": _("No shipment advice in progress found for this loading dock."),
+        }
+
+    def scan_dock_again_to_confirm(self, dock):
+        return {
+            "message_type": "error",
+            "body": _(
+                "No shipment advice in progress found for this loading dock. "
+                "Scan again {} to create a new one."
+            ).format(dock.name),
         }
 
     def picking_not_planned_in_shipment(self, picking, shipment_advice):

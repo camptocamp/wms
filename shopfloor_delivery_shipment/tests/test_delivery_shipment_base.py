@@ -85,8 +85,15 @@ class DeliveryShipmentCommonCase(common.CommonCase):
     def _data_for_stock_picking(self, picking):
         return self.service._data_for_stock_picking(picking)
 
-    def assert_response_scan_dock(self, response, message=None):
-        self.assert_response(response, next_state="scan_dock", message=message)
+    def assert_response_scan_dock(
+        self, response, message=None, confirmation_required=False
+    ):
+        data = {
+            "confirmation_required": confirmation_required,
+        }
+        self.assert_response(
+            response, next_state="scan_dock", data=data, message=message
+        )
 
     def assert_response_scan_document(
         self, response, shipment_advice, picking=None, message=None

@@ -48,7 +48,7 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
-            params={"shipment_advice_id": self.shipment.id, "confirm": True},
+            params={"shipment_advice_id": self.shipment.id, "confirmation": True},
         )
         self.assert_response_scan_dock(
             response, message=self.service.msg_store.shipment_validated(self.shipment),
@@ -88,7 +88,7 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
-            params={"shipment_advice_id": self.shipment.id, "confirm": True},
+            params={"shipment_advice_id": self.shipment.id, "confirmation": True},
         )
         self.assert_response_scan_dock(
             response, message=self.service.msg_store.shipment_validated(self.shipment),
@@ -133,7 +133,7 @@ class DeliveryShipmentValidateCase(DeliveryShipmentCommonCase):
         # Validate the shipment
         response = self.service.dispatch(
             "validate",
-            params={"shipment_advice_id": self.shipment.id, "confirm": True},
+            params={"shipment_advice_id": self.shipment.id, "confirmation": True},
         )
         self.assert_response_scan_dock(
             response, message=self.service.msg_store.shipment_validated(self.shipment),
