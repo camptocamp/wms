@@ -21,14 +21,14 @@ const DeliveryShipment = {
 
               <v-row align="center" justify="center" v-if="state_is('loading_list')">
                 <v-col class="text-center" cols="12">
-                <v-btn-toggle mandatory v-model="filter_state">
-                  <v-btn color="success" value="lading">
-                    Lading
-                  </v-btn>
-                  <v-btn color="warning" value="dock">
-                    On Dock
-                  </v-btn>
-                </v-btn-toggle>
+                  <v-btn-toggle mandatory v-model="filter_state">
+                    <v-btn color="success" value="lading">
+                      Lading
+                    </v-btn>
+                    <v-btn color="warning" value="dock">
+                      On Dock
+                    </v-btn>
+                  </v-btn-toggle>
                 </v-col>
               </v-row>
 
@@ -36,9 +36,9 @@ const DeliveryShipment = {
                 v-if="state_is('loading_list')"
                 v-for="picking in filter_pickings(pickings())"
                 :record="picking"
-                :options="{main: true, key_title: 'name', title_action_icon: 'mdi-help-circle', on_title_action: state.onBack2Picking, fields:[{path:'carrier.name', label: 'Carrier'}, {path:'move_line_count', label:'Lines'}]}"
+                :options="picking_options(pickings)"
                 :key="make_component_key(['shipment-picking', picking.id])"
-                :card_color="getOperationColor(picking)"
+                :card_color="operation_color(picking)"
                 />
 
             <item-detail-card
@@ -66,15 +66,15 @@ const DeliveryShipment = {
                     v-for="packlevel in value.package_levels"
                     :key="make_state_component_key(['shipment-pack', packlevel.id])"
                     :record="packlevel.package_src"
-                    :options="getPackOptions(packlevel)"
-                    :card_color="getPackColor(packlevel)"
+                    :options="pack_options(packlevel)"
+                    :card_color="pack_color(packlevel)"
                     />
                 <item-detail-card
                     v-for="line in value.move_lines"
                     :key="make_state_component_key(['shipment-product', line.product.id])"
                     :record="line"
-                    :options="getLineOptions(line)"
-                    :card_color="getLineColor(line)"
+                    :options="line_options(line)"
+                    :card_color="line_color(line)"
                     />
             </div>
 
@@ -84,8 +84,8 @@ const DeliveryShipment = {
             <item-detail-card v-if="state_is('validate')"
                 :key="make_state_component_key(['lading-detail', 123])"
                 :record="state.data.lading"
-                :card_color="getShipmentSummaryColor(state.data.lading)"
-                :options="getLadingSummary(state.data.lading)"
+                :card_color="shipment_summary_color(state.data.lading)"
+                :options="lading_summary_options(state.data.lading)"
                 >
                 <template v-slot:title>
                         <span>Lading</span>
@@ -94,8 +94,8 @@ const DeliveryShipment = {
             <item-detail-card v-if="state_is('validate')"
                 :key="make_state_component_key(['dock-detail', 123])"
                 :record="state.data.on_dock"
-                :card_color="getShipmentSummaryColor(state.data.on_dock)"
-                :options="getOnDockSummary(state.data.on_dock)"
+                :card_color="shipment_summary_color(state.data.on_dock)"
+                :options="ondock_summary(state.data.on_dock)"
                 >
                 <template v-slot:title>
                         <span>On Dock</span>
@@ -121,7 +121,7 @@ const DeliveryShipment = {
                 </v-row>
                 <v-row align="center">
                     <v-col class="text-center" cols="12">
-                        <btn-action color="default" @click="state.on_back">{{ btnBackLabel() }}</btn-action>
+                        <btn-action color="default" @click="state.on_back">{{ btn_back_label() }}</btn-action>
                     </v-col>
                 </v-row>
             </div>
@@ -135,8 +135,8 @@ const DeliveryShipment = {
             }
             return this.state.data.shipment_advice.name;
         },
-        btnBackLabel: function() {
-            return this.state.buttonBackLabel || "Back";
+        btn_back_label: function() {
+            return this.state.button_back_label || "Back";
         },
         // The current picking
         picking: function() {
@@ -172,10 +172,22 @@ const DeliveryShipment = {
             }
             return this.state.data.shipment_advice;
         },
-        getPackOptions: function(pack) {
+        picking_options: function(picking) {
+            return {
+                main: true,
+                key_title: "name",
+                title_action_icon: "mdi-help-circle",
+                on_title_action: state.on_back2picking,
+                fields:[
+                    {path:"carrier.name", label: "Carrier"},
+                    {path:"move_line_count", label:"Lines"}
+                ]
+            }
+        },
+        pack_options: function(pack) {
             const action = pack.is_done
                 ? () => {
-                      this.unloadPack(pack);
+                      this.unload_pack(pack);
                   }
                 : null;
             return {
@@ -184,15 +196,15 @@ const DeliveryShipment = {
                 title_action_icon: "mdi-upload",
             };
         },
-        getPackColor: function(pack) {
+        pack_color: function(pack) {
             const color = pack.is_done ? "screen_step_done" : "screen_step_todo";
             return this.utils.colors.color_for(color);
         },
-        getLineOptions: function(line) {
+        line_options: function(line) {
             const action =
                 line.qty_done == line.quantity
                     ? () => {
-                          this.unloadLine(line);
+                          this.unload_line(line);
                       }
                     : null;
             return {
@@ -206,14 +218,14 @@ const DeliveryShipment = {
                 ],
             };
         },
-        getLineColor: function(line) {
+        line_color: function(line) {
             const color =
                 line.qty_done >= line.quantity
                     ? "screen_step_done"
                     : "screen_step_todo";
             return this.utils.colors.color_for(color);
         },
-        unloadLine: function(line) {
+        unload_line: function(line) {
             this.wait_call(
                 this.odoo.call("unload_move_line", {
                     shipment_advice_id: this.shipment().id,
@@ -221,7 +233,7 @@ const DeliveryShipment = {
                 })
             );
         },
-        unloadPack: function(pack) {
+        unload_pack: function(pack) {
             this.wait_call(
                 this.odoo.call("unload_package_level", {
                     shipment_advice_id: this.shipment().id,
@@ -229,7 +241,7 @@ const DeliveryShipment = {
                 })
             );
         },
-        getOperationColor: function(pick) {
+        operation_color: function(pick) {
             var color = "";
             if (pick.is_fully_loaded) {
                 color = "success";
@@ -240,13 +252,13 @@ const DeliveryShipment = {
             }
             return this.utils.colors.color_for(color);
         },
-        getLoadedTotal: function(data, key) {
+        loaded_total: function(data, key) {
             // Return two value formatted has a fraction
             return (
                 data["loaded_" + key].toString() + "/" + data["total_" + key].toString()
             );
         },
-        isFullyLoaded: function(data) {
+        is_fully_loaded: function(data) {
             // Check if the summary from last screen is fully loaded
             // May need to know if planned or not
             if (data.total_packages_count != data.loaded_packages_count) {
@@ -256,7 +268,7 @@ const DeliveryShipment = {
             }
             return true;
         },
-        getLadingSummary: function(data) {
+        lading_summary_options: function(data) {
             return {
                 fields: [
                     {
@@ -275,7 +287,7 @@ const DeliveryShipment = {
                     {
                         path: "dummy",
                         renderer: () => {
-                            return this.getLoadedTotal(data, "packages_count");
+                            return this.loaded_total(data, "packages_count");
                         },
                         label: "Packages",
                         display_no_value: true,
@@ -283,7 +295,7 @@ const DeliveryShipment = {
                     {
                         path: "dummy",
                         renderer: () => {
-                            return this.getLoadedTotal(data, "bulk_lines_count");
+                            return this.loaded_total(data, "bulk_lines_count");
                         },
                         label: "Bulk moves",
                         display_no_value: true,
@@ -296,7 +308,7 @@ const DeliveryShipment = {
                 ],
             };
         },
-        getOnDockSummary: function(data) {
+        ondock_summary: function(data) {
             return {
                 fields: [
                     {
@@ -317,11 +329,11 @@ const DeliveryShipment = {
                 ],
             };
         },
-        getShipmentSummaryColor: function(data) {
+        shipment_summary_color: function(data) {
             const isLading = "loaded_weight" in data;
             var color = "";
             if (isLading) {
-                if (this.isFullyLoaded(data)) {
+                if (this.is_fully_loaded(data)) {
                     color = "screen_step_done";
                 } else {
                     color = "warning";
@@ -398,7 +410,7 @@ const DeliveryShipment = {
                     on_back: () => {
                         this.state_to("scan_document");
                     },
-                    onBack2Picking: picking => {
+                    on_back2picking: picking => {
                         this.wait_call(
                             this.odoo.call("scan_document", {
                                 barcode: picking.name,
@@ -418,7 +430,7 @@ const DeliveryShipment = {
                     display_info: {
                         title: "Shipment closure confirmation",
                     },
-                    buttonBackLabel: "Cancel",
+                    button_back_label: "Cancel",
                     on_back: () => {
                         this.wait_call(
                             this.odoo.call("loading_list", {
