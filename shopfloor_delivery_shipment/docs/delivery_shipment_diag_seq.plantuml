@@ -22,8 +22,12 @@ ArrowColor #00A09D
 header <img:oca_logo.png>
 title <size:35>Delivery with Shipment Advice scenario</size>
 
-== /scan_dock ==
+== /scan_dock (with an available shipment) ==
 scan_dock -> scan_document: **/scan_dock(barcode)**
+
+== /scan_dock (without available shipment) ==
+scan_dock -> scan_dock: **/scan_dock(barcode)**\n(asking for confirmation to create a new shipment)
+scan_dock -> scan_document: **/scan_dock(barcode, confirmation=True)**
 
 == /scan_document ==
 scan_document -> scan_document: **/scan_document**(shipment_advice_id, barcode, picking_id=None)
@@ -40,6 +44,6 @@ scan_document -> loading_list: **/loading_list**(shipment_advice_id)
 
 == /validate==
 loading_list -> validate: **/validate**(shipment_advice_id)
-validate-> scan_dock: **/validate**(shipment_advice_id, confirm=True)
+validate-> scan_dock: **/validate**(shipment_advice_id, confirmation=True)
 
 @enduml

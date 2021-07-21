@@ -61,9 +61,19 @@ class DeliveryShipmentLoadingListCase(DeliveryShipmentCommonCase):
         #   'on_dock' key is empty
         self.assertFalse(on_dock)
 
-    def test_loading_list_shipment_not_planned_loaded(self):
-        """Get the loading list of a unplanned shipment with some content loaded."""
-        # Load a part of it
+    def test_loading_list_shipment_not_planned_loaded_same_carrier_provider(self):
+        """Get the loading list of an unplanned shipment with some content loaded.
+
+        All deliveries are sharing the same carrier provider.
+        """
+        # Put the same carrier provider on all deliveries to get the unloaded
+        # one in the returned result
+        carrier1 = self.env.ref("delivery.delivery_carrier")
+        carrier2 = self.env.ref("delivery.normal_delivery_carrier")
+        (carrier1 | carrier2).sudo().delivery_type = "base_on_rule"
+        self.picking1.carrier_id = carrier1
+        self.picking2.carrier_id = self.picking3.carrier_id = carrier2
+        # Load some content
         #   - part of picking1
         move_line_d = self.picking1.move_line_ids.filtered(
             lambda ml: ml.product_id == self.product_d
@@ -87,5 +97,49 @@ class DeliveryShipmentLoadingListCase(DeliveryShipmentCommonCase):
         #   'on_dock' key contains at least picking3
         on_dock_picking_ids = [d["id"] for d in on_dock]
         self.assertIn(self.picking3.id, on_dock_picking_ids)
+        self.assertNotIn(self.picking1.id, on_dock_picking_ids)
+        self.assertNotIn(self.picking2.id, on_dock_picking_ids)
+
+    def test_loading_list_shipment_not_planned_loaded_different_carrier_provider(self):
+        """Get the loading list of an unplanned shipment with some content loaded.
+
+        Deliveries loaded have the same carrier provider while the delivery still
+        on dock have a different one, so it won't be listed as an available
+        delivery to load in the current shipment.
+        """
+        # Put the same carrier provider on loaded deliveries
+        carrier1 = self.env.ref("delivery.delivery_carrier")
+        carrier1.sudo().delivery_type = "base_on_rule"
+        self.picking1.carrier_id = self.picking2.carrier_id = carrier1
+        # Put a different carrier provider on the unloaded one
+        carrier2 = self.env.ref("delivery.normal_delivery_carrier")
+        carrier2.sudo().delivery_type = "fixed"
+        self.picking3.carrier_id = carrier2
+        # Load some content
+        #   - part of picking1
+        move_line_d = self.picking1.move_line_ids.filtered(
+            lambda ml: ml.product_id == self.product_d
+        )
+        move_line_d._load_in_shipment(self.shipment)
+        #   - all content of picking2
+        self.picking2._load_in_shipment(self.shipment)
+        #   - nothing from picking3
+        #     (in fact it's impossible to load it because the carrier provider
+        #      is different)
+        # Get the loading list
+        response = self.service.dispatch(
+            "loading_list", params={"shipment_advice_id": self.shipment.id}
+        )
+        self.assert_response_loading_list(response, self.shipment)
+        # Check returned content
+        lading = response["data"]["loading_list"]["lading"]
+        on_dock = response["data"]["loading_list"]["on_dock"]
+        #   'lading' key contains picking1 and picking2
+        self.assertEqual(
+            lading, self.service.data.pickings_loaded(self.picking1 | self.picking2)
+        )
+        #   'on_dock' key contains at least picking3
+        on_dock_picking_ids = [d["id"] for d in on_dock]
+        self.assertNotIn(self.picking3.id, on_dock_picking_ids)
         self.assertNotIn(self.picking1.id, on_dock_picking_ids)
         self.assertNotIn(self.picking2.id, on_dock_picking_ids)

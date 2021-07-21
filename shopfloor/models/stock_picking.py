@@ -14,6 +14,10 @@ class StockPicking(models.Model):
         compute="_compute_picking_info",
         help="Technical field. Indicates number of move lines included.",
     )
+    package_level_count = fields.Integer(
+        compute="_compute_picking_info",
+        help="Technical field. Indicates number of package_level included.",
+    )
 
     @api.depends(
         "move_line_ids", "move_line_ids.product_qty", "move_line_ids.product_id.weight"
@@ -24,6 +28,7 @@ class StockPicking(models.Model):
                 {
                     "total_weight": item._calc_weight(),
                     "move_line_count": len(item.move_line_ids),
+                    "package_level_count": len(item.package_level_ids),
                 }
             )
 

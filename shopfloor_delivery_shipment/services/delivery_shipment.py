@@ -149,13 +149,6 @@ class DeliveryShipment(Component):
                     shipment_advice,
                     message=self.msg_store.no_delivery_content_to_load(picking),
                 )
-            # Check carrier compatibility between shipment and picking
-            carriers = shipment_advice.carrier_ids
-            if carriers and not carriers & picking.carrier_id:
-                return self._response_for_scan_document(
-                    shipment_advice,
-                    message=self.msg_store.carrier_not_allowed_by_shipment(picking),
-                )
         return self._response_for_scan_document(shipment_advice, picking)
 
     def _scan_package(self, shipment_advice, package):
@@ -470,18 +463,9 @@ class DeliveryShipment(Component):
         """
         data = collections.OrderedDict()
         # Grab move lines to sort, restricted to the current delivery
-        #   1.  if the shipment is planned, returns delivery content planned for
-        #       this shipment
-        #   2.  if the shipment is not planned, returns delivery content to
-        #       load/unload (not planned, not loaded in another shipment)
-        if shipment_advice.planned_move_ids:
-            move_lines = (
-                shipment_advice.planned_move_ids.move_line_ids & picking.move_line_ids
-            )
-        else:
-            move_lines = self._find_move_lines_to_process_from_picking(
-                shipment_advice, picking
-            )
+        move_lines = self._find_move_lines_to_process_from_picking(
+            shipment_advice, picking
+        )
         package_level_ids = []
         # Sort and group move lines by source location and prepare the data
         for move_line in move_lines.sorted(lambda ml: ml.location_id.name):
@@ -560,7 +544,13 @@ class DeliveryShipment(Component):
         return shipment_advice
 
     def _find_move_lines_to_process_from_picking(self, shipment_advice, picking):
-        """Returns the moves to load or unload for the given shipment and delivery."""
+        """Returns the moves to load or unload for the given shipment and delivery.
+
+            - if the shipment is planned, returns delivery content planned for
+              this shipment
+            - if the shipment is not planned, returns delivery content to
+              load/unload (not planned and not loaded in another shipment)
+        """
         picking.ensure_one()
         # Shipment with planned content
         if shipment_advice.planned_move_ids:
@@ -582,6 +572,7 @@ class DeliveryShipment(Component):
         domain = [
             ("state", "in", ("assigned", "partially_available")),
             ("picking_code", "=", "outgoing"),
+            ("picking_id.picking_type_id", "in", self.picking_types.ids),
             "|",
             ("shipment_advice_id", "=", False),
             ("shipment_advice_id", "=", shipment_advice.id),
@@ -592,6 +583,19 @@ class DeliveryShipment(Component):
         # Shipment without planned content, search for all unplanned moves
         else:
             domain.append(("move_id.shipment_advice_id", "=", False))
+            # Restrict to shipment carrier delivery types (providers)
+            if shipment_advice.carrier_ids:
+                domain.extend(
+                    [
+                        "|",
+                        (
+                            "picking_id.carrier_id.delivery_type",
+                            "in",
+                            shipment_advice.carrier_ids.mapped("delivery_type"),
+                        ),
+                        ("picking_id.carrier_id", "=", False),
+                    ]
+                )
         return domain
 
     def _find_move_lines_from_package(self, shipment_advice, package):
@@ -672,6 +676,12 @@ class DeliveryShipment(Component):
                     return self.msg_store.picking_not_planned_in_shipment(
                         picking, shipment_advice
                     )
+            # Check carrier's provider compatibility between shipment and picking
+            carriers = shipment_advice.carrier_ids
+            shipment_carrier_types = set(carriers.mapped("delivery_type"))
+            picking_carrier_type = {picking.carrier_id.delivery_type}
+            if carriers and not shipment_carrier_types & picking_carrier_type:
+                return self.msg_store.carrier_not_allowed_by_shipment(picking)
 
 
 class ShopfloorDeliveryShipmentValidator(Component):

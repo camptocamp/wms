@@ -109,7 +109,9 @@ class DeliveryShipmentScanDocumentPickingCase(DeliveryShipmentCommonCase):
         This is only relevant for shipment without planned content.
         """
         self.picking1.carrier_id = self.env.ref("delivery.delivery_carrier")
+        self.picking1.carrier_id.sudo().delivery_type = "base_on_rule"
         self.picking2.carrier_id = self.env.ref("delivery.normal_delivery_carrier")
+        self.picking2.carrier_id.sudo().delivery_type = "fixed"
         # Load the first delivery in the shipment
         self.picking1._load_in_shipment(self.shipment)
         # Scan the second which has a different carrier => error

@@ -56,4 +56,5 @@ class DataAction(Component):
             "loaded_progress",
             "is_fully_loaded_in_shipment:is_fully_loaded",
             "is_partially_loaded_in_shipment:is_partially_loaded",
+            "package_level_count",
         ]
