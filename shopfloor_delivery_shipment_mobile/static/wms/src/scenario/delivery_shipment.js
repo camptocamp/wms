@@ -42,18 +42,18 @@ const DeliveryShipment = {
                 />
 
             <item-detail-card
-                v-if="!_.isEmpty(picking())"
-                :key="make_state_component_key(['delivery-shipment-pick', picking().id])"
-                :record="picking()"
-                :options="{main: true, key_title: 'name', title_action_field: {path: 'name', action_val_path: 'name'}}"
+                v-if="state_is('scan_document')"
+                :key="make_state_component_key(['delivery-shipment-dock', state.data.shipment_advice.dock.id])"
+                :record="state.data.shipment_advice.dock"
+                :options="{main: true, key_title: 'name'}"
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
 
             <item-detail-card
-                v-if="state_is('scan_document')"
-                :key="make_state_component_key(['delivery-shipment-shipment', shipment().id])"
-                :record="shipment()"
-                :options="{main: true, key_title: 'name', fields: [{path: 'dock.name', label: 'Dock'}]}"
+                v-if="!_.isEmpty(picking())"
+                :key="make_state_component_key(['delivery-shipment-pick', picking().id])"
+                :record="picking()"
+                :options="{main: true, key_title: 'name', title_action_field: {path: 'name', action_val_path: 'name'}}"
                 :card_color="utils.colors.color_for('screen_step_done')"
                 />
 
@@ -408,7 +408,12 @@ const DeliveryShipment = {
                         this.state_set_data({filter_name: scanned.text});
                     },
                     on_back: () => {
-                        this.state_to("scan_document");
+                        this.wait_call(
+                            this.odoo.call("scan_document", {
+                                barcode: "", //picking.name,
+                                shipment_advice_id: this.shipment().id,
+                            })
+                        );
                     },
                     on_back2picking: picking => {
                         this.wait_call(
