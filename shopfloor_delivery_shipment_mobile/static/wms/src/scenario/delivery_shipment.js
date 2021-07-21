@@ -22,10 +22,10 @@ const DeliveryShipment = {
               <v-row align="center" justify="center" v-if="state_is('loading_list')">
                 <v-col class="text-center" cols="12">
                   <v-btn-toggle mandatory v-model="filter_state">
-                    <v-btn color="success" value="lading">
+                    <v-btn active-class="success" value="lading" >
                       Lading
                     </v-btn>
-                    <v-btn color="warning" value="dock">
+                    <v-btn active-class="warning" value="dock">
                       On Dock
                     </v-btn>
                   </v-btn-toggle>
@@ -139,11 +139,17 @@ const DeliveryShipment = {
             return this.state.button_back_label || "Back";
         },
         // The current picking
-        picking: function() {
-            if (_.isEmpty(this.state.data.picking)) {
+        picking: function(from_state = "") {
+            var data = {};
+            if (from_state) {
+                data = this.state_get_data(from_state);
+            } else {
+                data = this.state.data;
+            }
+            if (_.isEmpty(data.picking)) {
                 return {};
             }
-            return this.state.data.picking;
+            return data.picking;
         },
         pickings: function() {
             if (this.filter_state === "dock" && !_.isEmpty(this.state.data.on_dock)) {
@@ -364,6 +370,8 @@ const DeliveryShipment = {
                         this.wait_call(
                             this.odoo.call("scan_dock", {
                                 barcode: scanned.text,
+                                confirmation:
+                                    this.state.data.confirmation_required || false,
                             })
                         );
                     },
@@ -389,7 +397,11 @@ const DeliveryShipment = {
                         );
                     },
                     on_back: () => {
-                        this.state_to("scan_dock");
+                        this.wait_call(
+                            this.odoo.call("scan_dock", {
+                                barcode: "",
+                            })
+                        );
                     },
                     on_go2loading_list: () => {
                         this.wait_call(
@@ -410,8 +422,9 @@ const DeliveryShipment = {
                     on_back: () => {
                         this.wait_call(
                             this.odoo.call("scan_document", {
-                                barcode: "", //picking.name,
+                                barcode: "",
                                 shipment_advice_id: this.shipment().id,
+                                picking_id: this.picking("scan_document").id,
                             })
                         );
                     },
@@ -447,7 +460,7 @@ const DeliveryShipment = {
                         this.wait_call(
                             this.odoo.call("validate", {
                                 shipment_advice_id: this.shipment().id,
-                                confirm: true,
+                                confirmation: true,
                             })
                         );
                     },
