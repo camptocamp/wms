@@ -36,7 +36,7 @@ const DeliveryShipment = {
                 v-if="state_is('loading_list')"
                 v-for="picking in filter_pickings(pickings())"
                 :record="picking"
-                :options="picking_options(pickings)"
+                :options="picking_options(picking)"
                 :key="make_component_key(['shipment-picking', picking.id])"
                 :card_color="operation_color(picking)"
                 />
@@ -186,7 +186,12 @@ const DeliveryShipment = {
                 on_title_action: this.state.on_back2picking,
                 fields: [
                     {path: "carrier.name", label: "Carrier"},
-                    {path: "move_line_count", label: "Lines"},
+                    {path: "move_line_count", label: "Lines", display_no_value: true},
+                    {
+                        path: "package_level_count",
+                        label: "Packages",
+                        display_no_value: true,
+                    },
                 ],
             };
         },
