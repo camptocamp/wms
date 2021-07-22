@@ -43,11 +43,6 @@ class ShopfloorSchemaAction(Component):
                     "nullable": False,
                     "required": True,
                 },
-                "package_level_count": {
-                    "type": "integer",
-                    "nullable": False,
-                    "required": True,
-                },
             }
         )
         return schema
