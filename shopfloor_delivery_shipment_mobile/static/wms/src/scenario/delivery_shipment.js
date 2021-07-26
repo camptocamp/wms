@@ -38,7 +38,7 @@ const DeliveryShipment = {
                 :record="picking"
                 :options="picking_options(picking)"
                 :key="make_component_key(['shipment-picking', picking.id])"
-                :card_color="operation_color(picking)"
+                :card_color="utils.colors.color_for(operation_color(picking))"
                 />
 
             <item-detail-card
@@ -84,7 +84,7 @@ const DeliveryShipment = {
             <item-detail-card v-if="state_is('validate')"
                 :key="make_state_component_key(['lading-detail', 123])"
                 :record="state.data.lading"
-                :card_color="shipment_summary_color(state.data.lading)"
+                :card_color="utils.colors.color_for(shipment_summary_color(state.data.lading))"
                 :options="lading_summary_options(state.data.lading)"
                 >
                 <template v-slot:title>
@@ -94,7 +94,7 @@ const DeliveryShipment = {
             <item-detail-card v-if="state_is('validate')"
                 :key="make_state_component_key(['dock-detail', 123])"
                 :record="state.data.on_dock"
-                :card_color="shipment_summary_color(state.data.on_dock)"
+                :card_color="utils.colors.color_for(shipment_summary_color(state.data.on_dock))"
                 :options="ondock_summary(state.data.on_dock)"
                 >
                 <template v-slot:title>
@@ -184,6 +184,7 @@ const DeliveryShipment = {
                 key_title: "name",
                 title_action_icon: "mdi-help-circle",
                 on_title_action: this.state.on_back2picking,
+                theme_dark: this.operation_color(picking) === "error",
                 fields: [
                     {path: "carrier.name", label: "Carrier"},
                     {
@@ -265,7 +266,7 @@ const DeliveryShipment = {
                     color = "success";
                 }
             }
-            return this.utils.colors.color_for(color);
+            return color;
         },
         loaded_total: function(data, key) {
             // Return two value formatted has a fraction
@@ -285,6 +286,7 @@ const DeliveryShipment = {
         },
         lading_summary_options: function(data) {
             return {
+                theme_dark: this.shipment_summary_color(data) === "error",
                 fields: [
                     {
                         path: "dummy",
@@ -325,6 +327,7 @@ const DeliveryShipment = {
         },
         ondock_summary: function(data) {
             return {
+                theme_dark: this.shipment_summary_color(data) === "error",
                 fields: [
                     {
                         path: "total_pickings_count",
@@ -360,7 +363,7 @@ const DeliveryShipment = {
                     color = "success";
                 }
             }
-            return this.utils.colors.color_for(color);
+            return color;
         },
     },
     data: function() {
