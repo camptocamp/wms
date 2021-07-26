@@ -19,7 +19,7 @@ const DeliveryShipment = {
                 :input_placeholder="search_input_placeholder"
                 />
 
-              <v-row align="center" justify="center" v-if="state_is('loading_list')">
+              <v-row align="center" v-if="state_is('loading_list')">
                 <v-col class="text-center" cols="12">
                   <v-btn-toggle mandatory v-model="filter_state">
                     <v-btn active-class="success" value="lading" >
@@ -59,7 +59,7 @@ const DeliveryShipment = {
 
 
             <div v-if="state_is('scan_document')" v-for="(value, name, index) in this.state.data.content">
-                <v-card color="blue lighten-1" class="detail v-card mt-5 main">
+                <v-card color="blue lighten-1" class="detail v-card mt-5 main mb-2">
                     <v-card-title>{{ name }}</v-card-title>
                 </v-card>
                 <item-detail-card
@@ -186,12 +186,12 @@ const DeliveryShipment = {
                 on_title_action: this.state.on_back2picking,
                 fields: [
                     {path: "carrier.name", label: "Carrier"},
-                    {path: "move_line_count", label: "Lines", display_no_value: true},
                     {
                         path: "package_level_count",
                         label: "Packages",
                         display_no_value: true,
                     },
+                    {path: "move_line_count", label: "Lines", display_no_value: true},
                 ],
             };
         },
@@ -259,7 +259,11 @@ const DeliveryShipment = {
             } else if (pick.is_partially_loaded) {
                 color = "warning";
             } else {
-                color = "error";
+                if (this.state.data.shipment_advice.is_planned) {
+                    color = "error";
+                } else {
+                    color = "success";
+                }
             }
             return this.utils.colors.color_for(color);
         },
