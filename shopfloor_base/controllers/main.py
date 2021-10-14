@@ -8,4 +8,4 @@ from odoo.addons.base_rest.controllers import main
 class ShopfloorController(main.RestController):
     _root_path = "/shopfloor/"
     _collection_name = "shopfloor.service"
-    _default_auth = "api_key"
+    _default_auth = "public"
