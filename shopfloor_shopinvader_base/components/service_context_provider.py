@@ -40,7 +40,8 @@ class ShopfloorInvaderServiceContextProvider(Component):
         partner_model = self.env["shopinvader.partner"]
         # TODO: this could depend on having real users or not.
         # For now, we rely on having a real user in Odoo.
-        partner = self.env.user.partner_id
+        # Note that this user != self.collection.env.user (tech user)
+        partner = self.request.env.user.partner_id
         s_partner = partner._get_invader_partner(self.collection)
         if s_partner:
             return s_partner
