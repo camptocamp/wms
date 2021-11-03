@@ -9,6 +9,7 @@
                 <page name="shopinvader" string="Shopinvader">
                     <group name="shop_main">
                         <field name="shopinvader_backend_id" />
+                        <field name="shopinvader_tech_user_id" />
                     </group>
                 </page>
             </page>
