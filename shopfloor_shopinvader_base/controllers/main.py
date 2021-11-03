@@ -32,8 +32,20 @@ class ShopfloorInvaderController(main.RestController):
         """
         collection = collection or request.env["shopfloor.app"].browse(app_id)
         # get shopinvader backend from current app
-        shopinvader_backend = collection.shopinvader_backend_id
-        if not shopinvader_backend:
+        backend = collection.shopinvader_backend_id
+        if collection.shopinvader_tech_user_id:
+            # Use a technical user to bypass issues like
+            #
+            # odoo.exceptions.AccessError:
+            # You are not allowed to access 'Sales Team' (crm.team) records.
+            # This operation is allowed for the following groups:
+            # - Sales/Administrator
+            # - Sales/User: Own Documents Only
+            # - User types/Internal User
+            #
+            # If you want to support real users updates you must give them proper rights.
+            backend = backend.with_user(collection.shopinvader_tech_user_id)
+        if not backend:
             # A not found will be raised later, just leave a trace for the poor devs :)
             _logger.error(
                 "No shopinvader backend found for collection: %s", str(collection)
@@ -41,9 +53,5 @@ class ShopfloorInvaderController(main.RestController):
         # TODO: in base_rest `*args` is passed based on the type of route
         # (eg: /<int:id>/update)
         return self._process_method(
-            service_name,
-            service_method_name,
-            *args,
-            collection=shopinvader_backend,
-            params=kwargs
+            service_name, service_method_name, *args, collection=backend, params=kwargs
         )
