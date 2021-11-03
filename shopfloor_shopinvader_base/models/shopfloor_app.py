@@ -13,6 +13,15 @@ class ShopfloorApp(models.Model):
         comodel_name="shopinvader.backend",
         string="Shopinvader Backend",
     )
+    shopinvader_tech_user_id = fields.Many2one(
+        comodel_name="res.users",
+        string="Shopinvader Tech User",
+        help="""
+        If this user is not set,
+        you'll have to ensure that every app user calling shop services
+        is allowed to handle sale records (eg: sale.order write).
+        """,
+    )
 
     shop_api_route = fields.Char(compute="_compute_shop_api_route")
 
