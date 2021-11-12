@@ -12,6 +12,11 @@
     "author": "Camptocamp, Odoo Community Association (OCA)",
     "maintainer": ["simahawk"],
     "license": "AGPL-3",
-    "depends": ["shopfloor_base", "shopinvader"],
+    "depends": ["shopfloor_base", "shopinvader", "sales_team"],
     "data": ["views/shopfloor_app.xml"],
+    "demo": [
+        "demo/res_users_demo.xml",
+        "demo/shopfloor_app_demo.xml",
+        "demo/tech_user_demo.xml",
+    ],
 }

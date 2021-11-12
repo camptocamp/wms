@@ -1,0 +1,16 @@
+<odoo>
+    <record id="invader_tech_user_demo" model="res.users">
+        <field
+            name="groups_id"
+            eval="[(6,0,[
+            ref('base.group_user'),
+            ref('base.group_system'),
+            ref('shopinvader.group_shopinvader_manager'),
+            ref('sales_team.group_sale_manager'),
+        ])]"
+        />
+        <field name="name">shopfloor shopinvader technical user</field>
+        <field name="email">shopfloor.invader.tech@shopfloor.com</field>
+        <field name="login">shopfloor.invader.tech.demo</field>
+    </record>
+</odoo>
