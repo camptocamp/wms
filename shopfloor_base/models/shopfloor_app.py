@@ -57,6 +57,12 @@ class ShopfloorApp(models.Model):
     auth_type = fields.Selection(
         selection="_selection_auth_type", default="user_endpoint"
     )
+    registered_routes = fields.Text(
+        compute="_compute_registered_routes",
+        compute_sudo=True,
+        help="Technical field to allow developers to check registered routes on the form",
+        groups="base.group_no_one",
+    )
 
     _sql_constraints = [("tech_name", "unique(tech_name)", "tech_name must be unique")]
 
@@ -74,6 +80,12 @@ class ShopfloorApp(models.Model):
     def _compute_url(self):
         for rec in self:
             rec.url = rec._base_url_path + rec.tech_name
+
+    @api.depends("tech_name")
+    def _compute_registered_routes(self):
+        for rec in self:
+            routes = rec._registered_routes()
+            rec.registered_routes = "\n".join(sorted([x[1].rule for x in routes]))
 
     def _selection_auth_type(self):
         return self.env["endpoint.route.handler"]._selection_auth_type()
