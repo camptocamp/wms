@@ -88,6 +88,12 @@ class TestShopfloorApp(CommonCase):
                 _check[route], method, f"{route}: {method} != {_check[route]}"
             )
 
+        expected = sorted(expected.keys())
+        rec.invalidate_cache(["registered_routes"])
+        self.assertEqual(
+            rec.registered_routes.splitlines(), expected, f"{rec.tech_name} failed"
+        )
+
     def test_registered_routes(self):
         rec1, rec2 = self.records
         self._test_registered_routes(rec1)
