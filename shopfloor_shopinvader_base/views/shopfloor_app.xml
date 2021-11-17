@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="shopfloor_app_form_view" model="ir.ui.view">
+        <field name="name">shopfloor app form</field>
+        <field name="model">shopfloor.app</field>
+        <field name="inherit_id" ref="shopfloor_base.shopfloor_app_form_view" />
+        <field name="arch" type="xml">
+            <page name="main" position="after">
+                <page name="shopinvader" string="Shopinvader">
+                    <group name="shop_main">
+                        <field name="shopinvader_backend_id" />
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>
