@@ -21,3 +21,10 @@ class ShopfloorApp(models.Model):
 
     def _allowed_api_key_ids(self):
         return self.auth_api_key_group_ids.auth_api_key_ids.ids
+
+    def action_manage_api_key_groups(self):
+        action = self.env.ref(
+            "auth_api_key_group.auth_api_key_group_act_window"
+        ).read()[0]
+        action["domain"] = [("id", "in", self.auth_api_key_group_ids.ids)]
+        return action
