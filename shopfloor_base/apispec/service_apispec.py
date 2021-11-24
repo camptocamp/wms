@@ -6,6 +6,9 @@ from odoo.http import request
 from odoo.addons.base_rest.apispec.base_rest_service_apispec import (
     BaseRestServiceAPISpec,
 )
+from odoo.addons.base_rest.apispec.rest_method_security_plugin import (
+    RestMethodSecurityPlugin,
+)
 
 
 class ShopfloorRestServiceAPISpec(BaseRestServiceAPISpec):
@@ -32,3 +35,12 @@ class ShopfloorRestServiceAPISpec(BaseRestServiceAPISpec):
                 )
             }
         ]
+
+    def _get_plugins(self):
+        plugins = super()._get_plugins()
+        for plugin in plugins:
+            if isinstance(plugin, RestMethodSecurityPlugin):
+                # Add `user_endpoint` to auth types
+                plugin._supported_user_auths = ("user", "user_endpoint")
+                break
+        return plugins
