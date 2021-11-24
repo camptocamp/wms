@@ -16,6 +16,32 @@
                 t-attf-src="/#{mod_name}/static/wms/src/products.js?v=#{get_version(mod_name)}"
                 type="module"
             />
+            <script
+                id="script_page_shop_cart"
+                t-attf-src="/#{mod_name}/static/wms/src/cart.js?v=#{get_version(mod_name)}"
+                type="module"
+            />
+            <script
+                id="script_page_shop_orders"
+                t-attf-src="/#{mod_name}/static/wms/src/orders.js?v=#{get_version(mod_name)}"
+                type="module"
+            />
+            <script
+                id="script_component_cart_list"
+                t-attf-src="/#{mod_name}/static/wms/src/cart_list.js?v=#{app_info['version']}"
+                type="module"
+            />
+            <script
+                id="script_component_cart_utils"
+                t-attf-src="/#{mod_name}/static/wms/src/utils_cart.js?v=#{app_info['version']}"
+                type="module"
+            />
+            <link
+                id="link_css_shopinvader"
+                t-attf-href="/#{mod_name}/static/wms/src/css/main.css?v=#{mod_version}"
+                rel="stylesheet"
+            />
+
         </t>
     </template>
 </odoo>
