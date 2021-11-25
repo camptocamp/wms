@@ -14,11 +14,19 @@
     "maintainers": ["guewen", "simahawk", "sebalix"],
     "license": "LGPL-3",
     "application": True,
-    "depends": ["base_jsonify", "base_rest", "base_sparse_field", "auth_api_key"],
+    "depends": [
+        "base_jsonify",
+        "base_rest",
+        "base_sparse_field",
+        "auth_api_key",  # FIXME: remove
+        "endpoint_route_handler",
+    ],
     "data": [
         "data/module_category_data.xml",
+        "data/shopfloor_app_data.xml",
         "security/groups.xml",
         "security/ir.model.access.csv",
+        "views/shopfloor_app.xml",
         "views/shopfloor_menu.xml",
         "views/shopfloor_scenario_views.xml",
         "views/shopfloor_profile_views.xml",
