@@ -4,7 +4,7 @@
  * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
  */
 
-import store from "./store/index.js";
+import store from "/shopfloor_mobile_base/static/wms/src/store/index.js";
 
 import CartModule from "./store/modules/cart_store.js";
 import {translation_registry} from "/shopfloor_mobile_base/static/wms/src/services/translation_registry.js";

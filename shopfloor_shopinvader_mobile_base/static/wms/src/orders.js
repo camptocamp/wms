@@ -1,7 +1,7 @@
 import {process_registry} from "/shopfloor_mobile_base/static/wms/src/services/process_registry.js";
 import {translation_registry} from "/shopfloor_mobile_base/static/wms/src/services/translation_registry.js";
 
-import store from "./store/index.js";
+import store from "/shopfloor_mobile_base/static/wms/src/store/index.js";
 
 import OrderModule from "./store/modules/order_store.js";
 
