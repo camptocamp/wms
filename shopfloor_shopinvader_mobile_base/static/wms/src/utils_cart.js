@@ -1,5 +1,5 @@
 import {utils_registry} from "/shopfloor_mobile_base/static/wms/src/services/utils_registry.js";
-import store from "./store/index.js";
+import store from "/shopfloor_mobile_base/static/wms/src/store/index.js";
 
 export class CartUtils {
     get_cart() {
