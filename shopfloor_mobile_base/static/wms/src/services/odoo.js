@@ -15,23 +15,27 @@ export class OdooMixin {
     }
     call(path, data, method = "POST", fullpath = false) {
         const endpoint = fullpath ? path : this.usage + "/" + path;
-        return this._call(endpoint, method, data);
+        const routing_info = {endpoint: endpoint, path: path, fullpath: fullpath};
+        return this._call(routing_info, method, data);
     }
     post(path, data, fullpath = false) {
         if (_.isArray(path)) {
             path = path.join("/");
         }
         const endpoint = fullpath ? path : this.usage + "/" + path;
-        return this._call(endpoint, "POST", data);
+        const routing_info = {endpoint: endpoint, path: path, fullpath: fullpath};
+        return this._call(routing_info, "POST", data);
     }
     get(path, data, fullpath = false) {
         if (_.isArray(path)) {
             path = path.join("/");
         }
         const endpoint = fullpath ? path : this.usage + "/" + path;
-        return this._call(endpoint, "GET", data);
+        const routing_info = {endpoint: endpoint, path: path, fullpath: fullpath};
+        return this._call(routing_info, "GET", data);
     }
-    _call(endpoint, method, data) {
+    _call(routing_info, method, data) {
+        const endpoint = routing_info.endpoint;
         if (this.debug) {
             console.log("CALL", endpoint);
         }
@@ -115,7 +119,8 @@ export class OdooMocked extends OdooMixin {
     _set_demo_data() {
         this.demo_data = demotools.get_case(this.usage);
     }
-    call(path, data, method = "POST", fullpath = false) {
+    _call(routing_info, method, data) {
+        const path = routing_info.path;
         this._set_demo_data();
         console.log("CALL:", path, this.usage);
         console.dir("CALL data:", data);
