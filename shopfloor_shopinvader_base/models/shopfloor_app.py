@@ -45,6 +45,8 @@ class ShopfloorApp(models.Model):
         return comp_registry and comp_registry.ready
 
     def _get_shop_services(self):
+        if not self._is_component_registry_ready():
+            return []
         return self.env["rest.service.registration"]._get_services(
             "shopinvader.backend"
         )
