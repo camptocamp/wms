@@ -11,6 +11,7 @@ from ..controllers.main import ShopfloorInvaderController
 class ShopfloorApp(models.Model):
     _inherit = "shopfloor.app"
 
+    category = fields.Selection(selection_add=[("shop", "Shop")])
     shopinvader_backend_id = fields.Many2one(
         comodel_name="shopinvader.backend",
         string="Shopinvader Backend",
