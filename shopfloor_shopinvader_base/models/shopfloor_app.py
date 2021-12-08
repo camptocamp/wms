@@ -39,6 +39,8 @@ class ShopfloorApp(models.Model):
 
     def _generate_shop_endpoints(self, service):
         values = self._generate_endpoints_values(service, self.shop_api_route)
-        rest_endpoint_handler = ShopfloorInvaderController()._process_method
         for vals in values:
+            rest_endpoint_handler = (
+                ShopfloorInvaderController()._process_shopinvader_endpoint
+            )
             self._generate_endpoints_routes(service, rest_endpoint_handler, vals)
