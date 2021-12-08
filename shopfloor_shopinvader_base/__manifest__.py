@@ -15,8 +15,8 @@
     "depends": ["shopfloor_base", "shopinvader", "sales_team"],
     "data": ["views/shopfloor_app.xml"],
     "demo": [
+        "demo/tech_user_demo.xml",
         "demo/res_users_demo.xml",
         "demo/shopfloor_app_demo.xml",
-        "demo/tech_user_demo.xml",
     ],
 }
