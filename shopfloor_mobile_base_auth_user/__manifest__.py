@@ -13,5 +13,8 @@
     "maintainer": ["simahawk"],
     "license": "AGPL-3",
     "depends": ["shopfloor_mobile_base", "base_rest_auth_user_service"],
-    "data": ["demo/shopfloor_app_demo.xml"],
+    "data": [
+        "demo/shopfloor_app_demo.xml",
+        "templates/assets.xml",
+    ],
 }
