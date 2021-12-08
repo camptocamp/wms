@@ -18,5 +18,5 @@
         # Needed because we assume we have real odoo users
         "shopfloor_mobile_base_auth_user",
     ],
-    "data": ["templates/assets.xml"],
+    "data": [],
 }
