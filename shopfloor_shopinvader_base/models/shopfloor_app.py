@@ -38,6 +38,8 @@ class ShopfloorApp(models.Model):
         self.env["rest.service.registration"]._register_rest_route(self.shop_api_route)
 
     def _get_shop_services(self):
+        if not self._is_component_registry_ready():
+            return []
         return self.env["rest.service.registration"]._get_services(
             "shopinvader.backend"
         )
