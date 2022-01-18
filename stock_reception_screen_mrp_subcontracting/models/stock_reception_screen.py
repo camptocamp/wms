@@ -7,7 +7,7 @@ from odoo import models
 class StockReceptionScreen(models.Model):
     _inherit = "stock.reception.screen"
 
-    def _split_move(self, move, qty):
+    def _split_move_2(self, move, qty):
         # Overridden to remove the link between the move of finished product
         # and the move to receive to ease the split
         move_is_subcontract = move.is_subcontract
@@ -30,13 +30,13 @@ class StockReceptionScreen(models.Model):
                 self.picking_id.action_assign()
         return res
 
-    def _action_done_move(self, move):
+    def _action_done_move_2(self, move):
         if move.is_subcontract:
             move = move.with_context(cancel_backorder=False)
         res = super()._action_done_move(move)
         return res
 
-    def _action_done_picking(self):
+    def _action_done_picking_2(self):
         # Overridden to unlink existing move lines of finished products
         # as it is done in 'picking.action_done' in module 'mrp_subcontracting',
         # but here we do this only one time and not each time we iterate on
