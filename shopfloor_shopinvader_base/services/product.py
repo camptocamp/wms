@@ -30,6 +30,9 @@ class ProductService(Component):
     def search(self, **params):
         return self._paginate_search(**params)
 
+    def _get_base_search_domain(self):
+        return [("backend_id", "=", self.shopinvader_backend.id)]
+
     # The following method are 'private' and should be never never NEVER call
     # from the controller.
     # All params are trusted as they have been checked before
