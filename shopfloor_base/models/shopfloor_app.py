@@ -126,7 +126,8 @@ class ShopfloorApp(models.Model):
         }
 
     def action_view_menu_items(self):
-        action = self.env.ref("shopfloor_base.action_shopfloor_menu").read()[0]
+        xid = "shopfloor_base.action_shopfloor_menu"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xid)
         action["domain"] = [
             "|",
             ("id", "in", self.profile_ids.menu_ids.ids),
