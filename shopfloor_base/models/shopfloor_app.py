@@ -99,7 +99,7 @@ class ShopfloorApp(models.Model):
     def _compute_registered_routes(self):
         for rec in self:
             routes = rec._registered_routes()
-            rec.registered_routes = "\n".join(sorted([x[1].rule for x in routes]))
+            rec.registered_routes = "\n".join(sorted([x[1].route for x in routes]))
 
     @api.depends("profile_ids")
     def _compute_profile_required(self):
