@@ -47,7 +47,7 @@ class ShopfloorPickingFormValidator(Component):
 
     def get(self):
         return {
-            "id": {"rename": "_id"},
+            "id": {"type": "integer", "rename": "_id"},
             "_id": {"type": "integer"},
         }
 
