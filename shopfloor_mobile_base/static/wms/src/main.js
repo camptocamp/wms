@@ -185,7 +185,7 @@ new Vue({
                     self.authenticated = true;
                     self.$storage.set("appconfig", self.appconfig);
                 }
-                event_hub.$emit("app.sync:update", {root: this, sync_data: result});
+                event_hub.$emit("app.sync:update", {root: self, sync_data: result});
                 return result;
             });
         },
