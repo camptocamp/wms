@@ -79,11 +79,9 @@ class TestSearchCase(TestSearchBaseCase):
         )
         handler = self.search.lot_from_scan
         self.assertEqual(handler(lots[0].name, products=self.product_a), lots[0])
-        self.assertEqual(handler(lots[0].name, products=self.product_b), lot_model)
+        self.assertEqual(handler(lots[1].name, products=self.product_a), lots[0])
+        self.assertEqual(handler(lots[0].name, products=self.product_b), lots[1])
         self.assertEqual(handler(lots[1].name, products=self.product_b), lots[1])
-        self.assertEqual(handler(lots[1].name, products=self.product_a), lot_model)
-        self.assertEqual(handler(False), lot_model)
-        self.assertEqual(handler("NONE"), lot_model)
 
     def test_search_generic_packaging(self):
         rec = (
