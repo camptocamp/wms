@@ -119,6 +119,9 @@ class DeliveryShipment(Component):
         scanned_package = search.package_from_scan(barcode)
         if scanned_package:
             return self._scan_package(shipment_advice, scanned_package)
+        # FIXME: limit the search of lots to relevant products as a lot number
+        # can be shared by several products
+        # (from shipment or lot in current location?)
         scanned_lot = search.lot_from_scan(barcode)
         if scanned_lot:
             return self._scan_lot(shipment_advice, scanned_lot)
