@@ -307,7 +307,7 @@ class TestConsolidationPriority(SavepointCase):
             picking.priority == PROCUREMENT_PRIORITIES[0][0]
             for picking in unchanged_pickings
         )
-        self.assertTrue(changed_ok, unchanged_ok)
+        self.assertTrue(changed_ok and unchanged_ok)
 
     def assert_default_priority(self):
         self.assert_priority(
