@@ -324,6 +324,7 @@ class StockMove(models.Model):
                 backorder_links[new_move.picking_id] = move.picking_id
 
             values = move._prepare_procurement_values()
+
             procurement_requests.append(
                 self.env["procurement.group"].Procurement(
                     move.product_id,
@@ -371,6 +372,11 @@ class StockMove(models.Model):
             moves = moves.mapped("move_orig_ids")
         pickings = self.env["stock.picking"].browse(picking_ids)
         pickings._after_release_update_chain()
+        # Set the highest priority on all pickings in the chain
+        highest_priorities = pickings.mapped("priority")
+        if highest_priorities:
+            highest_priorities.sort()
+            pickings.write({"priority": highest_priorities[-1]})
 
     def _after_release_assign_moves(self):
         moves = self
@@ -403,3 +409,10 @@ class StockMove(models.Model):
         new_move._assign_picking()
 
         return new_move.with_context(context)
+
+    def _assign_picking_post_process(self, new=False):
+        super()._assign_picking_post_process(new)
+        highest_priorities = self.mapped("move_dest_ids.picking_id.priority")
+        if highest_priorities:
+            highest_priorities.sort()
+            self.picking_id.write({"priority": highest_priorities[-1]})
