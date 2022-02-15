@@ -17,6 +17,7 @@ import {auth_handler_registry} from "./services/auth_handler_registry.js";
 import {Odoo, OdooMocked} from "./services/odoo.js";
 import event_hub from "./services/event_hub.js";
 import VueSuperMethod from "./lib/vue-super-call.min.js";
+import store from "./store/index.js";
 
 Vue.prototype.$super = VueSuperMethod;
 
@@ -52,6 +53,7 @@ config_registry.add("authenticated", {default: false, reset_on_clear: true});
 new Vue({
     i18n,
     router: router,
+    store,
     vuetify: new Vuetify({
         theme: {
             themes: color_registry.get_themes(),
