@@ -55,18 +55,26 @@ class CommonCase(SavepointCase, RegistryMixin, ComponentMixin):
     maxDiff = None
 
     @contextmanager
-    def work_on_services(self, env=None, **params):
+    def work_on_services(self, collection=None, env=None, **params):
         params = params or {}
-        collection = _PseudoCollection("shopfloor.service", env or self.env)
         yield WorkContext(
             model_name="rest.service.registration",
-            collection=collection,
+            collection=collection or self.shopfloor_app,
             # No need for a real request mock
             # as we don't deal w/ real request for testing
             # but base_rest context provider needs it.
             request=mock.Mock(),
             **params
         )
+
+    def get_service(self, usage, env=None, **kw):
+        with self.work_on_services(env=env, **kw) as work:
+            service = work.component(usage=usage)
+            # Thanks to shopfloor.app we don't need controllers
+            # but not having a controller means that non decorated methods
+            # stay undecorated as they are not fixed at startup by base_rest.
+            self.env["shopfloor.app"]._prepare_non_decorated_endpoints(service)
+            return service
 
     @contextmanager
     def work_on_actions(self, **params):
@@ -96,6 +104,9 @@ class CommonCase(SavepointCase, RegistryMixin, ComponentMixin):
             )
         )
 
+        cls.shopfloor_app = cls.env["shopfloor.app"].search(
+            [("tech_name", "=", "default")], limit=1
+        )
         cls.setUpComponent()
         cls.setUpRegistry()
         cls.setUpClassUsers()
