@@ -49,13 +49,12 @@ class UserCase(CommonMenuCase):
 
     def setUp(self):
         super().setUp()
-        with self.work_on_services(profile=self.profile) as work:
-            self.service = work.component(usage="user")
+        self.service = self.get_service("user", profile=self.profile)
 
     def test_menu_no_profile(self):
         """Request /user/menu"""
         # Simulate the client asking the menu w/out profile -> no menu
-        self.service.work.profile = self.env["shopfloor.menu"].browse()
+        self.service.profile = self.env["shopfloor.menu"].browse()
         response = self.service.dispatch("menu")
         self.assert_response(
             response,
@@ -74,7 +73,7 @@ class UserCase(CommonMenuCase):
         )
 
         # now all the rest but the 1st one
-        self.service.work.profile = self.profile2
+        self.service.profile = self.profile2
         menus = self.env["shopfloor.menu"].sudo().search([]) - expected_menu
         menus.sudo().profile_id = self.profile2
         response = self.service.dispatch("menu")
