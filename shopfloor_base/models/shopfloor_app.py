@@ -239,7 +239,9 @@ class ShopfloorApp(models.Model):
 
     def _prepare_endpoint_vals(self, service, method_name, route, routing_params):
         request_method = routing_params["methods"][0]
-        name = f"{self.tech_name}::{service._name}/{method_name}__{request_method.lower()}"
+        name = (
+            f"{self.tech_name}::{service._name}/{method_name}__{request_method.lower()}"
+        )
         endpoint_vals = dict(
             name=name,
             request_method=request_method,
