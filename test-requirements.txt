@@ -1,2 +1,6 @@
 freezegun
 odoo_test_helper
+
+odoo14-addon-l10n_eu_product_adr @ git+https://github.com/OCA/community-data-files@refs/pull/109/head#subdirectory=setup/l10n_eu_product_adr
+odoo14-addon-l10n_eu_product_adr_dangerous_goods @ git+https://github.com/OCA/community-data-files@refs/pull/118/head#subdirectory=setup/l10n_eu_product_adr_dangerous_goods
+odoo14-addon-stock_dangerous_goods @ git+https://github.com/OCA/stock-logistics-workflow@refs/pull/937/head#subdirectory=setup/stock_dangerous_goods
