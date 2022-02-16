@@ -98,8 +98,11 @@ class ShopfloorApp(models.Model):
     @api.depends("tech_name")
     def _compute_registered_routes(self):
         for rec in self:
-            routes = rec._registered_routes()
-            rec.registered_routes = "\n".join(sorted([x[1].route for x in routes]))
+            routes = sorted(rec._registered_routes())
+            vals = []
+            for __, endpoint_rule in routes:
+                vals.append(f"{endpoint_rule.route} ({', '.join(endpoint_rule.routing['methods'])})")
+            rec.registered_routes = "\n".join(vals)
 
     @api.depends("profile_ids")
     def _compute_profile_required(self):
