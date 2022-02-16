@@ -236,10 +236,10 @@ class ShopfloorApp(models.Model):
         # {'route': ['/shopfloor/test/app/user_config'],
         #  'methods': ['POST'], 'name': 'test::shopfloor.service.app:post_user_config',
         #  'request_method': 'POST'}]
-        name = f"{self.tech_name}::{service._name}:{method_name}"  # + what?
-        request_method = routing_params["methods"][
-            0
-        ]  # TODO: shall we create 1 per method?
+        request_method = routing_params["methods"][0]
+        name = (
+            f"{self.tech_name}::{service._name}:{method_name}_{request_method.lower()}"
+        )
         endpoint_vals = dict(
             name=name,
             request_method=request_method,

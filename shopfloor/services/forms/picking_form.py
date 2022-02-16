@@ -47,12 +47,16 @@ class ShopfloorPickingFormValidator(Component):
 
     def get(self):
         return {
+            # TODO @simahawk: remove the need for this
             "id": {"type": "integer", "rename": "_id"},
             "_id": {"type": "integer"},
         }
 
     def update(self):
         return {
+            # TODO @simahawk: remove the need for this
+            "id": {"type": "integer", "rename": "_id"},
+            "_id": {"type": "integer"},
             "carrier_id": {"type": "integer", "required": True},
         }
 
