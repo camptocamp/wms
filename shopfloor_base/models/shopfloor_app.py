@@ -101,7 +101,9 @@ class ShopfloorApp(models.Model):
             routes = sorted(rec._registered_routes())
             vals = []
             for __, endpoint_rule in routes:
-                vals.append(f"{endpoint_rule.route} ({', '.join(endpoint_rule.routing['methods'])})")
+                vals.append(
+                    f"{endpoint_rule.route} ({', '.join(endpoint_rule.routing['methods'])})"
+                )
             rec.registered_routes = "\n".join(vals)
 
     @api.depends("profile_ids")
