@@ -42,7 +42,8 @@ class ProductService(Component):
 
     def _to_json(self, records):
         # TODO: not super-efficient w/ many records
-        return [rec._get_shop_data() for rec in records]
+        # only if used w/ `shopinvader_data_stored`
+        return [rec.get_shop_data() for rec in records]
 
     # Validator
     def _validator_get(self):
