@@ -74,10 +74,15 @@ const router = new VueRouter({
 });
 router.beforeEach(async (to, from, next) => {
     await Vue.nextTick();
+    // FIXME: for shopinvader to work we need a user.
+    // To have a user we must log in or have an api key.
+    // Hence, either we turn on login for demo mode
+    // or we find another solution.
+    // &&
+    // !router.app.demo_mode
     if (
         !router.app.is_authenticated() &&
-        to.meta.requiresAuth &&
-        !router.app.demo_mode
+        to.meta.requiresAuth
     ) {
         next("login");
     } else {
