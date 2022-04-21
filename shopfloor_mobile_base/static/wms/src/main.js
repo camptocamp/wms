@@ -48,6 +48,7 @@ register_app_components(page_registry.all());
 config_registry.add("profile", {default: {}, reset_on_clear: true});
 config_registry.add("appmenu", {default: [], reset_on_clear: true});
 config_registry.add("authenticated", {default: false, reset_on_clear: true});
+config_registry.add("language", {default: "", reset_on_clear: false});
 
 new Vue({
     i18n,
@@ -81,6 +82,19 @@ new Vue({
         });
         document.addEventListener("fetchEnd", function () {
             self.loading = false;
+        });
+    },
+    beforeMount: function () {
+        const lang = this.language;
+        if (lang) {
+            // If a specific language is stored as app language,
+            // use it as locale instead of the default one
+            this.$i18n.locale = lang;
+        }
+        event_hub.$on("language:update", (lang_id) => {
+            // When the user updates the language in the app,
+            // store it so that it is used in the future
+            this.$set(this, "language", lang_id);
         });
     },
     mounted: function () {
