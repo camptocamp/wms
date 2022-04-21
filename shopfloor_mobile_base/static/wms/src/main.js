@@ -48,7 +48,7 @@ register_app_components(page_registry.all());
 config_registry.add("profile", {default: {}, reset_on_clear: true});
 config_registry.add("appmenu", {default: [], reset_on_clear: true});
 config_registry.add("authenticated", {default: false, reset_on_clear: true});
-config_registry.add("language", {default: "", reset_on_clear: false});
+config_registry.add("current_language", {default: "", reset_on_clear: false});
 
 new Vue({
     i18n,
@@ -85,16 +85,16 @@ new Vue({
         });
     },
     beforeMount: function () {
-        const lang = this.language;
-        if (lang) {
+        const lang_id = this.current_language;
+        if (lang_id) {
             // If a specific language is stored as app language,
             // use it as locale instead of the default one
-            this.$i18n.locale = lang;
+            this.switch_language(lang_id);
         }
         event_hub.$on("language:update", (lang_id) => {
             // When the user updates the language in the app,
             // store it so that it is used in the future
-            this.$set(this, "language", lang_id);
+            this.switch_language(lang_id);
         });
     },
     mounted: function () {
@@ -309,6 +309,10 @@ new Vue({
                 // Register them wisely.
                 extra_nav: extra_nav,
             };
+        },
+        switch_language: function (lang_id) {
+            this.$i18n.locale = lang_id;
+            this.$set(this, "current_language", lang_id);
         },
         /*
         Trigger and event on the event hub.

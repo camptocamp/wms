@@ -28,7 +28,6 @@ export var Language = {
     methods: {
         on_select: function (selected) {
             const self = this;
-            this.$i18n.locale = selected.id;
             event_hub.$emit("language:update", selected.id);
             self.$root.$router.push("/");
         },
