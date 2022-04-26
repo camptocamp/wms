@@ -1,0 +1,38 @@
+[
+  {
+    "id": "en-US",
+    "language_en_name": "English",
+    "scan": "scan",
+    "home": "home",
+    "settings": "settings",
+    "language": "language - English",
+    "profile": "profile -",
+    "logout": "logout",
+    "back": "back",
+    "profile_configure": "configure profile"
+  },
+  {
+    "id": "fr-FR",
+    "language_en_name": "French",
+    "scan": "scanner",
+    "home": "page d'accueil",
+    "settings": "paramètres",
+    "language": "langue - Français",
+    "profile": "profil -",
+    "logout": "se déconnecter",
+    "back": "retour",
+    "profile_configure": "configurer le profil"
+  },
+  {
+    "id": "de-DE",
+    "language_en_name": "German",
+    "scan": "gescannt",
+    "home": "startseite",
+    "settings": "einstellungen",
+    "language": "sprache - Deutsch",
+    "profile": "profil -",
+    "logout": "ausloggen",
+    "back": "zurück",
+    "profile_configure": "profil konfigurieren"
+  }
+]
