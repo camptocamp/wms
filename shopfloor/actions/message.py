@@ -466,7 +466,7 @@ class MessageAction(Component):
 
     def location_empty(self, location):
         return {
-            "message_type": "info",
+            "message_type": "error",
             "body": _("Location {} empty").format(location.name),
         }
 
