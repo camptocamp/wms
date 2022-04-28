@@ -15,11 +15,11 @@
 
 // Import commands.js using ES2015 syntax:
 import "./commands";
-
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
 //// CUSTOM ////
+import "@cypress/code-coverage/support";
 
-// Clears the session storage at before running the test suite
+// Clears the session storage before running the test suite
 sessionStorage.clear();
