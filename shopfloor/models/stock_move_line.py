@@ -49,8 +49,7 @@ class StockMoveLine(models.Model):
                     - move line with source location LOC2
                     - move line with source location LOC2
 
-        Return the new picking (in case a split has been made), or the current
-        related pickings.
+        Return the pickings containing the given move lines.
         """
         location_src_to_process = self.location_id
         if location_src_to_process and len(location_src_to_process) != 1:
@@ -60,7 +59,7 @@ class StockMoveLine(models.Model):
         pickings = self.picking_id
         move_lines_to_process_ids = []
         for picking in pickings:
-            location_src = picking.mapped("move_line_ids.location_id")
+            location_src = picking.move_line_ids.location_id
             if len(location_src) == 1:
                 continue
             # Get the related move lines among the picking and split them
@@ -95,15 +94,29 @@ class StockMoveLine(models.Model):
                 'data-oe-model="stock.picking" '
                 'data-oe-id="%d">%s</a> has been created.'
             ) % (new_picking.id, new_picking.name)
-            for pick in pickings:
+            for pick in move_lines_to_process.picking_id:
                 pick.message_post(body=message)
             new_moves.write({"picking_id": new_picking.id})
-            new_moves.mapped("move_line_ids").write({"picking_id": new_picking.id})
+            new_moves.move_line_ids.write({"picking_id": new_picking.id})
             new_moves.move_line_ids.package_level_id.write(
                 {"picking_id": new_picking.id}
             )
             new_moves._action_assign()
-            pickings = new_picking
+        return self.picking_id
+
+    def _split_pickings_from_assigned(self):
+        """Ensure that the related pickings will only contain fully reserved moves.
+
+        This prevents to have new move lines created while processing the picking.
+        """
+        pickings = self.picking_id
+        new_picking_ids = []
+        for picking in pickings:
+            #   -> put move lines to process in their own move/transfer
+            new_picking_id = picking.split_assigned_move_lines(self)
+            new_picking_ids.append(new_picking_id)
+        if new_picking_ids != pickings.ids:
+            pickings = pickings.browse(new_picking_ids)
         return pickings
 
     def _split_qty_to_be_done(self, qty_done, split_partial=True, **split_default_vals):

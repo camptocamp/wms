@@ -318,36 +318,22 @@ class LocationContentTransfer(Component):
                         ),
                     }
                 )
-        # If there are different source locations, we put the move lines we are
-        # interested in in a separate picking.
-        # This is required as we can only deal within this scenario with pickings
-        # that share the same source location.
-        pickings = move_lines._split_pickings_from_source_location()
-        # Ensure we process move lines related to transfers having only one source
-        # location among all their move lines.
-        # We need to put the unreserved qty into separate moves as a new move
-        # line could be created in the middle of the process.
-        new_picking_ids = []
-        for picking in pickings:
-            #   -> put move lines to process in their own move/transfer
-            new_picking_id = picking.split_assigned_move_lines(move_lines)
-            new_picking_ids.append(new_picking_id)
-        if new_picking_ids != pickings.ids:
-            pickings = pickings.browse(new_picking_ids)
 
-        # If the following criteria are met:
-        #   - no move lines have been found
-        #   - the menu is configured to allow the creation of moves
-        #   - the menu is bind to one picking type
-        #   - scanned location is a valid source for one the menu's picking types
-        # then prepare new stock moves to move goods from the scanned location.
-        menu = self.work.menu
-        if (
-            not move_lines
-            and menu.allow_move_create
-            and len(self.picking_types) == 1
-            and self.is_src_location_valid(location)
-        ):
+        if move_lines:
+            # If there are different source locations, we put the move lines we are
+            # interested in in a separate picking.
+            # This is required as we can only deal within this scenario with pickings
+            # that share the same source location.
+            move_lines._split_pickings_from_source_location()
+            # We need to put the unreserved qty into separate moves as a new move
+            # line could be created in the middle of the process.
+            move_lines._split_pickings_from_assigned()
+        elif not self.is_allow_move_create():
+            savepoint.rollback()
+            return self._response_for_start(
+                message=self.msg_store.location_empty(location)
+            )
+        else:
             new_moves = self._create_moves_from_location(location)
             if not new_moves:
                 return self._response_for_start(
@@ -360,7 +346,6 @@ class LocationContentTransfer(Component):
                 return self._response_for_start(
                     message=self.msg_store.new_move_lines_not_assigned()
                 )
-            pickings = new_moves.mapped("picking_id")
             move_lines = new_moves.move_line_ids
             for move_line in move_lines:
                 if not self.is_dest_location_valid(
@@ -385,22 +370,16 @@ class LocationContentTransfer(Component):
                 message=self.msg_store.no_putaway_destination_available()
             )
 
-        if not pickings:
-            return self._response_for_start(
-                message=self.msg_store.location_empty(location)
-            )
-
         for line in move_lines:
             line.qty_done = line.product_uom_qty
             line.shopfloor_user_id = self.env.uid
-
-        pickings.user_id = self.env.uid
+        move_lines.picking_id.write({"user_id": self.env.uid})
 
         unreserved_moves._action_assign()
 
         savepoint.release()
 
-        return self._router_single_or_all_destination(pickings)
+        return self._router_single_or_all_destination(move_lines.picking_id)
 
     def _find_transfer_move_lines_domain(self, location):
         return [
