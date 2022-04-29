@@ -700,7 +700,9 @@ class ZonePicking(Component):
                 message=self.msg_store.package_not_empty(package),
             )
             return (package_changed, response)
-        if self._is_package_already_used(package):
+        package_already_used = self._is_package_already_used(package)
+        multiple_move_allowed = self.work.menu.multiple_move_single_pack
+        if package_already_used and not multiple_move_allowed:
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.package_already_used(package),
