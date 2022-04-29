@@ -11,6 +11,16 @@ If you tick this box, while picking goods from a location
 * in both cases, if the picking has no carrier the operation fails.",
 """
 
+UNLOAD_PACK_AT_DEST_HELP = """
+With this option, the lines you processed by putting on a package during the
+picking process will be put as bulk products at the final destination location.
+
+This is useful if your picking device is emptied at the destination location or
+if you want to provide bulk products to the next operation.
+
+Incompatible with: "Pick and pack at the same time"
+"""
+
 MULTIPLE_MOVE_SINGLE_PACK_HELP = """
 When picking a move,
 allow to set a destination package that was already used for the other lines.
@@ -87,6 +97,14 @@ class ShopfloorMenu(models.Model):
         default=False,
         help=MULTIPLE_MOVE_SINGLE_PACK_HELP,
     )
+    unload_package_at_destination_is_possible = fields.Boolean(
+        compute="_compute_unload_package_at_dest_is_possible"
+    )
+    unload_package_at_destination = fields.Boolean(
+        string="Unload package at destination",
+        default=False,
+        help=UNLOAD_PACK_AT_DEST_HELP,
+    )
 
     allow_force_reservation = fields.Boolean(
         string="Force stock reservation",
@@ -128,6 +146,13 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.pick_pack_same_time_is_possible = menu.scenario_id.has_option(
                 "pick_pack_same_time"
+            )
+
+    @api.depends("scenario_id")
+    def _compute_unload_package_at_dest_is_possible(self):
+        for menu in self:
+            menu.unload_package_at_destination_is_possible = (
+                menu.scenario_id.has_option("unload_package_at_destination")
             )
 
     @api.depends("scenario_id")
