@@ -9,11 +9,12 @@ import {translation_registry} from "../services/translation_registry.js";
 const messages_fr = {
     screen: {
         home: {
-            title: "Barcode scanner",
+            title: "Home",
+            main_title: "Home",
         },
         scan_anything: {
             name: "Scanner",
-            title: "Scanner {what}",
+            title: "Scan {what}",
         },
         settings: {
             home: {
