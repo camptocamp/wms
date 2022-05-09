@@ -57,7 +57,9 @@ config_registry.add("authenticated", {default: false, reset_on_clear: true});
 config_registry.add("current_language", {
     default: "",
     reset_on_clear: false,
-    storage_driver: "local",
+    storage: {
+        driver: "local",
+    },
 });
 
 new Vue({
@@ -82,6 +84,7 @@ new Vue({
     },
     beforeCreate: function () {
         config_registry._set_root(this);
+        config_registry._set_storage_defaults();
     },
     created: function () {
         const self = this;
