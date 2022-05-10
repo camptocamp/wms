@@ -288,10 +288,12 @@ class ShopfloorApp(models.Model):
 
     def _make_app_info(self, demo=False):
         base_url = self.api_route.rstrip("/") + "/"
+        url = self.url.rstrip("/") + "/"
         return DotDict(
             name=self.name,
             short_name=self.short_name,
             base_url=base_url,
+            url=url,
             manifest_url=self.url + "/manifest.json",
             auth_type=self.auth_type,
             profile_required=self.profile_required,
