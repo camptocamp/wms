@@ -20,10 +20,22 @@ class StoredConfig {
         this.key = key;
         this.default = meta.default;
         this.reset_on_clear = meta.reset_on_clear;
+        if (!_.isEmpty(meta.storage)) {
+            meta.storage.driver = this._check_storage_driver(meta.storage.driver);
+        }
         this.storage = meta.storage || {};
     }
     _safe_value(v) {
         return v === null ? this.default : v;
+    }
+    _check_storage_driver(driver) {
+        // TODO: these permitted types are hardcoded, matching the driver types of Vue2Storage.
+        // If possible, we should be able to get them from the library class instead.
+        const permitted_types = ["local", "session", "memory"];
+        if (permitted_types.includes(driver)) {
+            return driver;
+        }
+        return "";
     }
 }
 
@@ -160,13 +172,6 @@ export class ConfigRegistry {
         // we switch the vue2storage driver option to "local", we store / retrieve the value,
         // and then we revert to "session" for further use.
         // See example in documentation: https://github.com/yarkovaleksei/vue2-storage/blob/master/docs/en/started.md
-
-        // TODO: these permitted types are hardcoded, matching the driver types of Vue2Storage.
-        // If possible, we should be able to get them from the library class instead.
-        const permitted_types = ["local", "session", "memory"];
-        if (!permitted_types.includes(storage.driver)) {
-            return;
-        }
         this.root.$storage.setOptions({
             prefix: storage.prefix || this.storage_defaults.prefix,
             driver: storage.driver || this.storage_defaults.driver,
