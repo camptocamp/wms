@@ -292,6 +292,7 @@ class ShopfloorApp(models.Model):
             name=self.name,
             short_name=self.short_name,
             base_url=base_url,
+            url=self.url,
             manifest_url=self.url + "/manifest.json",
             auth_type=self.auth_type,
             profile_required=self.profile_required,
