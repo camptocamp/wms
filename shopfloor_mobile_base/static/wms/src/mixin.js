@@ -1,7 +1,7 @@
 /**
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
 
 import {utils_registry} from "./services/utils_registry.js";
@@ -28,7 +28,7 @@ export var GlobalMixin = {
             return utils_registry.all();
         },
         available_languages() {
-            return this.$root.available_languages;
+            return this.$root.available_languages();
         },
         active_language_code() {
             return this.$i18n.locale || "en-US";
@@ -38,6 +38,11 @@ export var GlobalMixin = {
                 ({id}) => id === this.active_language_code
             );
             return language ? language.name : "?";
+        },
+        app_options() {
+            return {
+                show_fullscreen_btn: this.$root.app_info.show_fullscreen_btn || false,
+            };
         },
     },
 };

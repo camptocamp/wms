@@ -6,7 +6,7 @@
 {
     "name": "Shopfloor",
     "summary": "manage warehouse operations with barcode scanners",
-    "version": "14.0.2.0.1",
+    "version": "14.0.2.1.2",
     "development_status": "Beta",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -18,7 +18,7 @@
         "shopfloor_base",
         "stock",
         "stock_picking_batch",
-        "base_jsonify",
+        "jsonifier",
         "base_rest",
         "base_sparse_field",
         #  OCA / stock-logistics-warehouse
