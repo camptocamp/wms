@@ -113,6 +113,7 @@ class TestShopfloorApp(CommonCase):
         expected = {
             "auth_type": "user_endpoint",
             "base_url": "/shopfloor/api/test/",
+            "url": "/shopfloor/app/test/",
             "demo_mode": False,
             "manifest_url": "/shopfloor/app/test/manifest.json",
             "name": "Test",
