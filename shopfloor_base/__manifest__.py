@@ -6,7 +6,7 @@
 {
     "name": "Shopfloor Base",
     "summary": "Core module for creating mobile apps",
-    "version": "14.0.2.0.0",
+    "version": "14.0.2.5.0",
     "development_status": "Beta",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -15,7 +15,7 @@
     "license": "LGPL-3",
     "application": True,
     "depends": [
-        "base_jsonify",
+        "jsonifier",
         "base_rest",
         "base_sparse_field",
         "endpoint_route_handler",

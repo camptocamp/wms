@@ -1,6 +1,10 @@
 # Copyright 2021 Camptocamp SA (http://www.camptocamp.com)
 # @author Simone Orsi <simahawk@gmail.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
+from odoo.tests.common import Form
+
+from odoo.addons.shopfloor_base.utils import APP_VERSION
+
 from .common import CommonCase
 
 
@@ -33,11 +37,11 @@ class TestShopfloorApp(CommonCase):
         expected = [
             {
                 "api_route": "/shopfloor/api/test_app",
-                "url": "/shopfloor/app/test_app",
+                "url": "/shopfloor/app/test_app/",
             },
             {
                 "api_route": "/shopfloor/api/test_app_2",
-                "url": "/shopfloor/app/test_app_2",
+                "url": "/shopfloor/app/test_app_2/",
             },
         ]
         # fmt: on
@@ -88,3 +92,64 @@ class TestShopfloorApp(CommonCase):
         self._test_registered_routes(rec1)
         self._test_registered_routes(rec2)
         # TODO: test after routing_map cleaned
+
+    def test_api_url_for_service(self):
+        app = self.shopfloor_app
+        self.assertEqual(
+            app.api_url_for_service("profile"),
+            f"/shopfloor/api/{app.tech_name}/profile",
+        )
+        self.assertEqual(
+            app.api_url_for_service("profile", "search"),
+            f"/shopfloor/api/{app.tech_name}/profile/search",
+        )
+        self.assertEqual(
+            app.api_url_for_service("app", "user_config"),
+            f"/shopfloor/api/{app.tech_name}/app/user_config",
+        )
+
+    def test_make_app_info(self):
+        info = self.shopfloor_app._make_app_info()
+        expected = {
+            "auth_type": "user_endpoint",
+            "base_url": "/shopfloor/api/test/",
+            "url": "/shopfloor/app/test/",
+            "demo_mode": False,
+            "manifest_url": "/shopfloor/app/test/manifest.json",
+            "name": "Test",
+            "profile_required": False,
+            "running_env": "prod",
+            "short_name": "test",
+            "version": APP_VERSION,
+            "lang": {
+                "default": False,
+                "enabled": [],
+            },
+        }
+        self.assertEqual(info, expected)
+        info = self.shopfloor_app._make_app_info(demo=True)
+        self.assertEqual(info["demo_mode"], True)
+        lang_en, lang_fr = self.env.ref("base.lang_en"), self.env.ref("base.lang_fr")
+        lang_fr.sudo().active = True
+        self.shopfloor_app.sudo().lang_id = lang_en
+        self.shopfloor_app.sudo().lang_ids = lang_en + lang_fr
+        info = self.shopfloor_app._make_app_info()
+        self.assertEqual(
+            info["lang"], {"default": "en-US", "enabled": ["en-US", "fr-FR"]}
+        )
+
+    def test_lang_onchanges(self):
+        lang_en, lang_fr = self.env.ref("base.lang_en"), self.env.ref("base.lang_fr")
+        lang_fr.sudo().active = True
+        form = Form(self.shopfloor_app)
+        # No avail langs
+        self.assertFalse(form.lang_id)
+        self.assertFalse(form.lang_ids)
+        form.lang_id = lang_en
+        # Avail langs updated
+        self.assertIn(lang_en, form.lang_ids)
+        # Replace avail w/ FR
+        form.lang_ids.add(lang_fr)
+        form.lang_ids.remove(lang_en.id)
+        # lang wiped out
+        self.assertFalse(form.lang_id)

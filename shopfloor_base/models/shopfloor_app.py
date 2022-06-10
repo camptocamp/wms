@@ -5,10 +5,13 @@ from functools import partial
 
 from odoo import api, fields, models
 from odoo.http import request
+from odoo.tools import DotDict
 
 from odoo.addons.base_rest.controllers.main import RestController
 from odoo.addons.base_rest.tools import _inspect_methods
 from odoo.addons.component.core import _component_databases
+
+from ..utils import APP_VERSION, RUNNING_ENV
 
 
 def _process_endpoint(
@@ -76,6 +79,13 @@ class ShopfloorApp(models.Model):
         "in case you don't need profiles and menu items from the backend.",
     )
     profile_required = fields.Boolean(compute="_compute_profile_required", store=True)
+    app_version = fields.Char(compute="_compute_app_version")
+    lang_id = fields.Many2one(
+        "res.lang",
+        string="Default language",
+        help="If set, the app will be first loaded with this lang.",
+    )
+    lang_ids = fields.Many2many("res.lang", string="Available languages")
 
     _sql_constraints = [("tech_name", "unique(tech_name)", "tech_name must be unique")]
 
@@ -92,7 +102,8 @@ class ShopfloorApp(models.Model):
     @api.depends("tech_name")
     def _compute_url(self):
         for rec in self:
-            rec.url = rec._base_url_path + rec.tech_name
+            full_url = rec._base_url_path + rec.tech_name
+            rec.url = full_url.rstrip("/") + "/"
             rec.api_docs_url = rec._base_api_docs_url_path + rec.tech_name
 
     @api.depends("tech_name")
@@ -111,8 +122,17 @@ class ShopfloorApp(models.Model):
         for rec in self:
             rec.profile_required = bool(rec.profile_ids)
 
+    def _compute_app_version(self):
+        # Override this to choose your own versioning policy
+        for rec in self:
+            rec.app_version = APP_VERSION
+
     def _selection_auth_type(self):
         return self.env["endpoint.route.handler"]._selection_auth_type()
+
+    def api_url_for_service(self, service_name, endpoint=None):
+        """Handy method to generate services' API URLs for current app."""
+        return f"{self.api_route}/{service_name}/{endpoint or ''}".rstrip("/")
 
     def action_open_app(self):
         return {
@@ -266,3 +286,47 @@ class ShopfloorApp(models.Model):
             # built, it calls odoo.modules.loading.load_modules().
             return []
         return self.env["rest.service.registration"]._get_services(self._name)
+
+    def _make_app_info(self, demo=False):
+        base_url = self.api_route.rstrip("/") + "/"
+        return DotDict(
+            name=self.name,
+            short_name=self.short_name,
+            base_url=base_url,
+            url=self.url,
+            manifest_url=self.url + "manifest.json",
+            auth_type=self.auth_type,
+            profile_required=self.profile_required,
+            demo_mode=demo,
+            version=self.app_version,
+            running_env=RUNNING_ENV,
+            lang=self._app_info_lang(),
+        )
+
+    def _app_info_lang(self):
+        enabled = []
+        conv = self._app_convert_lang_code
+        if self.lang_ids:
+            enabled = [conv(x.code) for x in self.lang_ids]
+        return dict(
+            default=conv(self.lang_id.code) if self.lang_id else False,
+            enabled=enabled,
+        )
+
+    def _app_convert_lang_code(self, code):
+        # TODO: we should probably let the front decide the format
+        return code.replace("_", "-")
+
+    @api.onchange("lang_id")
+    def _onchange_lang_id(self):
+        if self.env.context.get("from_onchange__lang_ids"):
+            return
+        if self.lang_id and self.lang_id not in self.lang_ids:
+            self.with_context(from_onchange__lang_id=1).lang_ids += self.lang_id
+
+    @api.onchange("lang_ids")
+    def _onchange_lang_ids(self):
+        if self.env.context.get("from_onchange__lang_id"):
+            return
+        if self.lang_ids and self.lang_id and self.lang_id not in self.lang_ids:
+            self.with_context(from_onchange__lang_ids=1).lang_id = False

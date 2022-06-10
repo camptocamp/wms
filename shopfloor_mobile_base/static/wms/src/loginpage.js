@@ -4,7 +4,7 @@
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Thierry Ducrest <thierry.ducrest@camptocamp.com>
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
 import event_hub from "./services/event_hub.js";
 
@@ -17,7 +17,7 @@ export var LoginPage = Vue.component("login-page", {
     beforeCreate: function () {
         const self = this;
         if (this.$root.is_authenticated()) {
-            self.$router.push({name: "home"});
+            self.$router.push("/");
         }
     },
     mounted: function () {
@@ -26,7 +26,14 @@ export var LoginPage = Vue.component("login-page", {
             self.error = "";
         });
         event_hub.$once("login:success", function () {
-            self.$router.push({name: "home"});
+            const home_route = self.$router.options.routes.find((route) => {
+                // isHomeRoute can be set on route registration to use
+                // any custom route as home;
+                // if no route is explicitly set as home
+                // the router will use a default.
+                return route.meta ? route.meta.isHomeRoute : false;
+            });
+            self.$router.push({name: home_route.name});
         });
         event_hub.$once("login:failure", function () {
             self._handle_invalid_login();
@@ -83,7 +90,7 @@ export var LoginPage = Vue.component("login-page", {
                     </div>
                 </v-col>
             </v-row>
-            <div class="button-list button-vertical-list full">
+            <div class="button-list button-vertical-list full" v-if="app_options.show_fullscreen_btn">
                 <v-row align="center">
                     <v-col class="text-center" cols="12">
                         <btn-fullscreen />

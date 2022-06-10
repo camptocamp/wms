@@ -1,7 +1,7 @@
 /**
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
 
 import {page_registry} from "../services/page_registry.js";
@@ -37,7 +37,7 @@ export var SettingsControlPanel = Vue.component("settings-control-panel", {
                         <btn-action color="primary" @click="logout()">{{ $t('app.action.logout') }}</btn-action>
                     </v-col>
                 </v-row>
-                <v-row align="center">
+                <v-row align="center" v-if="app_options.show_fullscreen_btn">
                     <v-col class="text-center" cols="12">
                         <btn-fullscreen />
                     </v-col>

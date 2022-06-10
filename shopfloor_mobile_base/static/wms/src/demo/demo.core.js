@@ -1,7 +1,7 @@
 /**
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
 
 // TODO: split out WMS code
@@ -482,6 +482,11 @@ export class DemoTools {
         ];
     }
 
+    makePartnerEmail(partner) {
+        const split_name = partner.name.toLowerCase().split(" ");
+        return `${split_name[0]}.${split_name[1]}@example.com`;
+    }
+
     makeAppConfig() {
         return {
             profiles: this.makeProfiles(),
@@ -489,8 +494,8 @@ export class DemoTools {
     }
     makeProfiles() {
         const profiles = [
-            {id: 1, name: "SCH Transport"},
-            {id: 2, name: "SCH Pick"},
+            {id: 1, name: "Transport"},
+            {id: 2, name: "Pick"},
         ];
         return profiles;
     }

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 13.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2022-01-31 00:33+0000\n"
+"PO-Revision-Date: 2022-05-29 23:05+0000\n"
 "Last-Translator: Ignacio Buioli <ibuioli@gmail.com>\n"
 "Language-Team: none\n"
 "Language: es_AR\n"
@@ -40,7 +40,7 @@ msgstr ""
 #. module: shopfloor
 #: model:ir.model,name:shopfloor.model_shopfloor_app
 msgid "A Shopfloor application"
-msgstr ""
+msgstr "Una Aplicación de Taller"
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
@@ -146,7 +146,7 @@ msgstr "No se puede cambiar al lote {} ya que está completamente recogido."
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_app__category
 msgid "Category"
-msgstr ""
+msgstr "Categoría"
 
 #. module: shopfloor
 #: model:shopfloor.menu,name:shopfloor.shopfloor_menu_demo_checkout
@@ -185,16 +185,6 @@ msgstr "Transferencia de contenido desde {} hacia {}."
 #, python-format
 msgid "Control stock issue in location {} for {}"
 msgstr "Error en control de inventario en ubicación {} para {}"
-
-#. module: shopfloor
-#: code:addons/shopfloor/models/stock_move.py:0
-#, python-format
-msgid ""
-"Created from backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>"
-"%s</a>."
-msgstr ""
-"Creado desde pedido pendiente <a href=# data-oe-model=stock.picking data-oe-"
-"id=%d>%s</a>."
 
 #. module: shopfloor
 #: code:addons/shopfloor/models/shopfloor_menu.py:0
@@ -973,7 +963,7 @@ msgstr "Usuario del Taller"
 #. module: shopfloor
 #: model:shopfloor.app,name:shopfloor.app_demo
 msgid "Shopfloor WMS (demo)"
-msgstr ""
+msgstr "Taller WMS (demo)"
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_quant_package__shopfloor_weight
@@ -1083,7 +1073,6 @@ msgstr ""
 "barras."
 
 #. module: shopfloor
-#: code:addons/shopfloor/models/stock_move_line.py:0
 #: code:addons/shopfloor/models/stock_picking.py:0
 #, python-format
 msgid ""
@@ -1151,6 +1140,12 @@ msgid "The record you were working on does not exist anymore."
 msgstr "El registro en el que estaba trabajando ya no existe."
 
 #. module: shopfloor
+#: code:addons/shopfloor/models/stock_move.py:0
+#, python-format
+msgid "The split order {} has been created."
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__picking_id
 msgid "The stock operation where the packing has been made"
 msgstr "La operación de inventario donde se ha realizado el embalaje"
@@ -1178,12 +1173,6 @@ msgstr "Esta línea no está disponible en la transferencia {}."
 #, python-format
 msgid "This location content can't be moved at once."
 msgstr "El contenido de esta ubicación no se puede mover a la vez."
-
-#. module: shopfloor
-#: code:addons/shopfloor/services/location_content_transfer.py:0
-#, python-format
-msgid "This location content can't be moved using this menu."
-msgstr "El contenido de esta ubicación no se puede mover usando este menú."
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
@@ -1293,12 +1282,12 @@ msgstr "Es posible Anular la Reserva de Otros Movimientos"
 #. module: shopfloor
 #: model:ir.model.fields.selection,name:shopfloor.selection__shopfloor_app__category__wms
 msgid "WMS"
-msgstr ""
+msgstr "WMS"
 
 #. module: shopfloor
 #: model:shopfloor.app,short_name:shopfloor.app_demo
 msgid "WMS (demo)"
-msgstr ""
+msgstr "WMS (demo)"
 
 #. module: shopfloor
 #: code:addons/shopfloor/services/cluster_picking.py:0
@@ -1309,14 +1298,32 @@ msgstr "Compartimento incorrecto"
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "Wrong location."
+msgstr "Ubicación equivocada."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "Wrong lot."
 msgstr "Lote equivocado."
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "Wrong pack."
+msgstr "Paquete equivocado."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "Wrong product."
 msgstr "Producto equivocado."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Wrong."
+msgstr "Incorrecto."
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
@@ -1392,6 +1399,16 @@ msgstr "{} no es un paquete de destino válido."
 #, python-format
 msgid "{} {} put in {}"
 msgstr "{} {} poner en {}"
+
+#~ msgid ""
+#~ "Created from backorder <a href=# data-oe-model=stock.picking data-oe-id="
+#~ "%d>%s</a>."
+#~ msgstr ""
+#~ "Creado desde pedido pendiente <a href=# data-oe-model=stock.picking data-"
+#~ "oe-id=%d>%s</a>."
+
+#~ msgid "This location content can't be moved using this menu."
+#~ msgstr "El contenido de esta ubicación no se puede mover usando este menú."
 
 #~ msgid "%s updated."
 #~ msgstr "%s actualizado."

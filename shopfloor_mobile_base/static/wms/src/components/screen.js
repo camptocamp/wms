@@ -1,8 +1,10 @@
 /**
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
+
+import event_hub from "../services/event_hub.js";
 
 /* eslint-disable strict */
 Vue.component("Screen", {
@@ -76,9 +78,11 @@ Vue.component("Screen", {
         this.$watch(
             "drawer",
             (value) => {
-                if (value)
+                if (value) {
                     // Refresh menu items and their counters when the drawer is expanded
                     this.$root.loadMenu(true);
+                }
+                this._on_drawer_transition();
             },
             {immediate: true}
         );
@@ -97,6 +101,21 @@ Vue.component("Screen", {
             },
             {immediate: true}
         );
+    },
+    methods: {
+        _on_drawer_transition: function () {
+            if (this.drawer) {
+                document.body.classList.add("with-open-drawer");
+                document.body.classList.remove("with-closed-drawer");
+            } else {
+                document.body.classList.add("with-closed-drawer");
+                document.body.classList.remove("with-open-drawer");
+            }
+            event_hub.$emit("app:drawer_transition", {
+                root: this.$root,
+                drawer_opened: this.drawer,
+            });
+        },
     },
     template: `
     <v-app :class="screen_app_class">
@@ -276,7 +295,7 @@ Vue.component("nav-items-extra", {
                     id: "home",
                     name: this.$t("screen.home.title"),
                     icon: "mdi-home",
-                    route: {name: "home"},
+                    route: "/",
                 },
                 {
                     id: "scan-anything",

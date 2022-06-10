@@ -3,11 +3,10 @@
  * @author Raphaël Reverdy <raphael.reverdy@akretion.com>
  * Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
  * @author Simone Orsi <simahawk@gmail.com>
- * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
 
 import {router} from "./router.js";
-import {i18n} from "./i18n.js";
 import {GlobalMixin} from "./mixin.js";
 import {config_registry} from "./services/config_registry.js";
 import {process_registry} from "./services/process_registry.js";
@@ -17,15 +16,22 @@ import {auth_handler_registry} from "./services/auth_handler_registry.js";
 import {Odoo, OdooMocked} from "./services/odoo.js";
 import event_hub from "./services/event_hub.js";
 import VueSuperMethod from "./lib/vue-super-call.min.js";
+import {translation_registry} from "./services/translation_registry.js";
+
+// Setup languages
+if (shopfloor_app_info.lang.default)
+    translation_registry.set_default_lang(shopfloor_app_info.lang.default);
+if (shopfloor_app_info.lang.enabled)
+    translation_registry.set_enabled_langs(shopfloor_app_info.lang.enabled);
 
 Vue.prototype.$super = VueSuperMethod;
 
 // TODO: we need a local storage handler too, to store device/profile specific data
 // Maybe replace w/ https://github.com/ankurk91/vue-web-storage
-Vue.use(Vue2Storage, {
-    prefix: "shopfloor_",
-    driver: "session", // Local|session|memory
-    ttl: 60 * 60 * 24 * 1000, // 24 hours
+Vue.use(window.Vue2StoragePlugin, {
+    prefix: _.result(shopfloor_app_info, "storage.prefix", "shopfloor_"),
+    driver: _.result(shopfloor_app_info, "storage.driver", "session"), // Local|session|memory
+    ttl: _.result(shopfloor_app_info, "storage.ttl", 60 * 60 * 24 * 1000), // 24 hours
 });
 
 Vue.use(Vuetify);
@@ -48,9 +54,16 @@ register_app_components(page_registry.all());
 config_registry.add("profile", {default: {}, reset_on_clear: true});
 config_registry.add("appmenu", {default: [], reset_on_clear: true});
 config_registry.add("authenticated", {default: false, reset_on_clear: true});
+config_registry.add("current_language", {
+    default: "",
+    reset_on_clear: false,
+    storage: {
+        driver: "local",
+    },
+});
 
 new Vue({
-    i18n,
+    i18n: translation_registry.init_i18n(),
     router: router,
     vuetify: new Vuetify({
         theme: {
@@ -70,7 +83,7 @@ new Vue({
         return data;
     },
     beforeCreate: function () {
-        config_registry._set_root(this);
+        config_registry.setup(this);
     },
     created: function () {
         const self = this;
@@ -81,6 +94,19 @@ new Vue({
         });
         document.addEventListener("fetchEnd", function () {
             self.loading = false;
+        });
+    },
+    beforeMount: function () {
+        const lang_id = this.current_language;
+        if (lang_id) {
+            // If a specific language is stored as app language,
+            // use it as locale instead of the default one
+            this.switch_language(lang_id);
+        }
+        event_hub.$on("language:selected", (lang_id) => {
+            // When the user updates the language in the app,
+            // store it so that it is used in the future
+            this.switch_language(lang_id);
         });
     },
     mounted: function () {
@@ -108,24 +134,6 @@ new Vue({
             set(newValue) {
                 this.loading_msg_custom = newValue;
             },
-        },
-        available_languages: function () {
-            // FIXME: this should come from odoo and from app config
-            // They will match w/ $i18n.availableLocales
-            return [
-                {
-                    id: "en-US",
-                    name: this.$t("language.name.English"),
-                },
-                {
-                    id: "fr-FR",
-                    name: this.$t("language.name.French"),
-                },
-                {
-                    id: "de-DE",
-                    name: this.$t("language.name.German"),
-                },
-            ];
         },
         has_profile: function () {
             return !_.isEmpty(this.profile);
@@ -186,6 +194,11 @@ new Vue({
                     self.$storage.set("appconfig", self.appconfig);
                 }
                 event_hub.$emit("app.sync:update", {root: self, sync_data: result});
+                if (self.user.lang && !self.current_language) {
+                    // Use user default language if a language hasn't been
+                    // manually selected in the app.
+                    self.switch_language(self.user.lang);
+                }
                 return result;
             });
         },
@@ -295,6 +308,14 @@ new Vue({
                 // Register them wisely.
                 extra_nav: extra_nav,
             };
+        },
+        available_languages: function () {
+            return translation_registry.available_langs_display(this);
+        },
+        switch_language: function (lang_id) {
+            this.$i18n.locale = lang_id;
+            this.$set(this, "current_language", lang_id);
+            event_hub.$emit("language:updated", lang_id);
         },
         /*
         Trigger and event on the event hub.
