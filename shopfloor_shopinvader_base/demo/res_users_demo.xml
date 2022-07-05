@@ -1,0 +1,24 @@
+<odoo>
+    <record id="partner_1" model="res.partner">
+        <field name="name">Johnny</field>
+        <field name="email">johnny@shopfloor.com</field>
+        <field name="street">Somewhere</field>
+        <field name="city">Nowhere</field>
+        <field name="zip">1110</field>
+        <field name="country_id" ref="base.fr" />
+        <field name="property_product_pricelist" ref="product.list0" />
+    </record>
+
+    <record id="shopinvader_partner_1" model="shopinvader.partner">
+        <field name="backend_id" ref="shopinvader.backend_1" />
+        <field name="external_id">AaAaA</field>
+        <field name="record_id" ref="partner_1" />
+    </record>
+
+    <record id="user_demo" model="res.users">
+        <field name="groups_id" eval="[(4, ref('base.group_portal'))]" />
+        <field name="partner_id" ref="partner_1" />
+        <field name="login">shopfloor.invader.demo</field>
+        <field name="password">12345</field>
+    </record>
+</odoo>
