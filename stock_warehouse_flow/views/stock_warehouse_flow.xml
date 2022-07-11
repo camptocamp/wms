@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2022 Camptocamp SA
+     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
+<odoo>
+
+  <record id="stock_warehouse_flow_view_form" model="ir.ui.view">
+    <field name="name">stock.warehouse.flow.form</field>
+    <field name="model">stock.warehouse.flow</field>
+    <field name="arch" type="xml">
+      <form string="Warehouse Flow">
+        <sheet>
+          <div class="oe_title">
+              <h1><field name="display_name" placeholder="Flow Name" /></h1>
+          </div>
+          <group name="info">
+            <field name="from_picking_type_id" />
+            <field name="carrier_id" />
+            <field name="flow_domain" />
+            <field name="to_picking_type_id" />
+          </group>
+          <group name="rule_ids" string="Rules">
+            <field name="rule_ids" nolabel="1" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+</odoo>
