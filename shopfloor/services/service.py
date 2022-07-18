@@ -46,7 +46,7 @@ class BaseShopfloorProcess(AbstractComponent):
         # every time.
         return self._actions_for("search_move_line", picking_types=self.picking_types)
 
-    def _check_picking_status(self, pickings):
+    def _check_picking_status(self, pickings, location=None):
         """Check if given pickings can be processed.
 
         If the picking is already done, canceled or didn't belong to the
@@ -60,6 +60,9 @@ class BaseShopfloorProcess(AbstractComponent):
             if picking.state != "assigned":  # the picking must be ready
                 return self.msg_store.stock_picking_not_available(picking)
             if picking.picking_type_id not in self.picking_types:
+                return self.msg_store.cannot_move_something_in_picking_type()
+            if location and not picking.location_id.is_sublocation_of(location):
+                # TODO change message !
                 return self.msg_store.cannot_move_something_in_picking_type()
 
     def is_src_location_valid(self, location):

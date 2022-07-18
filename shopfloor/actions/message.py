@@ -421,6 +421,28 @@ class MessageAction(Component):
             ).format(location_dest.name),
         }
 
+    def product_in_multiple_sublocation(self, product):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Product {} found in multiple locations. Scan your location first."
+            ).format(product.name),
+        }
+
+    def lot_in_multiple_sublocation(self, lot):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Lot {} for product {} found in multiple locations. Scan your location first."
+            ).format(lot.name, lot.product_id.name),
+        }
+
+    def location_src_set_to_sublocation(self, location_src):
+        return {
+            "message_type": "success",
+            "body": _("Working location changed to {}").format(location_src.name),
+        }
+
     def picking_already_started_in_location(self, pickings):
         return {
             "message_type": "error",
