@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright 2022 Camptocamp SA
-     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
+     License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl). -->
 <odoo>
 
   <record id="stock_warehouse_flow_view_form" model="ir.ui.view">
@@ -14,8 +14,9 @@
           </div>
           <group name="info">
             <field name="from_picking_type_id" />
-            <field name="carrier_id" />
-            <field name="flow_domain" />
+            <field name="from_location_src_id" />
+            <field name="from_location_dest_id" />
+            <field name="carrier_ids" widget="many2many_tags" />
             <field name="to_picking_type_id" />
           </group>
           <group name="rule_ids" string="Rules">
@@ -25,5 +26,35 @@
       </form>
     </field>
   </record>
+
+  <record id="stock_warehouse_flow_view_tree" model="ir.ui.view">
+    <field name="name">stock.warehouse.flow.tree</field>
+    <field name="model">stock.warehouse.flow</field>
+    <field name="arch" type="xml">
+      <tree string="Warehouse Flows">
+        <field name="carrier_id" />
+        <field name="from_picking_type_id" />
+        <field name="to_picking_type_id" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="stock_warehouse_flow_action" model="ir.actions.act_window">
+    <field name="name">Routing Flows</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">stock.warehouse.flow</field>
+    <field name="view_id" ref="stock_warehouse_flow_view_tree" />
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Create a new Routing Flow
+      </p>
+    </field>
+  </record>
+
+  <menuitem
+        id="stock_warehouse_flow_menu"
+        parent="stock.menu_warehouse_config"
+        action="stock_warehouse_flow_action"
+    />
 
 </odoo>

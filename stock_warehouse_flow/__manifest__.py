@@ -8,7 +8,13 @@
     "category": "Warehouse Management",
     "version": "14.0.1.0.0",
     "license": "LGPL-3",
-    "depends": ["stock", "delivery"],
+    "depends": [
+        # core
+        "stock",
+        "delivery",
+        # OCA/wms
+        "stock_available_to_promise_release",
+    ],
     "demo": [],
     "data": ["security/ir.model.access.csv", "views/stock_warehouse_flow.xml"],
     "installable": True,

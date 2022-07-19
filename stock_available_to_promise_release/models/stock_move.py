@@ -323,6 +323,9 @@ class StockMove(models.Model):
                 new_move = move._release_split(remaining)
                 backorder_links[new_move.picking_id] = move.picking_id
 
+            __import__("pdb").set_trace()
+            move._before_release()
+
             values = move._prepare_procurement_values()
             procurement_requests.append(
                 self.env["procurement.group"].Procurement(
@@ -362,6 +365,9 @@ class StockMove(models.Model):
         pulled_moves._after_release_update_chain()
 
         return True
+
+    def _before_release(self):
+        """Hook that aims to be overridden."""
 
     def _after_release_update_chain(self):
         picking_ids = set()
