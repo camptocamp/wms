@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2022 Camptocamp SA
+     License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+  <record id="stock_warehouse_flow_view_form" model="ir.ui.view">
+    <field name="name">stock.warehouse.flow.form</field>
+    <field name="model">stock.warehouse.flow</field>
+    <field name="arch" type="xml">
+      <form string="Warehouse Flow">
+        <header>
+          <button
+                        name="action_generate_routes"
+                        type="object"
+                        string="Generate routes"
+                        class="oe_highlight"
+                        attrs="{'invisible': [('delivery_route_id', '!=', False)]}"
+                    />
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+              <button
+                            name="action_view_all_routes"
+                            string="Routes"
+                            icon="fa-refresh"
+                            class="oe_stat_button"
+                            type="object"
+                        />
+          </div>
+          <div class="oe_title">
+              <h1><field name="name" placeholder="Flow Name" /></h1>
+          </div>
+          <group>
+            <group name="info" colspan="4" col="4">
+              <field name="warehouse_id" />
+              <field name="delivery_route_id" />
+            </group>
+            <group name="from" string="From">
+              <field name="from_picking_type_id" />
+              <div
+                                colspan="2"
+                                attrs="{'invisible': [('from_picking_type_id', '=', False)]}"
+                            >
+                <span style="width: 4em;" />
+                =>
+                <field name="from_location_src_id" nolabel="1" />
+                to
+                <field name="from_location_dest_id" nolabel="1" />
+              </div>
+              <field name="carrier_ids" widget="many2many_tags" />
+              <field
+                                name="move_domain"
+                                widget="domain"
+                                options="{'model': 'stock.move', 'in_dialog': true}"
+                            />
+            </group>
+            <group name="to" string="To">
+              <field name="to_picking_type_id" />
+            </group>
+          </group>
+          <notebook>
+            <page string="Rules" name="rules">
+              <field name="rule_ids" nolabel="1" />
+            </page>
+            <page string="Impacted routes" name="impacted_routes">
+              <field name="impacted_route_ids" nolabel="1">
+                <tree>
+                  <field name="name" />
+                </tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="stock_warehouse_flow_view_tree" model="ir.ui.view">
+    <field name="name">stock.warehouse.flow.tree</field>
+    <field name="model">stock.warehouse.flow</field>
+    <field name="arch" type="xml">
+      <tree string="Warehouse Flows">
+        <field name="name" />
+        <field name="from_picking_type_id" />
+        <field name="carrier_ids" widget="many2many_tags" />
+        <field name="to_picking_type_id" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="stock_warehouse_flow_action" model="ir.actions.act_window">
+    <field name="name">Routing Flows</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">stock.warehouse.flow</field>
+    <field name="view_id" ref="stock_warehouse_flow_view_tree" />
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Create a new Routing Flow
+      </p>
+    </field>
+  </record>
+
+  <menuitem
+        id="stock_warehouse_flow_menu"
+        parent="stock.menu_warehouse_config"
+        action="stock_warehouse_flow_action"
+    />
+
+</odoo>
