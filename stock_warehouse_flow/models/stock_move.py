@@ -8,19 +8,10 @@ class StockMove(models.Model):
     _inherit = "stock.move"
 
     def _before_release(self):
+        # Apply the flow when releasing the move
+        # TODO: to move in a glue module depending
+        # on 'stock_available_to_promise_release'
         super()._before_release()
         for move in self:
-            move._find_flow()._apply_on_move(move)
-
-    def _find_flow_domain(self):
-        self.ensure_one()
-        return [
-            ("from_picking_type_id", "=", self.picking_type_id.id),
-            ("carrier_id", "in", self.group_id.carrier_ids.ids),
-        ]
-
-    def _find_flow(self):
-        self.ensure_one()
-        return self.env["stock.warehouse.flow"].search(
-            self._find_flow_domain(), limit=1
-        )
+            flow = self.env["stock.warehouse.flow"]._search_for_move(move)
+            flow._apply_on_move(move)

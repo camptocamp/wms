@@ -8,20 +8,68 @@
     <field name="model">stock.warehouse.flow</field>
     <field name="arch" type="xml">
       <form string="Warehouse Flow">
+        <header>
+          <button
+                        name="action_generate_routes"
+                        type="object"
+                        string="Generate routes"
+                        class="oe_highlight"
+                        attrs="{'invisible': [('delivery_route_id', '!=', False)]}"
+                    />
+        </header>
         <sheet>
-          <div class="oe_title">
-              <h1><field name="display_name" placeholder="Flow Name" /></h1>
+          <div class="oe_button_box" name="button_box">
+              <button
+                            name="action_view_all_routes"
+                            string="Routes"
+                            icon="fa-refresh"
+                            class="oe_stat_button"
+                            type="object"
+                        />
           </div>
-          <group name="info">
-            <field name="from_picking_type_id" />
-            <field name="from_location_src_id" />
-            <field name="from_location_dest_id" />
-            <field name="carrier_ids" widget="many2many_tags" />
-            <field name="to_picking_type_id" />
+          <div class="oe_title">
+              <h1><field name="name" placeholder="Flow Name" /></h1>
+          </div>
+          <group>
+            <group name="info" colspan="4" col="4">
+              <field name="warehouse_id" />
+              <field name="delivery_route_id" />
+            </group>
+            <group name="from" string="From">
+              <field name="from_picking_type_id" />
+              <div
+                                colspan="2"
+                                attrs="{'invisible': [('from_picking_type_id', '=', False)]}"
+                            >
+                <span style="width: 4em;" />
+                =>
+                <field name="from_location_src_id" nolabel="1" />
+                to
+                <field name="from_location_dest_id" nolabel="1" />
+              </div>
+              <field name="carrier_ids" widget="many2many_tags" />
+              <field
+                                name="move_domain"
+                                widget="domain"
+                                options="{'model': 'stock.move', 'in_dialog': true}"
+                            />
+            </group>
+            <group name="to" string="To">
+              <field name="to_picking_type_id" />
+            </group>
           </group>
-          <group name="rule_ids" string="Rules">
-            <field name="rule_ids" nolabel="1" />
-          </group>
+          <notebook>
+            <page string="Rules" name="rules">
+              <field name="rule_ids" nolabel="1" />
+            </page>
+            <page string="Impacted routes" name="impacted_routes">
+              <field name="impacted_route_ids" nolabel="1">
+                <tree>
+                  <field name="name" />
+                </tree>
+              </field>
+            </page>
+          </notebook>
         </sheet>
       </form>
     </field>
@@ -32,8 +80,9 @@
     <field name="model">stock.warehouse.flow</field>
     <field name="arch" type="xml">
       <tree string="Warehouse Flows">
-        <field name="carrier_id" />
+        <field name="name" />
         <field name="from_picking_type_id" />
+        <field name="carrier_ids" widget="many2many_tags" />
         <field name="to_picking_type_id" />
       </tree>
     </field>

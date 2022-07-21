@@ -323,7 +323,6 @@ class StockMove(models.Model):
                 new_move = move._release_split(remaining)
                 backorder_links[new_move.picking_id] = move.picking_id
 
-            __import__("pdb").set_trace()
             move._before_release()
 
             values = move._prepare_procurement_values()
