@@ -1,0 +1,10 @@
+<odoo>
+    <record id="app_demo" model="shopfloor.app">
+        <field name="name">shopinvader demo</field>
+        <field name="short_name">Shop</field>
+        <field name="tech_name">shop_demo</field>
+        <field name="category">shop</field>
+        <field name="shopinvader_tech_user_id" ref="invader_tech_user_demo" />
+        <field name="shopinvader_backend_id" ref="shopinvader.backend_1" />
+    </record>
+</odoo>
