@@ -339,3 +339,12 @@ Vue.component("app-bar-actions", {
     </div>
     `,
 });
+
+
+Vue.component("app-version", {
+    template: `
+        <div>
+            <span class="version">{{ $t('screen.home.version') }}</span> <span class="version-number" v-text="$root.app_info.version" />
+        </div>
+    `,
+})
