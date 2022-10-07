@@ -383,10 +383,15 @@ Vue.component("user-session-detail", {
             type: Boolean,
             default: true,
         },
+        show_report_issue_action: {
+            type: Boolean,
+            default: true,
+        },
     },
     template: `
   <div :class="$options._componentTag" data-ref="user-session-detail">
     <v-list>
+        <report-issue-action v-if="show_report_issue_action" />
         <v-list-item v-if="show_env"
                 data-ref="session-detail-env"
                 :data-id="$root.app_info.running_env"
@@ -429,5 +434,59 @@ Vue.component("user-session-detail", {
         </v-list-item>
     </v-list>
   </div>
+  `,
+});
+
+Vue.component("report-issue-action", {
+    computed: {
+        report_issue_conf: function () {
+            return _.result(this.$root.app_info, "report_issue", {
+                enabled: false,
+                mail_to: "",
+            });
+        },
+        report_issue_enabled: function () {
+            const enabled = this.report_issue_conf.enabled;
+            const configured = this.report_issue_conf.mail_to.trim().length;
+            return enabled && configured;
+        },
+        report_issue_mail_to_href: function () {
+            if (!this.report_issue_enabled) {
+                return "";
+            }
+            const email = this.report_issue_conf.mail_to;
+            const subject = this.$t("app.report_issue.mail.subject");
+            const body = encodeURIComponent(this._get_report_issue_body());
+            return `mailto:${email}?subject=${subject}&body=${body}`;
+        },
+    },
+    methods: {
+        _get_report_issue_body: function () {
+            const bits = [
+                "",
+                "",
+                "-- " + this.$t("app.report_issue.mail.info_warning_msg") + " --",
+                "",
+                "APP: " + this.$root.app_info.version,
+                "UID: " + this.$root.user.id,
+                "UA: " + window.navigator.userAgent,
+            ];
+            return bits.join("\n");
+        },
+    },
+    template: `
+    <v-list-item v-if="report_issue_enabled"
+            data-ref="report-issue-action"
+            :href="report_issue_mail_to_href"
+            >
+        <v-list-item-avatar>
+            <v-avatar size="36">
+                <v-icon dark>comment-question</v-icon>
+            </v-avatar>
+        </v-list-item-avatar>
+        <v-list-item-content>
+            <span v-text="$t('app.report_issue.action_txt')" />
+        </v-list-item-content>
+    </v-list-item>
   `,
 });
