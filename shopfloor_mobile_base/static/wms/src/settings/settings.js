@@ -47,6 +47,11 @@ export var SettingsControlPanel = Vue.component("settings-control-panel", {
                         <btn-back/>
                     </v-col>
                 </v-row>
+                <v-row align="center">
+                    <v-col class="text-center" cols="12">
+                        <app-version/>
+                    </v-col>
+                </v-row>
             </div>
         </Screen>
     `,
