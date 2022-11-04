@@ -481,9 +481,7 @@ class ClusterPicking(Component):
         )
 
     def _get_prefill_qty(self, move_line, qty=False):
-        """Returns the increment qty or qty_done depending on the no_prefill_qty
-        option value.
-        """
+        """Returns the quantity to increment depending on no_prefill_qty optione."""
         if self.work.menu.no_prefill_qty:
             return qty
         return move_line.product_uom_qty
