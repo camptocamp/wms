@@ -353,14 +353,13 @@ class Checkout(Component):
         return self._select_picking(picking, "manual_selection")
 
     def _select_lines(self, lines, prefill_qty=0):
-        for line in lines:
+        for i, line in enumerate(lines):
             if line.shopfloor_checkout_done:
                 continue
-            if self.work.menu.no_prefill_qty:
-                line.qty_done += prefill_qty
+            if self.work.menu.no_prefill_qty and i == 0:
                 # For prefill quantity we only want to increment one line
-                prefill_qty = 0
-            else:
+                line.qty_done += prefill_qty
+            elif not self.work.menu.no_prefill_qty:
                 line.qty_done = line.product_uom_qty
             line.shopfloor_user_id = self.env.user
 
@@ -707,11 +706,11 @@ class Checkout(Component):
             )
 
     def _increment_custom_qty(
-        self, picking, selected_line, increment_lines, qty_increment
+        self, picking, selected_lines, increment_lines, qty_increment
     ):
         """Increment the  qty_done of a move line with a custom value
 
-        The selected_line_ids parameter is used to keep the selection of lines
+        The selected_line parameter is used to keep the selection of lines
         stateless.
 
         Transitions:
@@ -720,7 +719,7 @@ class Checkout(Component):
         """
         return self._change_line_qty(
             picking.id,
-            selected_line.ids,
+            selected_lines.ids,
             increment_lines.ids,
             lambda line: line.qty_done + qty_increment,
         )
