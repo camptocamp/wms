@@ -7,4 +7,7 @@ def to_float(val):
         return val
     if isinstance(val, int):
         return float(val)
+    if isinstance(val, str):
+        if val.replace(".", "", 1).isdigit():
+            return float(val)
     return None
