@@ -35,6 +35,21 @@ class StockAction(Component):
         )
         move_lines.picking_id.filtered(lambda p: p.user_id != user).user_id = user.id
 
+    def unmark_move_line_as_picked(self, move_lines):
+        move_lines.write(
+            {
+                "shopfloor_user_id": False,
+                "qty_done": 0,
+            }
+        )
+        move_lines.move_id.picking_id.write(
+            {
+                "user_id": False,
+                # What is this ?
+                "printed": False,
+            }
+        )
+
     def validate_moves(self, moves):
         """Validate moves in different ways depending on several criterias:
 

@@ -1,7 +1,8 @@
 # Copyright 2020-2021 Camptocamp SA (http://www.camptocamp.com)
 # Copyright 2020-2022 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-from odoo import _
+from odoo import _, fields
+from odoo.osv.expression import AND
 
 from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
@@ -19,7 +20,7 @@ class LocationContentTransfer(Component):
     """
     Methods for the Location Content Transfer Process
 
-    Move the full content of a location to one or another location.
+    Move the full content of a location to one or more locations.
 
     Generally used to move a pallet with multiple boxes to either:
 
@@ -51,8 +52,30 @@ class LocationContentTransfer(Component):
     _description = __doc__
 
     def _response_for_start(self, message=None, popup=None):
-        """Transition to the 'start' state"""
+        """Transition to the 'start' or 'get_work' state
+
+        The switch to 'get_work' is done if the option is enabled on the scenario
+        """
+        if self.work.menu.allow_get_work:
+            return self._response(
+                next_state="get_work", data={}, message=message, popup=popup
+            )
         return self._response(next_state="start", message=message, popup=popup)
+
+    def _response_for_scan_location(self, location=None, message=None):
+        """Transition to the 'scan_location' state
+
+        If location is set, the client will display information on that location
+        and only accept this specific location to be scanned.
+        """
+        data = {}
+        if location:
+            data["location"] = self.data.location(location)
+        return self._response(
+            next_state="scan_location",
+            data=data,
+            message=message,
+        )
 
     def _response_for_scan_destination_all(
         self, pickings, message=None, confirmation_required=False
@@ -178,13 +201,20 @@ class LocationContentTransfer(Component):
             )
         return self._response_for_start()
 
-    def _find_location_move_lines_domain(self, location):
-        return [
-            ("location_id", "=", location.id),
+    def _find_location_move_lines_domain(self, location, shopfloor_user_id):
+        domain = [
+            ("location_id", "in", location.ids),
             ("qty_done", "=", 0),
             ("state", "in", ("assigned", "partially_available")),
-            ("shopfloor_user_id", "=", False),
         ]
+        domain_user = [
+            (
+                "shopfloor_user_id",
+                "=",
+                shopfloor_user_id if shopfloor_user_id else False,
+            )
+        ]
+        return AND([domain, domain_user])
 
     def _find_location_all_move_lines_domain(self, location):
         return [
@@ -192,10 +222,10 @@ class LocationContentTransfer(Component):
             ("state", "in", ("assigned", "partially_available")),
         ]
 
-    def _find_location_move_lines(self, location):
+    def _find_location_move_lines(self, location, shopfloor_user_id=None):
         """Find lines that potentially are to move in the location"""
         return self.env["stock.move.line"].search(
-            self._find_location_move_lines_domain(location)
+            self._find_location_move_lines_domain(location, shopfloor_user_id)
         )
 
     def _create_moves_from_location(self, location):
@@ -257,6 +287,45 @@ class LocationContentTransfer(Component):
         package_levels.explode_package()
         unreserved_moves._do_unreserve()
         return (move_lines - lines_other_picking_types, unreserved_moves, None)
+
+    def _find_location_to_work_from(self):
+        next_picking = self.env["stock.picking"].search(
+            [
+                ("picking_type_id", "in", self.picking_types.ids),
+                ("state", "=", "assigned"),
+            ],
+            order="create_date",
+            limit=1,
+        )
+        return fields.first(next_picking.move_line_ids.location_id)
+
+    def find_work(self):
+        """Find the next location to work from for the picker.
+
+        Find the oldest move line that can be processed.
+        """
+        location = self._find_location_to_work_from()
+        if not location:
+            return self._response_for_start(message=self.msg_store.no_work_found())
+        move_lines = self._find_location_move_lines(location)
+        stock = self._actions_for("stock")
+        stock.mark_move_line_as_picked(move_lines)
+        return self._response_for_scan_location(location=location)
+
+    def cancel_work(self, location_id):
+        """Cancel work assigned to user."""
+        location = self.env["stock.location"].browse(location_id)
+        if not location:
+            return self._response_for_start(message=self.msg_store.location_not_found())
+        location_move_lines = self.env["stock.move.line"].search(
+            self._find_location_all_move_lines_domain(location)
+        )
+
+        location_move_lines.write({"shopfloor_user_id": False})
+        stock = self._actions_for("stock")
+        stock.unmark_move_line_as_picked(location_move_lines)
+        # add a message for the cancelation, maybe ?
+        return self._response_for_start()
 
     def scan_location(self, barcode):  # noqa: C901
         """Scan start location
@@ -906,6 +975,15 @@ class ShopfloorLocationContentTransferValidator(Component):
     def start_or_recover(self):
         return {}
 
+    def get_work(self):
+        return {}
+
+    def cancel_work(self):
+        return {"location_id": {"required": True, "type": "integer"}}
+
+    def select(self):
+        return {"location_id": {"required": True, "type": "integer"}}
+
     def scan_location(self):
         return {"barcode": {"required": True, "type": "string"}}
 
@@ -996,10 +1074,17 @@ class ShopfloorLocationContentTransferValidatorResponse(Component):
         """
         return {
             "start": {},
+            "get_work": {},
+            # "cancel_work": {},
+            "manual_selection": self._schema_for_manual_selection,
             "scan_destination_all": self._schema_all,
             "start_single": self._schema_single,
             "scan_destination": self._schema_single,
         }
+
+    @property
+    def _schema_for_manual_selection(self):
+        return self.schemas._schema_search_results_of(self.schemas.picking())
 
     @property
     def _schema_all(self):
@@ -1035,7 +1120,13 @@ class ShopfloorLocationContentTransferValidatorResponse(Component):
 
     def start_or_recover(self):
         return self._response_schema(
-            next_states={"start", "scan_destination_all", "start_single"}
+            next_states={
+                "start",
+                "scan_destination_all",
+                "start_single",
+                "manual_selection",
+                "get_work",
+            }
         )
 
     def scan_location(self):
