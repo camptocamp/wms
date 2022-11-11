@@ -114,6 +114,18 @@ class ShopfloorMenu(models.Model):
         compute="_compute_allow_force_reservation_is_possible"
     )
 
+    allow_get_work = fields.Boolean(
+        string="Allow the user to select his work",
+        default=False,
+        help=(
+            "At the start of the scenario the user will be offered to select "
+            "what to work on from a list of work ready."
+        ),
+    )
+    allow_get_work_is_possible = fields.Boolean(
+        compute="_compute_allow_get_work_is_possible"
+    )
+
     @api.onchange("unload_package_at_destination")
     def _onchange_unload_package_at_destination(self):
         # Uncheck pick_pack_same_time when unload_package_at_destination is set to True
@@ -293,4 +305,11 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.allow_force_reservation_is_possible = menu.scenario_id.has_option(
                 "allow_force_reservation"
+            )
+
+    @api.depends("scenario_id")
+    def _compute_allow_get_work_is_possible(self):
+        for menu in self:
+            menu.allow_get_work_is_possible = menu.scenario_id.has_option(
+                "allow_get_work"
             )
