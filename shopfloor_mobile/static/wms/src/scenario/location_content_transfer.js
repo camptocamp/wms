@@ -19,6 +19,11 @@ const LocationContentTransfer = {
                 v-on:found="on_scan"
                 :input_placeholder="search_input_placeholder"
                 />
+            <get-work
+                v-if="state_is('get_work')"
+                v-on:get_work="state.on_get_work"
+                v-on:manual_selection="state.on_manual_selection"
+                />
             <div v-if="state_in(['start_single', 'scan_destination', 'scan_destination_all']) && wrapped_context().has_records">
 
                 <item-detail-card
@@ -209,6 +214,26 @@ const LocationContentTransfer = {
                         this.wait_call(this.odoo.call("start_or_recover"));
                     },
                 },
+                get_work: {
+                    on_get_work: (evt) => {
+                        this.wait_call(this.odoo.call("find_work"));
+                    },
+                    on_manual_selection: (evt) => {
+                        this.state_to("scan_location");
+                    },
+                },
+                // Probably better to use the existing scan_location for the confirmation !?
+                // confirm_start_location: {
+                //     display_info: {
+                //         title: this.$t("location_content_transfer.confirm_start_location.title"),
+                //         scan_placeholder: this.$t("scan_placeholder_translation"),
+                //     },
+                //     on_scan: (scanned) => {
+                //         this.wait_call(
+                //             this.odoo.call("confirm_start_location", {barcode: scanned.text})
+                //         );
+                //     },
+                // },
                 scan_location: {
                     display_info: {
                         title: this.$t("location_content_transfer.scan_location.title"),
