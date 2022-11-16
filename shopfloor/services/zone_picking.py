@@ -578,6 +578,7 @@ class ZonePicking(Component):
                 response = change_package_lot.change_package(
                     first(move_lines),
                     package,
+                    # FIXME we may need to pass the quantity being done
                     self._response_for_set_line_destination,
                     self._response_for_change_pack_lot,
                 )
@@ -717,6 +718,7 @@ class ZonePicking(Component):
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.dest_location_not_allowed(),
+                qty_done=quantity,
             )
             return (location_changed, response)
 
@@ -729,6 +731,7 @@ class ZonePicking(Component):
                     move_line.location_dest_id, location
                 ),
                 confirmation_required=True,
+                qty_done=quantity,
             )
             return (location_changed, response)
 
@@ -737,6 +740,7 @@ class ZonePicking(Component):
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.dest_package_required(),
+                qty_done=quantity,
             )
             return (location_changed, response)
         # destination location set to the scanned one
@@ -780,6 +784,7 @@ class ZonePicking(Component):
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.package_not_empty(package),
+                qty_done=quantity,
             )
             return (package_changed, response)
         multiple_move_allowed = self.work.menu.multiple_move_single_pack
@@ -787,6 +792,7 @@ class ZonePicking(Component):
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.package_already_used(package),
+                qty_done=quantity,
             )
             return (package_changed, response)
         # the quantity done is set to the passed quantity
@@ -797,6 +803,7 @@ class ZonePicking(Component):
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.unable_to_pick_more(move_line.product_uom_qty),
+                qty_done=quantity,
             )
             return (package_changed, response)
         stock = self._actions_for("stock")
@@ -923,7 +930,7 @@ class ZonePicking(Component):
                     extra_message = message
                     if not good_for_packing:
                         return self._response_for_set_line_destination(
-                            move_line, message=message
+                            move_line, message=message, qty_done=quantity
                         )
                 pkg_moved, response = self._set_destination_location(
                     move_line,
@@ -949,7 +956,7 @@ class ZonePicking(Component):
                 ) = self._handle_pick_pack_same_time_for_package(move_line, package)
                 if not good_for_packing:
                     return self._response_for_set_line_destination(
-                        move_line, message=message
+                        move_line, message=message, qty_done=quantity
                     )
             location = move_line.location_dest_id
             pkg_moved, response = self._set_destination_package(
