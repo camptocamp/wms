@@ -77,4 +77,4 @@ class ShopfloorScenario(models.Model):
         return slugify(name).replace("-", "_")
 
     def has_option(self, key):
-        return self.options.get(key, False)
+        return key in self.options.keys()
