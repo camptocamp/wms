@@ -19,11 +19,29 @@ const LocationContentTransfer = {
                 v-on:found="on_scan"
                 :input_placeholder="search_input_placeholder"
                 />
+            <template v-if="state_in(['scan_location'])">
+                <item-detail-card
+                    v-if="state.data.location"
+                    :key="make_state_component_key(['detail-move-line-location', state.data.location.id])"
+                    :record="state.data.location"
+                    :options="{main: true, key_title: 'name', title_action_field: {action_val_path: 'name'}}"
+                    :card_color="utils.colors.color_for('screen_step_done')"
+                />
+                <div class="button-list button-vertical-list full" v-if="state.data.location">
+                    <v-row align="center">
+                        <v-col class="text-center" cols="12">
+                            <cancel-button v-on:cancel="on_cancel"/>
+                        </v-col>
+                    </v-row>
+                </div>
+            </template>
+
             <get-work
                 v-if="state_is('get_work')"
                 v-on:get_work="state.on_get_work"
                 v-on:manual_selection="state.on_manual_selection"
-                />
+            />
+
             <div v-if="state_in(['start_single', 'scan_destination', 'scan_destination_all']) && wrapped_context().has_records">
 
                 <item-detail-card
@@ -206,7 +224,7 @@ const LocationContentTransfer = {
     data: function () {
         return {
             usage: "location_content_transfer",
-            initial_state_key: "scan_location",
+            initial_state_key: "init",
             scan_destination_qty: 0,
             states: {
                 init: {
@@ -222,22 +240,25 @@ const LocationContentTransfer = {
                         this.state_to("scan_location");
                     },
                 },
-                // Probably better to use the existing scan_location for the confirmation !?
-                // confirm_start_location: {
-                //     display_info: {
-                //         title: this.$t("location_content_transfer.confirm_start_location.title"),
-                //         scan_placeholder: this.$t("scan_placeholder_translation"),
-                //     },
-                //     on_scan: (scanned) => {
-                //         this.wait_call(
-                //             this.odoo.call("confirm_start_location", {barcode: scanned.text})
-                //         );
-                //     },
-                // },
                 scan_location: {
                     display_info: {
                         title: this.$t("location_content_transfer.scan_location.title"),
                         scan_placeholder: this.$t("scan_placeholder_translation"),
+                    },
+                    events: {
+                        go_back: "on_back",
+                    },
+                    on_back: () => {
+                        this.state_to("start");
+                        this.reset_notification();
+                    },
+                    on_cancel: () => {
+                        this.state_reset_data("scan_location");
+                        this.wait_call(
+                            this.odoo.call("cancel_work", {
+                                location_id: this.state.data.location.id,
+                            })
+                        );
                     },
                     on_scan: (scanned) => {
                         this.wait_call(
