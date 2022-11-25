@@ -3,6 +3,7 @@
  * @author Simone Orsi <simahawk@gmail.com>
  * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
  */
+import event_hub from "../services/event_hub.js";
 
 /* eslint-disable strict */
 Vue.component("manual-select", {
@@ -45,6 +46,11 @@ Vue.component("manual-select", {
     mounted() {
         // Relies on properties
         this.selected = this._initSelected();
+
+        // Make the elements in the UI react to scans.
+        event_hub.$on("manual_select:handle_scan", (data) => {
+            this.handleScan(data);
+        });
     },
     methods: {
         _initSelected() {
@@ -115,15 +121,27 @@ Vue.component("manual-select", {
             }
         },
         handleSelect(rec, event) {
-            const elem = event.target;
+            this._updateElement(rec, event.target);
+            if (!this.opts.showActions) {
+                this._emitSelected(this._getSelected());
+            }
+        },
+        handleScan(new_data) {
+            new_data.selected_move_lines.forEach((line) => {
+                const query = $(`[input-value=${line.id}]`);
+                const elem = query[0];
+                if (line.qty_done > 0) {
+                    elem.checked = true;
+                }
+                this._updateElement(line, elem);
+            });
+        },
+        _updateElement(rec, elem) {
             const val = isNaN(elem.value) ? elem.value : parseInt(elem.value, 10);
             this._updateValue(val, elem.checked);
             $(elem)
                 .closest(".list-item-wrapper")
                 .toggleClass(this.selected_color_klass(rec), elem.checked);
-            if (!this.opts.showActions) {
-                this._emitSelected(this._getSelected());
-            }
         },
         _emitSelected(data) {
             this.$root.trigger(this.opts.selected_event, data);
