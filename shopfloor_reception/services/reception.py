@@ -2,6 +2,10 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 
+from datetime import timedelta
+
+import pytz
+
 from odoo import fields
 
 from odoo.addons.base_rest.components.service import to_int
@@ -53,6 +57,18 @@ class Reception(Component):
             self._domain_move_line_by_packaging(packaging)
         )
 
+    def _scheduled_date_today_domain(self):
+        domain = []
+        company = self.env.company
+        tz = company.partner_id.tz or "UTC"
+        today = fields.Datetime.today().replace(hour=0, minute=0, second=0)
+        tomorrow = today + timedelta(days=1)
+        today_start = pytz.timezone(tz).localize(today).astimezone(pytz.utc)
+        today_end = pytz.timezone(tz).localize(tomorrow).astimezone(pytz.utc)
+        domain.append(("scheduled_date", ">=", today_start))
+        domain.append(("scheduled_date", "<", today_end))
+        return domain
+
     # DOMAIN METHODS
 
     def _domain_move_line_by_packaging(self, packaging):
@@ -71,12 +87,15 @@ class Reception(Component):
             ("product_id", "=", product.id),
         ]
 
-    def _domain_stock_picking(self):
-        return [
+    def _domain_stock_picking(self, today_only=False):
+        domain = [
             ("state", "=", "assigned"),
             ("picking_type_id", "in", self.picking_types.ids),
-            ("user_id", "=", False),
+            ("user_id", "in", [False, self.env.uid]),
         ]
+        if today_only:
+            domain.extend(self._scheduled_date_today_domain())
+        return domain
 
     def _select_picking(self, picking):
         if picking.picking_type_id not in self.picking_types:
@@ -356,7 +375,7 @@ class Reception(Component):
     def _response_for_select_document(self, pickings=None, message=None):
         if not pickings:
             pickings = self.env["stock.picking"].search(
-                self._domain_stock_picking(),
+                self._domain_stock_picking(today_only=True),
                 order=self._order_stock_picking(),
             )
         else:
@@ -368,6 +387,14 @@ class Reception(Component):
             )
         data = {"pickings": self._data_for_stock_pickings(pickings, with_lines=False)}
         return self._response(next_state="select_document", data=data, message=message)
+
+    def _response_for_manual_selection(self):
+        pickings = self.env["stock.picking"].search(
+            self._domain_stock_picking(),
+            order=self._order_stock_picking(),
+        )
+        data = {"pickings": self._data_for_stock_pickings(pickings, with_lines=False)}
+        return self._response(next_state="manual_selection", data=data)
 
     def _response_for_set_lot(self, picking, line, message=None):
         return self._response(
@@ -439,12 +466,12 @@ class Reception(Component):
           - select_document: Error: barcode not found
           - select_document: Multiple picking matching the product / packaging barcode
           - select_line: Picking scanned, one has been found
+          - manual_selection: Press 'manual select' button, all available pickings are displayed
           - set_lot: Packaging / Product has been scanned,
-                     single correspondance. Tracked product
+                        single correspondance. Tracked product
           - set_quantity: Packaging / Product has been scanned,
-                          single correspondance. Not tracked product
+                        single correspondance. Not tracked product
         """
-        self._actions_for("search")
         handlers = (
             self._scan_document__by_picking,
             self._scan_document__by_product,
@@ -457,6 +484,27 @@ class Reception(Component):
         return self._response_for_select_document(
             message=self.msg_store.barcode_not_found()
         )
+
+    def list_stock_pickings(self):
+        """Select a picking manually
+
+        transitions:
+        - select_document: Press 'back' button
+        - select_line: Picking selected
+        - set_lot: Picking selected, single correspondance. Tracked product
+        - set_quantity: Picking selected, single correspondance. Not tracked product
+
+        This endpoint returns the list of all pickings available
+        so that the user can select one manually
+
+        Since there's no scan in the manual_selection screen
+        there are only two options:
+            - Select an available picking and move to the next screen
+            - Go back to select_document
+
+        This means there should be no room for error
+        """
+        return self._response_for_manual_selection()
 
     def scan_line(self, picking_id, barcode):
         """Scan a product or a packaging
@@ -829,6 +877,9 @@ class ShopfloorReceptionValidator(Component):
     def scan_document(self):
         return {"barcode": {"required": True, "type": "string"}}
 
+    def list_stock_pickings(self):
+        return {}
+
     def scan_line(self):
         return {
             "picking_id": {"coerce": to_int, "required": True, "type": "integer"},
@@ -951,6 +1002,7 @@ class ShopfloorReceptionValidatorResponse(Component):
         """
         return {
             "select_document": self._schema_select_document,
+            "manual_selection": self._schema_manual_selection,
             "select_line": self._schema_select_line,
             "confirm_done": self._schema_confirm_done,
             "set_lot": self._schema_set_lot,
@@ -964,7 +1016,22 @@ class ShopfloorReceptionValidatorResponse(Component):
         return {"select_document"}
 
     def _scan_document_next_states(self):
-        return {"select_document", "select_line", "set_lot", "set_quantity"}
+        return {
+            "select_document",
+            "select_line",
+            "set_lot",
+            "set_quantity",
+            "manual_selection",
+        }
+
+    def _list_stock_pickings_next_states(self):
+        return {
+            "select_document",
+            "select_line",
+            "set_lot",
+            "set_quantity",
+            "manual_selection",
+        }
 
     def _scan_line_next_states(self):
         return {"select_line", "set_lot", "set_quantity"}
@@ -1006,18 +1073,13 @@ class ShopfloorReceptionValidatorResponse(Component):
             )
         }
 
-    def _schema_stock_picking_with_lines(self, lines_with_packaging=False):
-        # TODO: ideally, we should use self.schemas_detail.picking_detail
-        # instead of this method.
-        schema = self.schemas.picking()
-        schema.update(
-            {
-                "move_lines": self.schemas._schema_list_of(
-                    self.schemas.move_line(with_packaging=lines_with_packaging)
-                )
-            }
-        )
-        return schema
+    @property
+    def _schema_manual_selection(self):
+        return {
+            "pickings": self.schemas._schema_list_of(
+                self.schemas.picking(), required=True
+            )
+        }
 
     @property
     def _schema_select_line(self):
@@ -1095,6 +1157,19 @@ class ShopfloorReceptionValidatorResponse(Component):
             "new_package_name": {"type": "string"},
         }
 
+    def _schema_stock_picking_with_lines(self, lines_with_packaging=False):
+        # TODO: ideally, we should use self.schemas_detail.picking_detail
+        # instead of this method.
+        schema = self.schemas.picking()
+        schema.update(
+            {
+                "move_lines": self.schemas._schema_list_of(
+                    self.schemas.move_line(with_packaging=lines_with_packaging)
+                )
+            }
+        )
+        return schema
+
     # ENDPOINTS
 
     def start(self):
@@ -1102,6 +1177,11 @@ class ShopfloorReceptionValidatorResponse(Component):
 
     def scan_document(self):
         return self._response_schema(next_states=self._scan_document_next_states())
+
+    def list_stock_pickings(self):
+        return self._response_schema(
+            next_states=self._list_stock_pickings_next_states()
+        )
 
     def scan_line(self):
         return self._response_schema(next_states=self._scan_line_next_states())

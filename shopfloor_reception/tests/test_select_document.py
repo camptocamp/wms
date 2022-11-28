@@ -1,6 +1,8 @@
 # Copyright 2022 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
+from odoo import fields
+
 from .common import CommonCase
 
 
@@ -163,6 +165,7 @@ class TestSelectDocument(CommonCase):
     def test_scan_product_no_picking(self):
         # next_step is select_document, with an error message
         picking = self._create_picking()
+        picking.write({"scheduled_date": fields.Datetime.today()})
         response = self.service.dispatch(
             "scan_document", params={"barcode": self.product_c.barcode}
         )
@@ -177,6 +180,7 @@ class TestSelectDocument(CommonCase):
     def test_scan_packaging_no_picking(self):
         # next step is select_document, with an error message
         picking = self._create_picking()
+        picking.write({"scheduled_date": fields.Datetime.today()})
         response = self.service.dispatch(
             "scan_document", params={"barcode": self.product_c_packaging.barcode}
         )

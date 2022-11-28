@@ -32,7 +32,24 @@ const Reception = {
                     :key="make_state_component_key(['reception-picking-item-detail', state.data.picking.id])"
                 />
             </template>
-            <template v-if="state_is('select_document') && visible_pickings">
+            <template v-if="state_is('select_document')">
+                <manual-select
+                    class="with-progress-bar"
+                    :records="state.data.pickings"
+                    :options="manual_select_options_for_select_document(true)"
+                    :key="make_state_component_key(['reception', 'manual-select-document'])"
+                />
+                <div v-if="state_is('select_document')">
+                    <div class="button-list button-vertical-list full">
+                        <v-row align="center">
+                            <v-col class="text-center" cols="12">
+                                <btn-action @click="state.on_manual_selection">Manual selection</btn-action>
+                            </v-col>
+                        </v-row>
+                    </div>
+                </div>
+            </template>
+            <template v-if="state_is('manual_selection') && visible_pickings">
                 <list-filter
                     v-on:found="on_search"
                     :input_placeholder="filter_input_placeholder"
@@ -43,6 +60,13 @@ const Reception = {
                     :options="manual_select_options_for_select_document()"
                     :key="make_state_component_key(['reception', 'manual-select-document'])"
                 />
+                <div class="button-list button-vertical-list full">
+                    <v-row align="center">
+                        <v-col class="text-center" cols="12">
+                            <btn-back />
+                        </v-col>
+                    </v-row>
+                </div>
             </template>
             <template v-if="state_is('select_line')">
                 <picking-summary
@@ -229,9 +253,11 @@ const Reception = {
                 ],
             };
         },
-        manual_select_options_for_select_document: function () {
+        manual_select_options_for_select_document: function (today_only = false) {
             return {
-                group_title_default: "Pickings to process",
+                group_title_default: today_only
+                    ? "Pickings to process today"
+                    : "Pickings to process",
                 group_color: this.utils.colors.color_for("screen_step_todo"),
                 list_item_extra_component: "picking-list-item-progress-bar",
                 showActions: false,
@@ -420,6 +446,9 @@ const Reception = {
                 this._apply_search_filter(picking, input.text)
             );
         },
+        reset_picking_filter: function () {
+            this.filtered_pickings = [];
+        },
         lot_has_expiry_date: function () {
             // If there's a expiry date, it means there's a lot too.
             const expiry_date = _.result(
@@ -473,6 +502,28 @@ const Reception = {
                             })
                         );
                     },
+                    on_manual_selection: () => {
+                        this.wait_call(this.odoo.call("list_stock_pickings"));
+                    },
+                },
+                manual_selection: {
+                    title: "Choose an operation",
+                    events: {
+                        select: "on_select",
+                        go_back: "on_back",
+                    },
+                    on_select: (selected) => {
+                        this.wait_call(
+                            this.odoo.call("scan_document", {
+                                barcode: selected.name,
+                            })
+                        );
+                    },
+                    on_back: () => {
+                        this.state_to("select_document");
+                        this.reset_notification();
+                        this.reset_picking_filter();
+                    },
                 },
                 select_line: {
                     display_info: {
@@ -514,6 +565,7 @@ const Reception = {
                     },
                     events: {
                         confirm: "on_confirm",
+                        go_back: "on_back",
                     },
                     on_confirm: () => {
                         this.wait_call(

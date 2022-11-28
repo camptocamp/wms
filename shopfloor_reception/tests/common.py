@@ -2,14 +2,16 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 
+from odoo import fields
+
 from odoo.addons.shopfloor.tests.common import CommonCase as BaseCommonCase
 
 
 class CommonCase(BaseCommonCase):
     @classmethod
-    def _create_picking(cls, picking_type=None, lines=None, confirm=True):
+    def _create_picking(cls, picking_type=None, lines=None, confirm=True, **kw):
         picking = super()._create_picking(
-            picking_type=picking_type, lines=lines, confirm=confirm
+            picking_type=picking_type, lines=lines, confirm=confirm, **kw
         )
         picking.user_id = False
         return picking
@@ -98,3 +100,24 @@ class CommonCase(BaseCommonCase):
 
     def _packaging_data(self, packaging):
         return self.data.packaging(packaging)
+
+    def _get_all_pickings(self):
+        return self.env["stock.picking"].search(
+            [
+                ("state", "=", "assigned"),
+                ("picking_type_id", "=", self.picking_type.id),
+                ("user_id", "=", False),
+            ],
+            order="scheduled_date ASC",
+        )
+
+    def _get_today_pickings(self):
+        return self.env["stock.picking"].search(
+            [
+                ("state", "=", "assigned"),
+                ("picking_type_id", "=", self.picking_type.id),
+                ("user_id", "=", False),
+                ("scheduled_date", "=", fields.Datetime.today()),
+            ],
+            order="scheduled_date ASC",
+        )

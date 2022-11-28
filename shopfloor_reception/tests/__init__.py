@@ -1,5 +1,6 @@
 from . import test_start
 from . import test_select_document
+from . import test_manual_selection
 from . import test_select_line
 from . import test_reception_done
 from . import test_set_lot

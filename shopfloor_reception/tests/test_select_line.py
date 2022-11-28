@@ -1,6 +1,8 @@
 # Copyright 2022 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
+from odoo import fields
+
 from .common import CommonCase
 
 
@@ -158,8 +160,12 @@ class TestSelectLine(CommonCase):
 
         # These are needed to test that we get a valid list of pickings
         # when returning to select_document.
-        self._create_picking(picking_type=picking.picking_type_id)
-        self._create_picking(picking_type=picking.picking_type_id)
+        self._create_picking(
+            picking_type=picking.picking_type_id, scheduled_date=fields.Datetime.today()
+        )
+        self._create_picking(
+            picking_type=picking.picking_type_id, scheduled_date=fields.Datetime.today()
+        )
 
         for line in picking.move_line_ids:
             line.qty_done = line.product_uom_qty
@@ -192,6 +198,7 @@ class TestSelectLine(CommonCase):
                 ("state", "=", "assigned"),
                 ("picking_type_id", "=", picking.picking_type_id.id),
                 ("user_id", "=", False),
+                ("scheduled_date", "=", fields.Datetime.today()),
             ],
             order="scheduled_date ASC",
         )
