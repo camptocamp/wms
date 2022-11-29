@@ -13,7 +13,10 @@ class ProductProduct(models.Model):
 
     @api.depends("stock_move_ids.need_release")
     def _compute_move_need_release_count(self):
-        for product in self:
+        products = self.filtered(lambda p: p.type != "service")
+        for p in self - products:
+            p.move_need_release_count = 0
+        for product in products:
             product.move_need_release_count = len(
                 product.stock_move_ids.filtered("need_release")
             )
