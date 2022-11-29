@@ -129,6 +129,17 @@ class ShopfloorMenu(models.Model):
     no_prefill_qty_is_possible = fields.Boolean(
         compute="_compute_no_prefill_qty_is_possible"
     )
+    allow_get_work = fields.Boolean(
+        string="Show Get Work on start",
+        default=False,
+        help=(
+            "When enabled the user will have the option to ask "
+            "for a task to work on."
+        ),
+    )
+    allow_get_work_is_possible = fields.Boolean(
+        compute="_compute_allow_get_work_is_possible"
+    )
 
     @api.onchange("unload_package_at_destination")
     def _onchange_unload_package_at_destination(self):
@@ -316,4 +327,11 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.no_prefill_qty_is_possible = menu.scenario_id.has_option(
                 "no_prefill_qty"
+            )
+
+    @api.depends("scenario_id")
+    def _compute_allow_get_work_is_possible(self):
+        for menu in self:
+            menu.allow_get_work_is_possible = menu.scenario_id.has_option(
+                "allow_get_work"
             )
