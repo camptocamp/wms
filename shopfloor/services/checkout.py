@@ -154,7 +154,7 @@ class Checkout(Component):
         )
 
     def scan_document(self, barcode):
-        """Scan a package, a product, a transfer or a location
+        """Scan a package, a product, a transfer or a location abd find a picking.
 
         When a location is scanned, if all the move lines from this destination
         are for the same stock.picking, the stock.picking is used for the
@@ -180,9 +180,16 @@ class Checkout(Component):
           destination pack set
         """
         search = self._actions_for("search")
-        picking = search.picking_from_scan(barcode)
-        if not picking:
-            location = search.location_from_scan(barcode)
+        search_result = search.find_barcode(
+            barcode, types=("picking", "location", "package")
+        )
+        # picking = search.picking_from_scan(barcode)
+        if search_result.type == "picking":
+            return self._select_picking(search_result.record, "select_document")
+
+        if search_result.type == "location":
+            location = search_result.record
+            # location = search.location_from_scan(barcode)
             if location:
                 if not self.is_src_location_valid(location):
                     return self._response_for_select_document(
@@ -222,6 +229,16 @@ class Checkout(Component):
                     picking = pickings
         if not picking:
             # Try to find the product first
+            search_result = search.find_barcode(
+                barcode,
+                types=("product",),
+                handler_kw=dict(product=dict(use_packaging=True)),
+            )
+            search_result = search.find_barcode(
+                barcode,
+                types=("product",),
+                handler_kw=dict(product=dict(use_packaging=True)),
+            )
             product = search.product_from_scan(barcode, use_packaging=False)
             # TODO Filter lines on picking_type before
             # line_domain = [
@@ -368,6 +385,7 @@ class Checkout(Component):
             {"qty_done": 0, "shopfloor_user_id": False}
         )
 
+    # @barcode
     def scan_line(self, picking_id, barcode):
         """Scan move lines of the stock picking
 
@@ -398,17 +416,14 @@ class Checkout(Component):
         if not selection_lines:
             return self._response_for_summary(picking)
 
-        package = search.package_from_scan(barcode)
-        if package:
-            return self._select_lines_from_package(picking, selection_lines, package)
-
-        product = search.product_from_scan(barcode)
-        if product:
-            return self._select_lines_from_product(picking, selection_lines, product)
-
-        lot = search.lot_from_scan(barcode, products=picking.move_lines.product_id)
-        if lot:
-            return self._select_lines_from_lot(picking, selection_lines, lot)
+        search_result = search.parse_barcode(
+            barcode,
+            types=("package", "product", "lot"),
+            handler_kw={"lot": dict(products=picking.move_lines.product_id)},
+        )
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type, None)
+        if result_handler:
+            return result_handler(picking, selection_lines, search_result.record)
 
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
