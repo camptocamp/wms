@@ -1,0 +1,104 @@
+# Copyright 2021 Camptocamp SA (http://www.camptocamp.com)
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# @author Simone Orsi <simahawk@gmail.com>
+
+
+from .test_actions_search import TestSearchBaseCase
+
+
+class TestSearchCaseNomenclature(TestSearchBaseCase):
+    def test_property_nomenclatures(self):
+        # We expect to get at least the default nomenclatures
+        # from 'stock' + 'barcodes' modules
+        self.assertTrue(self.search.nomenclatures)
+
+    # def test_search_location(self):
+    #     rec = self.customer_location
+    #     handler = self.search.location_from_scan
+    #     self.assertEqual(handler(rec.barcode), rec)
+    #     self.assertEqual(handler(rec.name), rec)
+    #     self.assertEqual(handler(False), rec.browse())
+    #     self.assertEqual(handler("NONE"), rec.browse())
+
+    # def test_search_location_with_limit(self):
+    #     rec = self.customer_location
+    #     rec2 = self.customer_location.sudo().copy({"barcode": "CUSTOMERS2"})
+    #     handler = self.search.location_from_scan
+    #     res = handler("Customers", 2)
+    #     self.assertEqual(res, rec + rec2)
+
+    # def test_search_package(self):
+    #     rec = self.env["stock.quant.package"].sudo().create({"name": "1234"})
+    #     handler = self.search.package_from_scan
+    #     self.assertEqual(handler(rec.name), rec)
+    #     self.assertEqual(handler(False), rec.browse())
+    #     self.assertEqual(handler("NONE"), rec.browse())
+
+    # def test_search_picking(self):
+    #     ptype = self.env.ref("shopfloor.picking_type_single_pallet_transfer_demo")
+    #     rec = self._create_picking(picking_type=ptype)
+    #     handler = self.search.picking_from_scan
+    #     self.assertEqual(handler(rec.name), rec)
+    #     self.assertEqual(handler(False), rec.browse())
+    #     self.assertEqual(handler("NONE"), rec.browse())
+
+    def test_search_product(self):
+        rec = self.product_a
+        types = ("product",)
+        handler = self.search.find
+        res = self.search._make_search_result(
+            record=rec, type="product", code=rec.barcode
+        )
+        self.assertEqual(handler(rec.barcode, types=types), res)
+        res = self.search._make_search_result(type="none")
+        self.assertEqual(handler(False, types=types), res)
+        res = self.search._make_search_result(type="none")
+        self.assertEqual(handler("NONE", types=types), res)
+
+    # def test_search_lot_number_unique(self):
+    #     rec = (
+    #         self.env["stock.production.lot"]
+    #         .sudo()
+    #         .create(
+    #             {"product_id": self.product_a.id, "company_id": self.env.company.id}
+    #         )
+    #     )
+    #     handler = self.search.lot_from_scan
+    #     self.assertEqual(handler(rec.name, products=self.product_a), rec)
+    #     self.assertEqual(handler(False), rec.browse())
+    #     self.assertEqual(handler("NONE"), rec.browse())
+
+    # def test_search_lot_number_shared_with_multiple_products(self):
+    #     lot_model = self.env["stock.production.lot"].sudo()
+    #     lots = (
+    #         lot_model.create(
+    #             {
+    #                 "name": "TEST",
+    #                 "product_id": self.product_a.id,
+    #                 "company_id": self.env.company.id,
+    #             }
+    #         ),
+    #         lot_model.create(
+    #             {
+    #                 "name": "TEST",
+    #                 "product_id": self.product_b.id,
+    #                 "company_id": self.env.company.id,
+    #             }
+    #         ),
+    #     )
+    #     handler = self.search.lot_from_scan
+    #     self.assertEqual(handler(lots[0].name, products=self.product_a), lots[0])
+    #     self.assertEqual(handler(lots[1].name, products=self.product_a), lots[0])
+    #     self.assertEqual(handler(lots[0].name, products=self.product_b), lots[1])
+    #     self.assertEqual(handler(lots[1].name, products=self.product_b), lots[1])
+
+    # def test_search_generic_packaging(self):
+    #     rec = (
+    #         self.env["product.packaging"]
+    #         .sudo()
+    #         .create({"name": "TEST PKG", "barcode": "1234"})
+    #     )
+    #     handler = self.search.generic_packaging_from_scan
+    #     self.assertEqual(handler(rec.barcode), rec)
+    #     self.assertEqual(handler(False), rec.browse())
+    #     self.assertEqual(handler("NONE"), rec.browse())
