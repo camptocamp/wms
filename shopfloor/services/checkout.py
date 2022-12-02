@@ -398,17 +398,14 @@ class Checkout(Component):
         if not selection_lines:
             return self._response_for_summary(picking)
 
-        package = search.package_from_scan(barcode)
-        if package:
-            return self._select_lines_from_package(picking, selection_lines, package)
-
-        product = search.product_from_scan(barcode)
-        if product:
-            return self._select_lines_from_product(picking, selection_lines, product)
-
-        lot = search.lot_from_scan(barcode, products=picking.move_lines.product_id)
-        if lot:
-            return self._select_lines_from_lot(picking, selection_lines, lot)
+        search_result = search.find(
+            barcode,
+            types=("package", "product", "lot"),
+            handler_kw={"lot": dict(products=picking.move_lines.product_id)},
+        )
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type, None)
+        if result_handler:
+            return result_handler(picking, selection_lines, search_result.record)
 
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
