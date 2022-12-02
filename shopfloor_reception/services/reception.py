@@ -118,7 +118,9 @@ class Reception(Component):
             - set_lot: a single picking has been found for this packaging
             - select_document: A single or no pickings has been found for this packaging
         """
-        move_lines = self._move_line_by_product(product)
+        move_lines = self._move_line_by_product(product).filtered(
+            lambda l: l.picking_id.picking_type_id.id in self.picking_types.ids
+        )
         pickings = move_lines.mapped("move_id.picking_id")
         if len(pickings) == 1:
             self._assign_user_to_picking(pickings)
@@ -143,7 +145,9 @@ class Reception(Component):
             - set_lot: a single picking has been found for this packaging
             - select_document: A single or no pickings has been found for this packaging
         """
-        move_lines = self._move_line_by_packaging(packaging)
+        move_lines = self._move_line_by_packaging(packaging).filtered(
+            lambda l: l.picking_id.picking_type_id.id in self.picking_types.ids
+        )
         pickings = move_lines.mapped("move_id.picking_id")
         if len(pickings) == 1:
             self._assign_user_to_picking(pickings)
@@ -203,21 +207,28 @@ class Reception(Component):
     def _scan_document__by_picking(self, barcode):
         search = self._actions_for("search")
         picking_filter_result = search.picking_from_scan(barcode, use_origin=True)
-        if picking_filter_result:
-            message = self._check_picking_status(picking_filter_result)
+        reception_pickings = picking_filter_result.filtered(
+            lambda p: p.picking_type_id.id in self.picking_types.ids
+        )
+        if picking_filter_result and not reception_pickings:
+            return self._response_for_select_document(
+                message=self.msg_store.cannot_move_something_in_picking_type()
+            )
+        if reception_pickings:
+            message = self._check_picking_status(reception_pickings)
             if message:
                 return self._response_for_select_document(
-                    pickings=picking_filter_result, message=message
+                    pickings=reception_pickings, message=message
                 )
             # There is a case where scanning the source document
             # could return more than one picking.
             # In this case, we ask the user to scan a package instead.
-            if len(picking_filter_result) > 1:
+            if len(reception_pickings) > 1:
                 return self._response_for_select_document(
-                    pickings=picking_filter_result,
+                    pickings=reception_pickings,
                     message=self.msg_store.source_document_multiple_pickings_scan_package(),
                 )
-            return self._select_picking(picking_filter_result)
+            return self._select_picking(reception_pickings)
 
     def _scan_document__by_product(self, barcode):
         search = self._actions_for("search")
