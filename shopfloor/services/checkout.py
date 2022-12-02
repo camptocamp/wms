@@ -416,24 +416,14 @@ class Checkout(Component):
         if not selection_lines:
             return self._response_for_summary(picking)
 
-        package = search.package_from_scan(barcode)
-        if package:
-            return self._select_lines_from_package(picking, selection_lines, package)
-
-        product = search.product_from_scan(barcode)
-        if product:
-            return self._select_lines_from_product(picking, selection_lines, product, 1)
-
-        if not product:
-            packaging = search.packaging_from_scan(barcode)
-            if packaging:
-                return self._select_lines_from_product(
-                    picking, selection_lines, packaging.product_id, packaging.qty
-                )
-
-        lot = search.lot_from_scan(barcode, products=picking.move_lines.product_id)
-        if lot:
-            return self._select_lines_from_lot(picking, selection_lines, lot)
+        search_result = search.find(
+            barcode,
+            types=("package", "product", "lot"),
+            handler_kw={"lot": dict(products=picking.move_lines.product_id)},
+        )
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type, None)
+        if result_handler:
+            return result_handler(picking, selection_lines, search_result.record)
 
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
@@ -459,7 +449,7 @@ class Checkout(Component):
         return self._response_for_select_package(picking, lines)
 
     def _select_lines_from_product(
-        self, picking, selection_lines, product, prefill_qty
+        self, picking, selection_lines, product, prefill_qty=1
     ):
         if product.tracking in ("lot", "serial"):
             return self._response_for_select_line(
@@ -502,6 +492,11 @@ class Checkout(Component):
             lines, prefill_qty=prefill_qty, related_lines=related_lines
         )
         return self._response_for_select_package(picking, lines)
+    
+    def _select_lines_from_packaging(self, picking, selection_lines, packaging):
+        return self._select_lines_from_product(
+            picking, selection_lines, packaging.product_id, prefill_qty=packaging.qty
+        )
 
     def _select_lines_from_lot(self, picking, selection_lines, lot):
         lines = selection_lines.filtered(lambda l: l.lot_id == lot)
