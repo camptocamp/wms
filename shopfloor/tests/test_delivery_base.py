@@ -65,6 +65,30 @@ class DeliveryCommonCase(CommonCase):
                 }
             )
         )
+        cls.product_g = (
+            cls.env["product.product"]
+            .sudo()
+            .create(
+                {
+                    "name": "Product G",
+                    "type": "product",
+                    "default_code": "G",
+                    "barcode": "G",
+                    "weight": 1,
+                }
+            )
+        )
+        cls.product_g_packaging = (
+            cls.env["product.packaging"]
+            .sudo()
+            .create(
+                {
+                    "name": "Box",
+                    "product_id": cls.product_g.id,
+                    "barcode": "ProductGBox",
+                }
+            )
+        )
 
     def setUp(self):
         super().setUp()
@@ -75,11 +99,21 @@ class DeliveryCommonCase(CommonCase):
     def _stock_picking_data(self, picking):
         return self.service.data_detail.picking_detail(picking)
 
-    def assert_response_deliver(self, response, picking=None, message=None):
+    def _stock_location_data(self, location):
+        return self.service.data.location(location)
+
+    def assert_response_deliver(
+        self, response, picking=None, message=None, location=None
+    ):
         self.assert_response(
             response,
             next_state="deliver",
-            data={"picking": self._stock_picking_data(picking) if picking else None},
+            data={
+                "picking": self._stock_picking_data(picking) if picking else None,
+                "sublocation": self._stock_location_data(location)
+                if location
+                else None,
+            },
             message=message,
         )
 

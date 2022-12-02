@@ -283,10 +283,6 @@ const Checkout = {
         select_delivery_packaging_manual_select_options: function () {
             return {
                 showActions: false,
-                list_item_options: {
-                    loud_title: true,
-                    fields: [{path: "packaging_type"}],
-                },
             };
         },
         select_line_detail_picking_select_props: function () {

@@ -248,11 +248,39 @@ class MessageAction(Component):
             "body": _("Several lots found in %s, please scan a lot.") % location.name,
         }
 
+    def several_lots_in_package(self, package):
+        return {
+            "message_type": "error",
+            "body": _("Several lots found in %s, please scan the lot." % package.name),
+        }
+
+    def several_move_in_different_location(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Several moves found on different locations, please scan first the location."
+            ),
+        }
+
+    def several_move_with_different_lot(self):
+        return {
+            "message_type": "warning",
+            "body": _("Several moves found for different lots, please scan the lot."),
+        }
+
     def several_products_in_location(self, location):
         return {
             "message_type": "warning",
             "body": _(
                 "Several products found in %s, please scan a product." % location.name
+            ),
+        }
+
+    def several_products_in_package(self, package):
+        return {
+            "message_type": "error",
+            "body": _(
+                "Several products found in %s, please scan the product." % package.name
             ),
         }
 
@@ -342,6 +370,12 @@ class MessageAction(Component):
             ),
         }
 
+    def product_not_unitary_in_package_scan_package(self):
+        return {
+            "message_type": "warning",
+            "body": _("This product is part of a package, please scan a package."),
+        }
+
     def product_not_found(self):
         return {
             "message_type": "error",
@@ -419,6 +453,29 @@ class MessageAction(Component):
             "body": _(
                 "The content of {} cannot be transferred with this scenario."
             ).format(location_dest.name),
+        }
+
+    def product_in_multiple_sublocation(self, product):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Product {} found in multiple locations. Scan your location first."
+            ).format(product.name),
+        }
+
+    def lot_in_multiple_sublocation(self, lot):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Lot {lot} for product {product} found in multiple locations. "
+                "Scan your location first."
+            ).format(lot=lot.name, product=lot.product_id.name),
+        }
+
+    def location_src_set_to_sublocation(self, location_src):
+        return {
+            "message_type": "success",
+            "body": _("Working location changed to {}").format(location_src.name),
         }
 
     def picking_already_started_in_location(self, pickings):

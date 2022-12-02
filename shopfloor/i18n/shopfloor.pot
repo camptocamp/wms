@@ -413,6 +413,14 @@ msgid "Lot is not in the current transfer."
 msgstr ""
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid ""
+"Lot {lot} for product {product} found in multiple locations. Scan your "
+"location first."
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/services/delivery.py:0
 #, python-format
 msgid "Lot {} belongs to a picking without a valid state."
@@ -829,6 +837,12 @@ msgid "Product {} belongs to a picking without a valid state."
 msgstr ""
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Product {} found in multiple locations. Scan your location first."
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/services/checkout.py:0
 #, python-format
 msgid "Product(s) processed as raw product(s)"
@@ -926,6 +940,25 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "Several lots found in %s, please scan the lot."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Several moves found for different lots, please scan the lot."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid ""
+"Several moves found on different locations, please scan first the location."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "Several operation types found for this menu and profile."
 msgstr ""
 
@@ -939,6 +972,12 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Several products found in %s, please scan a product."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Several products found in %s, please scan the product."
 msgstr ""
 
 #. module: shopfloor
@@ -1240,6 +1279,12 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "This product is part of a package, please scan a package."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "This product is part of multiple packages, please scan a package."
 msgstr ""
 
@@ -1307,6 +1352,16 @@ msgid "Unreserve Other Moves Is Possible"
 msgstr ""
 
 #. module: shopfloor
+#: model:shopfloor.profile,name:shopfloor.profile_demo_2
+msgid "WH delivery"
+msgstr ""
+
+#. module: shopfloor
+#: model:shopfloor.profile,name:shopfloor.profile_demo_1
+msgid "WH worker"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields.selection,name:shopfloor.selection__shopfloor_app__category__wms
 msgid "WMS"
 msgstr ""
@@ -1322,6 +1377,12 @@ msgid ""
 "When active, what you scan (typically a product packaging EAN) will be ship "
 "'as-is' and the operation will be validated triggering a backorder creation "
 "with the remaining lines."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Working location changed to {}"
 msgstr ""
 
 #. module: shopfloor
