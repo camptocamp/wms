@@ -1,9 +1,14 @@
 # Copyright 2022 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
+from freezegun import freeze_time
+
 from odoo import fields
 
 from .common import CommonCase
+
+_TODAY = "2022-12-07"
+_TOMORROW = "2022-12-08"
 
 
 class TestSelectDocument(CommonCase):
@@ -55,6 +60,25 @@ class TestSelectDocument(CommonCase):
                 "message_type": "warning",
                 "body": message,
             },
+        )
+
+    @freeze_time(_TODAY)
+    def test_scan_picking_origin_multiple_pickings_one_today(self):
+        # Multiple pickings with this origin are found,
+        # but only one is due today.
+        # Select that one and move to the next screen.
+        picking_today = self._create_picking(scheduled_date=_TODAY)
+        picking_tomorrow = self._create_picking(scheduled_date=_TOMORROW)
+        pickings = picking_today | picking_tomorrow
+        pickings = pickings.sorted(lambda p: (p.scheduled_date, p.id), reverse=False)
+        pickings.write({"origin": "Somewhere together"})
+        response = self.service.dispatch(
+            "scan_document", params={"barcode": "Somewhere together"}
+        )
+        self.assert_response(
+            response,
+            next_state="select_line",
+            data={"picking": self._data_for_picking_with_line(picking_today)},
         )
 
     def test_scan_picking_origin_one_picking(self):

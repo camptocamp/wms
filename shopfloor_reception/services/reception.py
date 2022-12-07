@@ -59,15 +59,19 @@ class Reception(Component):
 
     def _scheduled_date_today_domain(self):
         domain = []
+        today_start, today_end = self._get_today_start_end_datetime()
+        domain.append(("scheduled_date", ">=", today_start))
+        domain.append(("scheduled_date", "<", today_end))
+        return domain
+
+    def _get_today_start_end_datetime(self):
         company = self.env.company
         tz = company.partner_id.tz or "UTC"
         today = fields.Datetime.today().replace(hour=0, minute=0, second=0)
         tomorrow = today + timedelta(days=1)
         today_start = pytz.timezone(tz).localize(today).astimezone(pytz.utc)
         today_end = pytz.timezone(tz).localize(tomorrow).astimezone(pytz.utc)
-        domain.append(("scheduled_date", ">=", today_start))
-        domain.append(("scheduled_date", "<", today_end))
-        return domain
+        return (today_start, today_end)
 
     # DOMAIN METHODS
 
@@ -230,7 +234,16 @@ class Reception(Component):
                 )
             # There is a case where scanning the source document
             # could return more than one picking.
-            # In this case, we ask the user to scan a package instead.
+            # If there's only one picking due today, we go to the next screen.
+            # Otherwise, we ask the user to scan a package instead.
+            today_start, today_end = self._get_today_start_end_datetime()
+            picking_filter_result_due_today = picking_filter_result.filtered(
+                lambda p: today_start
+                <= p.scheduled_date.astimezone(pytz.utc)
+                < today_end
+            )
+            if len(picking_filter_result_due_today) == 1:
+                return self._select_picking(picking_filter_result_due_today)
             if len(picking_filter_result) > 1:
                 return self._response_for_select_document(
                     pickings=picking_filter_result,
