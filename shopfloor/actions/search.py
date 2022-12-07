@@ -34,28 +34,6 @@ class SearchAction(Component):
 
     # TODO: these methods shall be probably replaced by scan anything handlers
 
-    def _parse_barcode_with_nomenclature(self, barcode_nom, barcode, types=None):
-        # return barcode_nom.parse_barcode(barcode, types=types)
-        return barcode_nom.parse_barcode(barcode)
-
-    # TODO add configuration for barcodes nomenclatures
-    #   => shopfloor.app + shopfloor.scenario + shopfloor.menu
-    # To reduce overhead of searching with all possible nomenclatures, we would
-    # like to limit the nomenclature to use for the search by configuration on
-    # the Shopfloor app (global) and on the scenario.
-    _nomenclatures = None
-
-    @property
-    def nomenclatures(self):
-        if self._nomenclatures:
-            return self._nomenclatures
-        model = self.env["barcode.nomenclature"]
-        nomenclatures = getattr(self.work, "barcode_nomemclatures", [])
-        if not nomenclatures:
-            nomenclatures = model.search([])
-        self._nomenclatures = nomenclatures
-        return nomenclatures
-
     @property
     def _barcode_type_handler(self):
         return {
@@ -77,47 +55,14 @@ class SearchAction(Component):
         """
         return SearchResult(**kwargs)
 
+    # TODO: add tests + use it everywhere
     def find(self, barcode, types=None, handler_kw=None):
         """Find Odoo record matching given `barcode`.
 
         Plain barcodes
         """
-        res = None
-        barcode = barcode or ""  # Nomenclature impl. doesn't support boolean values
-        for nom in self.nomenclatures:
-            res = self._find_record_by_nomenclature(
-                barcode, nom, types=types, handler_kw=handler_kw
-            )
-            if res:
-                return res
-        # Fallback on plain barcode matching
-        # TODO we should probably deprecate this and enforce having nomenclatures
-        # for every kind of barcodes (even the simplest ones)
-        # return self.generic_find(barcode, types=types, handler_kw=handler_kw)
-        return self._make_search_result(type="none")
-
-    def _find_record_by_nomenclature(
-        self, barcode, nomenclature, types=None, handler_kw=None
-    ):
-        handler_kw = handler_kw or {}
-        if nomenclature:
-            info = self._parse_barcode_with_nomenclature(
-                nomenclature, barcode, types=types
-            )
-            btype = info["type"]
-            # NOTE if nomenclature finds nothing it returns type=error
-            # then we won't find an handler for it.
-            # But if a rule matches the barcode (a wildcard one like 'product')
-            # it will return a type="something" but this only means that the
-            # barcode has matched one rule, not that a record has been found.
-            handler = self._barcode_type_handler.get(btype)
-            if handler:
-                record = handler(info["code"], **handler_kw.get(btype, {}))
-                if not record:
-                    return self._make_search_result(type="none")
-                info["record"] = record
-                return self._make_search_result(**info)
-        return self._make_search_result(type="none")
+        barcode = barcode or ""
+        return self.generic_find(barcode, types=types, handler_kw=handler_kw)
 
     def generic_find(self, barcode, types=None, handler_kw=None):
         handler_kw = handler_kw or {}
