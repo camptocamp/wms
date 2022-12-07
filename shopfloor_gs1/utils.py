@@ -6,6 +6,7 @@ from biip.gs1 import GS1Message
 
 AI_MAPPING = (
     # https://www.gs1.org/standards/barcodes/application-identifiers
+    # TODO: define other internal mappings by convention
     ("01", "product"),
     ("10", "lot"),
     ("11", "production_date"),

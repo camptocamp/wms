@@ -5,7 +5,7 @@
 {
     "name": "Shopfloor GS1",
     "summary": "Integrate GS1 barcode scan into Shopfloor app",
-    "version": "14.0.1.2.0",
+    "version": "14.0.1.0.0",
     "development_status": "Beta",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -14,8 +14,5 @@
     "license": "AGPL-3",
     "depends": ["shopfloor"],
     "external_dependencies": {"python": ["biip"]},
-    "data": [
-        # "views/barcode_nomenclature.xml",
-    ],
-    # "post_init_hook": "post_init_hook",
+    "data": [],
 }
