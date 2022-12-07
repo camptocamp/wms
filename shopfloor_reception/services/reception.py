@@ -2,8 +2,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 
-from datetime import timedelta
-
 import pytz
 
 from odoo import fields
@@ -61,17 +59,20 @@ class Reception(Component):
         domain = []
         today_start, today_end = self._get_today_start_end_datetime()
         domain.append(("scheduled_date", ">=", today_start))
-        domain.append(("scheduled_date", "<", today_end))
+        domain.append(("scheduled_date", "<=", today_end))
         return domain
 
     def _get_today_start_end_datetime(self):
         company = self.env.company
         tz = company.partner_id.tz or "UTC"
-        today = fields.Datetime.today().replace(hour=0, minute=0, second=0)
-        tomorrow = today + timedelta(days=1)
-        today_start = pytz.timezone(tz).localize(today).astimezone(pytz.utc)
-        today_end = pytz.timezone(tz).localize(tomorrow).astimezone(pytz.utc)
-        return (today_start, today_end)
+        today = fields.Datetime.today()
+        today_start = fields.Datetime.start_of(today, "day")
+        today_end = fields.Datetime.end_of(today, "day")
+        today_start_localized = (
+            pytz.timezone(tz).localize(today_start).astimezone(pytz.utc)
+        )
+        today_end_localized = pytz.timezone(tz).localize(today_end).astimezone(pytz.utc)
+        return (today_start_localized, today_end_localized)
 
     # DOMAIN METHODS
 
