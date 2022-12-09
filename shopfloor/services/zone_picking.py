@@ -160,9 +160,21 @@ class ZonePicking(Component):
         zones = self.work.menu.picking_type_ids.mapped(
             "default_location_src_id.child_ids"
         )
+        data = {"zones": self._data_for_select_zone(zones)}
+        buffer = self._find_buffer_move_lines()
+        if buffer:
+            # Some lines can be unloaded, let the user know
+            # The call to the endpoint will need the location and picking id
+            line = first(buffer)
+            picking_type = line.picking_id.picking_type_id
+            zone = line.move_id.location_id
+            data["buffer"] = {
+                "zone_location": self.data.location(zone),
+                "picking_type": self.data.picking_type(picking_type),
+            }
         return self._response(
             next_state="start",
-            data={"zones": self._data_for_select_zone(zones)},
+            data=data,
             message=message,
         )
 
@@ -458,9 +470,8 @@ class ZonePicking(Component):
             return response, message
 
         if not location.is_sublocation_of(self.zone_location):
-            response = self._response_for_start(
-                message=self.msg_store.location_not_allowed()
-            )
+            response = self._list_move_lines(self.zone_location)
+            message = self.msg_store.location_not_allowed()
             return response, message
 
         product, lot, package = self._find_product_in_location(location)
@@ -1510,6 +1521,19 @@ class ShopfloorZonePickingValidatorResponse(Component):
         zone_schema.update(self._schema_for_zone_line_counters)
         zone_schema = {
             "zones": self.schemas._schema_list_of(zone_schema),
+            "buffer": {
+                "type": "dict",
+                "nullable": False,
+                "required": False,
+                "schema": {
+                    "zone_location": self.schemas._schema_dict_of(
+                        self.schemas.location(), nullable=False, required=False
+                    ),
+                    "picking_type": self.schemas._schema_dict_of(
+                        self.schemas.picking_type(), nullable=False, required=False
+                    ),
+                },
+            },
         }
         return zone_schema
 
