@@ -47,6 +47,7 @@ class SearchAction(Component):
             "location": self.location_from_scan,
             "location_dest": self.location_from_scan,
             "lot": self.lot_from_scan,
+            "serial": self.lot_from_scan,
             "packaging": self.packaging_from_scan,
             "delivery_packaging": self.generic_packaging_from_scan,
         }

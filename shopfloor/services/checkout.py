@@ -418,10 +418,16 @@ class Checkout(Component):
 
         search_result = search.find(
             barcode,
-            types=("package", "product", "lot"),
-            handler_kw={"lot": dict(products=picking.move_lines.product_id)},
+            types=("package", "product", "lot", "serial"),
+            handler_kw=dict(
+                lot=dict(products=picking.move_lines.product_id),
+                serial=dict(products=picking.move_lines.product_id),
+            ),
         )
-        result_handler = getattr(self, "_select_lines_from_" + search_result.type, None)
+        try:
+            result_handler = getattr(self, "_select_lines_from_" + search_result.type)
+        except AttributeError:
+            raise ValueError(f"`{search_result.type}` record type is not supported")
         if result_handler:
             return result_handler(picking, selection_lines, search_result.record)
 
@@ -529,6 +535,10 @@ class Checkout(Component):
 
         self._select_lines(lines, prefill_qty=1)
         return self._response_for_select_package(picking, lines)
+
+    def _select_lines_from_serial(self, picking, selection_lines, lot):
+        # Search for serial number is actually the same as searching for lot (as of v14...)
+        return self._select_lines_from_lot(picking, selection_lines, lot)
 
     def _select_line_package(self, picking, selection_lines, package):
         if not package:
