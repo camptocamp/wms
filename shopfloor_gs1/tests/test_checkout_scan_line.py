@@ -56,3 +56,16 @@ class CheckoutScanLineCase(CheckoutScanLineCaseBase):
         lot = first_line.lot_id
         lot.name = LOT_BARCODE
         self._test_scan_line_ok(GS1_BARCODE, first_line)
+
+    def test_scan_line_product_serial_ok(self):
+        barcode = "(11)141231(21)1234AB"
+        picking = self._create_picking(
+            lines=[(self.product_a, 1), (self.product_a, 1), (self.product_b, 1)]
+        )
+        for move in picking.move_lines:
+            self._fill_stock_for_moves(move, in_lot=True)
+        picking.action_assign()
+        first_line = picking.move_line_ids[0]
+        lot = first_line.lot_id
+        lot.name = LOT_BARCODE
+        self._test_scan_line_ok(barcode, first_line)

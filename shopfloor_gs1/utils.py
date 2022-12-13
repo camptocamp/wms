@@ -2,8 +2,8 @@
 # @author Simone Orsi <simahawk@gmail.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-from biip.gs1 import GS1Message
 from biip import ParseError
+from biip.gs1 import GS1Message
 
 AI_MAPPING = {
     # https://www.gs1.org/standards/barcodes/application-identifiers
@@ -11,8 +11,9 @@ AI_MAPPING = {
     "01": "product",
     "10": "lot",
     "11": "production_date",
+    "21": "serial",
 }
-AI_MAPPING_INV = {v: k for k,v in AI_MAPPING.items()}
+AI_MAPPING_INV = {v: k for k, v in AI_MAPPING.items()}
 
 
 class GS1Barcode:
@@ -39,7 +40,7 @@ class GS1Barcode:
         return True
 
     @classmethod
-    def parse(cls, barcode, ai_whitelist=None, ai_mapping=AI_MAPPING):
+    def parse(cls, barcode, ai_whitelist=None, ai_mapping=None):
         """TODO"""
         res = []
         try:
@@ -49,6 +50,7 @@ class GS1Barcode:
             parsed = None
         if not parsed:
             return res
+        ai_mapping = ai_mapping or AI_MAPPING
         # Use whitelist if given, to respect a specific order
         ai_whitelist = ai_whitelist or ai_mapping.keys()
         for ai in ai_whitelist:
