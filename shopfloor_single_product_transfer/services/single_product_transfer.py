@@ -32,6 +32,23 @@ def with_savepoint(meth):
 
 
 class ShopfloorSingleProductTransfer(Component):
+    """
+    Methods for the Single Product Transfer Process
+
+    Move a product or lot from one location to another.
+
+    * scan the source location
+    * scan a product/lot/packaging from this source location
+    * confirm or change the quantity to move
+    * scan the destination location
+
+    You will find a sequence diagram describing states and endpoints
+    relationships [here](../docs/diagram.png).
+    Keep [the sequence diagram](../docs/diagram.plantuml) up-to-date
+    if you change endpoints.
+
+    """
+    # TODO check if we can remove allow_create_moves
     _inherit = "base.shopfloor.process"
     _name = "shopfloor.single.product.transfer"
     _usage = "single_product_transfer"
@@ -53,11 +70,13 @@ class ShopfloorSingleProductTransfer(Component):
     # Handlers
 
     def _scan_location__location_found(self, location):
+        """Check that the location exists."""
         if not location:
             message = self.msg_store.no_location_found()
             return self._response_for_select_location(message=message)
 
     def _scan_location__check_location(self, location):
+        """Check that `location` belongs to the source location of the operation type."""
         locations = self.picking_types.default_location_src_id
         child_locations = self.env["stock.location"].search(
             [("id", "child_of", locations.ids)]
@@ -67,8 +86,9 @@ class ShopfloorSingleProductTransfer(Component):
             return self._response_for_select_location(message=message)
 
     def _scan_location__check_stock(self, location):
+        """Check if the location has products to move."""
         quants_in_location = self.env["stock.quant"].search(
-            [("location_id", "=", location.id)]
+            [("location_id", "=", location.id), ("quantity", ">", 0)]
         )
         if not quants_in_location:
             message = self.msg_store.location_empty(location)
@@ -204,6 +224,8 @@ class ShopfloorSingleProductTransfer(Component):
                 return product_response
 
     def _use_handlers(self, handlers, *args, **kwargs):
+        # TODO: each handler should raise a Shopfloor dedicated exception
+        # with the response data attached
         for handler in handlers:
             response = handler(*args, **kwargs)
             if response:
@@ -285,6 +307,7 @@ class ShopfloorSingleProductTransfer(Component):
             return self._response_for_set_quantity(move_line, message=message)
 
     def _set_quantity__check_no_prefill_qty(self, move_line, product, lot=None):
+        # TODO this is making the `no_prefill_qty` flag mandatory, we do not want that
         if not self.work.menu.no_prefill_qty:
             # If no_prefill_qty is False, then qty_done should have been prefilled
             # with product_uom_qty in the select_product screen
@@ -292,6 +315,8 @@ class ShopfloorSingleProductTransfer(Component):
             return self._response_for_set_quantity(move_line, message=message)
 
     def _set_quantity__increment_qty_done(self, move_line, product, lot=None):
+        """Increment the quantity done depending on the item scanned."""
+        # TODO use no_prefill_qty option
         # TODO if packaging
         if lot:
             qty_done = 1
@@ -301,12 +326,12 @@ class ShopfloorSingleProductTransfer(Component):
         return self._response_for_set_quantity(move_line)
 
     def _set_quantity__scan_product_handlers(self):
-        return [
+        return (
             self._set_quantity__check_product_in_line,
             self._set_quantity__check_quantity_done,
             self._set_quantity__check_no_prefill_qty,
             self._set_quantity__increment_qty_done,
-        ]
+        )
 
     def _set_quantity__scan_product(self, move_line, barcode, confirmation=False):
         search = self._actions_for("search")
@@ -429,6 +454,17 @@ class ShopfloorSingleProductTransfer(Component):
         return self._response_for_select_location()
 
     def scan_location(self, barcode):
+        """Scan a source location.
+
+        It is the starting point of this scenario.
+
+        If stock has been found in the scanned location, allows to scan a
+        product or a lot.
+
+        Transitions:
+        * select_product: to scan a product or a lot stored in the scanned location
+        * start: no stock found or wrong barcode
+        """
         search = self._actions_for("search")
         location = search.location_from_scan(barcode)
         handlers = [

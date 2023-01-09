@@ -63,16 +63,6 @@ else #Lightgreen Ask for confirmation
     set_quantity -[#green]> select_location: **/set_quantity__action_cancel**(selected_line_id)\n(User clicked the cancel button)
 end
 
-note over set_quantity: location scanned
-alt #Pink Errors
-    set_quantity -[#red]> set_quantity: **/set_quantity**(selected_line_id, barcode, confirmation=False)\nscanned location is invalid
-else #LightBlue Ask for confirmation
-    set_quantity -[#blue]> set_quantity: **/set_quantity**(selected_line_id, barcode, confirmation=False)\nscanned location is a child of menu's default dest location\nasks for confirmation
-else #Lightgreen Successful cases
-    set_quantity -[#green]> set_quantity: **/select_location**(selected_line_id, barcode, confirmation=True)\nscanned location is a child of menu's default dest location\nposts the move
-    set_quantity -[#green]> set_quantity: **/select_location**(selected_line_id, barcode, confirmation=True)\nscanned location is a child of move_line's default dest location\nposts the move
-end
-
 note over set_quantity: product/lot/packaging scanned
 alt #Pink Errors
     set_quantity -[#red]> set_quantity: **/set_quantity**(selected_line_id, barcode)\nScanned product/lot not in selected line
@@ -80,6 +70,16 @@ alt #Pink Errors
     set_quantity -[#red]> set_quantity: **/set_quantity**(selected_line_id, barcode)\nnot_prefill_qty is disabled
 else #Lightgreen Successful cases
     set_quantity -[#green]> set_quantity: **/set_quantity**(selected_line_id, barcode, confirmation=False)\nall above checks are ok\n(increments qty for product / lot / packaging)
+end
+
+note over set_quantity: location scanned
+alt #Pink Errors
+    set_quantity -[#red]> set_quantity: **/set_quantity**(selected_line_id, barcode, confirmation=False)\nscanned location is invalid
+else #LightBlue Ask for confirmation
+    set_quantity -[#blue]> set_quantity: **/set_quantity**(selected_line_id, barcode, confirmation=False)\nscanned location is a child of menu's default dest location\nasks for confirmation
+else #Lightgreen Successful cases
+    set_quantity -[#green]> select_location: **/select_location**(selected_line_id, barcode, confirmation=True)\nscanned location is a child of menu's default dest location\nposts the move
+    set_quantity -[#green]> select_location: **/select_location**(selected_line_id, barcode, confirmation=True)\nscanned location is a child of move_line's default dest location\nposts the move
 end
 
 @enduml
