@@ -153,6 +153,7 @@ class ShopfloorSingleProductTransfer(Component):
             return self._response_for_set_quantity(move_line)
 
     def _scan_product__check_create_move_line(self, product, location, lot=None):
+        # TODO this is making the `allow_move_create` flag mandatory, we do not want that
         if not self.is_allow_move_create():
             message = self.msg_store.no_operation_found()
             return self._response_for_select_product(location, message=message)
@@ -171,6 +172,10 @@ class ShopfloorSingleProductTransfer(Component):
             ("location_id", "=", location.id),
             ("product_id", "=", product.id),
             ("available_quantity", ">", 0),
+            # FIXME: handle the scan of packages later
+            # this will also prevent the fetch of quants with lots having
+            # a package, to check.
+            ("package_id", "=", False),
         ]
         if lot:
             lot_domain = [("lot_id", "=", lot.id)]
@@ -276,6 +281,8 @@ class ShopfloorSingleProductTransfer(Component):
         move_line = move.move_line_ids
         stock = self._actions_for("stock")
         if self.work.menu.no_prefill_qty:
+            # We ensure the qty_done is 0 here, so we can set it manually after
+            # to avoid the split of the move line by 'mark_move_line_as_picked'.
             stock.mark_move_line_as_picked(move_line, quantity=0)
             # Just to be explicit
             # TODO add if packaging
@@ -430,7 +437,7 @@ class ShopfloorSingleProductTransfer(Component):
         message = self.msg_store.transfer_done_success(move_line.picking_id)
         return self._response_for_select_location(message=message)
 
-    def _find_recover_move_line_domain(self, user):
+    def _find_user_move_line_domain(self, user):
         return [
             ("picking_id.user_id", "in", (False, self.env.uid)),
             ("picking_id.picking_type_id", "in", self.picking_types.ids),
@@ -438,10 +445,10 @@ class ShopfloorSingleProductTransfer(Component):
             ("qty_done", ">", 0),
         ]
 
-    def _find_recover_move_line(self):
+    def _find_user_move_line(self):
         """Return the first move line already started (if any)."""
         user = self.env.user
-        domain = self._find_recover_move_line_domain(user)
+        domain = self._find_user_move_line_domain(user)
         return self.env["stock.move.line"].search(domain, limit=1)
 
     def _set_quantity__by_product(self, move_line, barcode, confirmation=False):
@@ -471,7 +478,7 @@ class ShopfloorSingleProductTransfer(Component):
     # Endpoints
 
     def start(self):
-        move_line = self._find_recover_move_line()
+        move_line = self._find_user_move_line()
         if move_line:
             message = self.msg_store.recovered_previous_session()
             return self._response_for_set_quantity(move_line, message=message)
