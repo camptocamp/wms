@@ -48,6 +48,7 @@ class ShopfloorSingleProductTransfer(Component):
     if you change endpoints.
 
     """
+
     # TODO check if we can remove allow_create_moves
     _inherit = "base.shopfloor.process"
     _name = "shopfloor.single.product.transfer"
@@ -123,7 +124,7 @@ class ShopfloorSingleProductTransfer(Component):
             ("location_id", "=", location.id),
             ("product_id", "=", product.id),
             ("state", "in", ("assigned", "partially_available")),
-            ("shopfloor_user_id", "=", False),
+            ("picking_id.user_id", "in", (False, self.env.uid)),
             ("picking_id.picking_type_id", "in", self.picking_types.ids),
         ]
         if lot:
@@ -237,7 +238,7 @@ class ShopfloorSingleProductTransfer(Component):
             ("location_id", "=", location.id),
             ("product_id", "=", product.id),
             ("state", "in", ("assigned", "partially_available")),
-            ("shopfloor_user_id", "=", False),
+            ("picking_id.user_id", "in", (False, self.env.uid)),
         ]
         if lot:
             domain = AND([domain, [("lot_id", "=", lot.id)]])
@@ -383,7 +384,7 @@ class ShopfloorSingleProductTransfer(Component):
         message = False
         if location in valid_locations_for_move_line:
             # scanned location is valid, return no response
-            ...
+            pass
         elif location in valid_locations_for_menu:
             # Considered valid if scan confirmed
             if not confirmation:
@@ -392,7 +393,6 @@ class ShopfloorSingleProductTransfer(Component):
                 message = self.msg_store.confirm_location_changed(
                     orig_location, location
                 )
-            ...
         else:
             # Invalid location, return an error
             message = self.msg_store.dest_location_not_allowed()
@@ -400,17 +400,16 @@ class ShopfloorSingleProductTransfer(Component):
             return self._response_for_set_quantity(move_line, message=message)
 
     def _set_quantity__post_move(self, location, move_line, confirmation=False):
-        self._actions_for("stock")
+        stock = self._actions_for("stock")
         # TODO qty_done = 0: transfer_no_qty_done
         # TODO qty done < product_qty: transfer_confirm_done
-        picking = move_line.picking_id
-        picking._action_done()
-        message = self.msg_store.transfer_done_success(picking)
+        stock.validate_moves(move_line.move_id)
+        message = self.msg_store.transfer_done_success(move_line.picking_id)
         return self._response_for_select_location(message=message)
 
     def _start__find_ongoing_moves_for_user_domain(self, user):
         return [
-            ("shopfloor_user_id", "=", user.id),
+            ("picking_id.user_id", "in", (False, self.env.uid)),
             ("picking_id.picking_type_id", "in", self.picking_types.ids),
             ("state", "in", ("assigned", "partially_available")),
         ]
@@ -519,8 +518,9 @@ class ShopfloorSingleProductTransfer(Component):
         return self._response_for_set_quantity(move_line, message=message)
 
     def set_quantity__action_cancel(self, selected_line_id):
-        move_line = self.env["stock.move.line"].browse(selected_line_id)
-        move_line.write({"qty_done": 0, "shopfloor_user_id": False})
+        stock = self._actions_for("stock")
+        move_line = self.env["stock.move.line"].browse(selected_line_id).exists()
+        stock.unmark_move_line_as_picked(move_line)
         return self._response_for_select_location()
 
 

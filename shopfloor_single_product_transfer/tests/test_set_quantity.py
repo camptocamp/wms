@@ -253,6 +253,6 @@ class TestSetQuantity(CommonCase):
         )
         data = {}
         self.assert_response(response, next_state="select_location", data=data)
-        # Ensure the qty_done and shopfloor_user_id has ben reset.
-        self.assertFalse(move_line.shopfloor_user_id)
+        # Ensure the qty_done and user has been reset.
+        self.assertFalse(move_line.picking_id.user_id)
         self.assertEqual(move_line.qty_done, 0.0)

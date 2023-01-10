@@ -4,7 +4,7 @@
     "version": "14.0.1.0.0",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
-    "author": "Camptocamp SA, Odoo Community Association (OCA)",
+    "author": "Camptocamp, Odoo Community Association (OCA)",
     "maintainers": ["mmequignon"],
     "license": "AGPL-3",
     "installable": True,

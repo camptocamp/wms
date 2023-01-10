@@ -110,7 +110,7 @@ class TestScanProduct(CommonCase):
                     params={"location_id": location.id, "barcode": product.barcode},
                 )
         move_line = picking.move_line_ids
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         data = {
             "move_line": self._data_for_move_line(move_line),
         }
@@ -155,7 +155,7 @@ class TestScanProduct(CommonCase):
                 )
         move_line = self.get_new_move_line()
         self.assertTrue(move_line)
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         self.assertEqual(move_line.product_qty, 10.0)
         data = {
             "move_line": self._data_for_move_line(move_line),
@@ -211,7 +211,7 @@ class TestScanProduct(CommonCase):
                 )
         move_line = self.get_new_move_line()
         self.assertTrue(move_line)
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         self.assertEqual(move_line.product_qty, 10.0)
         data = {
             "move_line": self._data_for_move_line(move_line),
@@ -251,7 +251,7 @@ class TestScanProduct(CommonCase):
                     params={"location_id": location.id, "barcode": lot.name},
                 )
         move_line = picking.move_line_ids
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         data = {
             "move_line": self._data_for_move_line(move_line),
         }
@@ -293,7 +293,7 @@ class TestScanProduct(CommonCase):
                 )
         move_line = self.get_new_move_line()
         self.assertTrue(move_line)
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         data = {
             "move_line": self._data_for_move_line(move_line),
         }
@@ -345,7 +345,7 @@ class TestScanProduct(CommonCase):
                 )
         move_line = self.get_new_move_line()
         self.assertTrue(move_line)
-        self.assertTrue(move_line.shopfloor_user_id)
+        self.assertTrue(move_line.picking_id.user_id)
         self.assertEqual(move_line.product_qty, 10.0)
         data = {
             "move_line": self._data_for_move_line(move_line),
