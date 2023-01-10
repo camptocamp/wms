@@ -9,6 +9,7 @@ from odoo.tools import float_compare
 
 from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
+from odoo.addons.component.exception import NoComponentError
 
 _logger = logging.getLogger("shopfloor.services.single_product_transfer")
 
@@ -399,10 +400,32 @@ class ShopfloorSingleProductTransfer(Component):
         if message:
             return self._response_for_set_quantity(move_line, message=message)
 
+    def _write_destination_on_lines(self, lines, location):
+        # TODO
+        # '_write_destination_on_lines' is implemented in:
+        #
+        #   - 'location_content_transfer'
+        #   - 'zone_picking'
+        #   - 'cluster_picking' (but it is called '_unload_write_destination_on_lines')
+        #
+        # And all of them has a different implementation,
+        # To refactor later.
+        try:
+            # TODO loose dependency on 'shopfloor_checkout_sync' to avoid having
+            # yet another glue module. In the long term we should make
+            # 'shopfloor_checkout_sync' use events and trash the overrides made
+            # on all scenarios.
+            self._actions_for("checkout.sync")._sync_checkout(lines, location)
+        except NoComponentError:
+            pass
+        lines.location_dest_id = location
+        lines.package_level_id.location_dest_id = location
+
     def _set_quantity__post_move(self, location, move_line, confirmation=False):
-        stock = self._actions_for("stock")
         # TODO qty_done = 0: transfer_no_qty_done
         # TODO qty done < product_qty: transfer_confirm_done
+        self._write_destination_on_lines(move_line, location)
+        stock = self._actions_for("stock")
         stock.validate_moves(move_line.move_id)
         message = self.msg_store.transfer_done_success(move_line.picking_id)
         return self._response_for_select_location(message=message)
