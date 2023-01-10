@@ -16,6 +16,7 @@ class TestStart(CommonCase):
         picking = self._create_picking(lines=[(product, 10)])
         picking.user_id = self.env.user
         move_line = picking.move_line_ids
+        move_line.qty_done = move_line.product_uom_qty
         response = self.service.dispatch("start")
         data = {"move_line": self._data_for_move_line(move_line)}
         message = {

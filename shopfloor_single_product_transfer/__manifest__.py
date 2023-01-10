@@ -1,6 +1,6 @@
 {
     "name": "Shopfloor Single Product Transfer",
-    "summary": "Brief Summary",
+    "summary": "Move an item from one location to another.",
     "version": "14.0.1.0.0",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",

@@ -407,16 +407,18 @@ class ShopfloorSingleProductTransfer(Component):
         message = self.msg_store.transfer_done_success(move_line.picking_id)
         return self._response_for_select_location(message=message)
 
-    def _start__find_ongoing_moves_for_user_domain(self, user):
+    def _find_recover_move_line_domain(self, user):
         return [
             ("picking_id.user_id", "in", (False, self.env.uid)),
             ("picking_id.picking_type_id", "in", self.picking_types.ids),
             ("state", "in", ("assigned", "partially_available")),
+            ("qty_done", ">", 0),
         ]
 
-    def _start__find_ongoing_moves_for_user(self):
+    def _find_recover_move_line(self):
+        """Return the first move line already started (if any)."""
         user = self.env.user
-        domain = self._start__find_ongoing_moves_for_user_domain(user)
+        domain = self._find_recover_move_line_domain(user)
         return self.env["stock.move.line"].search(domain, limit=1)
 
     def _set_quantity__by_product(self, move_line, barcode, confirmation=False):
@@ -446,10 +448,10 @@ class ShopfloorSingleProductTransfer(Component):
     # Endpoints
 
     def start(self):
-        ongoing_move_line = self._start__find_ongoing_moves_for_user()
-        if ongoing_move_line:
+        move_line = self._find_recover_move_line()
+        if move_line:
             message = self.msg_store.recovered_previous_session()
-            return self._response_for_set_quantity(ongoing_move_line, message=message)
+            return self._response_for_set_quantity(move_line, message=message)
         return self._response_for_select_location()
 
     def scan_location(self, barcode):
