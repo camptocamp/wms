@@ -418,19 +418,17 @@ class Checkout(Component):
 
         search_result = search.find(
             barcode,
-            types=("package", "product", "lot", "serial"),
+            types=("package", "product", "packaging", "lot", "serial"),
             handler_kw=dict(
                 lot=dict(products=picking.move_lines.product_id),
                 serial=dict(products=picking.move_lines.product_id),
             ),
         )
-        try:
-            result_handler = getattr(self, "_select_lines_from_" + search_result.type)
-        except AttributeError:
-            raise ValueError(f"`{search_result.type}` record type is not supported")
-        if result_handler:
-            return result_handler(picking, selection_lines, search_result.record)
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type)
+        return result_handler(picking, selection_lines, search_result.record)
 
+    def _select_lines_from_none(self, picking, selection_lines, record):
+        """Handle result when no record is found."""
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
         )
