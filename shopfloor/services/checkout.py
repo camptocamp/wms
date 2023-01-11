@@ -498,7 +498,7 @@ class Checkout(Component):
             lines, prefill_qty=prefill_qty, related_lines=related_lines
         )
         return self._response_for_select_package(picking, lines)
-    
+
     def _select_lines_from_packaging(self, picking, selection_lines, packaging):
         return self._select_lines_from_product(
             picking, selection_lines, packaging.product_id, prefill_qty=packaging.qty
