@@ -1,4 +1,5 @@
-# Copyright 2019-2020 Camptocamp (https://www.camptocamp.com)
+# Copyright 2019 Camptocamp (https://www.camptocamp.com)
+# Copyright 2020 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
 
@@ -330,19 +331,27 @@ class StockMove(models.Model):
         quantities.
         """
         procurement_requests = []
-        pulled_moves = self.env["stock.move"]
-        backorder_links = {}
+        released_moves = self.env["stock.move"]
         for move in self:
             available_qty, remaining_qty = move._is_releasable()
             if not available_qty:
                 continue
-
             if remaining_qty:
-                new_move = move._release_split(remaining_qty)
-                backorder_links[new_move.picking_id] = move.picking_id
+                move._release_split(remaining_qty)
+            released_moves |= move
 
+        # move the unreleased moves to a backorder
+        released_pickings = released_moves.picking_id
+        unreleased_moves = released_pickings.move_lines - released_moves
+        unreleased_moves = unreleased_moves.filtered(
+            lambda m: m.state not in ("done", "cancel")
+        )
+        if unreleased_moves:
+            unreleased_moves._unreleased_to_backorder()
+
+        # pull the released moves
+        for move in released_moves:
             move._before_release()
-
             values = move._prepare_procurement_values()
             procurement_requests.append(
                 self.env["procurement.group"].Procurement(
@@ -356,32 +365,15 @@ class StockMove(models.Model):
                     values,
                 )
             )
-            pulled_moves |= move
-
-        # move the unreleased moves to a backorder
-        released_pickings = pulled_moves.picking_id
-        unreleased_moves = released_pickings.move_lines - pulled_moves
-        for unreleased_move in unreleased_moves:
-            if unreleased_move.state in ("done", "cancel"):
-                continue
-            # no split will occur as we keep the same qty, but the move
-            # will be assigned to a new stock.picking
-            original_picking = unreleased_move.picking_id
-            unreleased_move._release_split(unreleased_move.product_qty)
-            backorder_links[unreleased_move.picking_id] = original_picking
-
-        for backorder, origin in backorder_links.items():
-            backorder._release_link_backorder(origin)
-
         self.env["procurement.group"].run_defer(procurement_requests)
 
         # Set all transfers released to "printed", consider the work has
         # been planned and started and another "release" of moves should
         # (for instance) merge new pickings with this "round of release".
-        pulled_moves._after_release_assign_moves()
-        pulled_moves._after_release_update_chain()
+        released_moves._after_release_assign_moves()
+        released_moves._after_release_update_chain()
 
-        return pulled_moves
+        return released_moves
 
     def _before_release(self):
         """Hook that aims to be overridden."""
@@ -406,30 +398,29 @@ class StockMove(models.Model):
             moves = moves.mapped("move_orig_ids")
 
     def _release_split(self, remaining_qty):
-        """Split move and create a new picking for it.
+        """Split move and put remaining_qty to a backorder move."""
+        new_move_vals = self.with_context(release_available_to_promise=True)._split(
+            remaining_qty
+        )
+        new_move = self.create(new_move_vals)
+        new_move._action_confirm(merge=False)
+        return new_move
 
-        Instead of splitting the move and leave remaining qty into the same picking
-        we move it to a new one so that we can release it later as soon as
-        the qty is available.
-        """
-        context = self.env.context
-        self = self.with_context(release_available_to_promise=True)
+    def _unreleased_to_backorder(self):
+        """Move the unreleased moves to a new backorder picking"""
         # Rely on `printed` flag to make _assign_picking create a new picking.
         # See `stock.move._assign_picking` and
         # `stock.move._search_picking_for_assignation`.
-        if not self.picking_id.printed:
-            self.picking_id.printed = True
-        new_move = self  # Work on the current move if split doesn't occur
-        new_move_vals = self._split(remaining_qty)
-        if new_move_vals:
-            new_move = self.create(new_move_vals)
-            new_move._action_confirm(merge=False)
-        # Picking assignment is needed here because `_split` copies the move
-        # thus the `_should_be_assigned` condition is not satisfied
-        # and the move is not assigned.
-        new_move._assign_picking()
-
-        return new_move.with_context(context)
+        self.picking_id.write({"printed": True})
+        origin_pickings = {m.id: m.picking_id for m in self}
+        self._assign_picking()
+        backorder_links = {}
+        for move in self:
+            origin = origin_pickings[move.id]
+            if origin:
+                backorder_links[move.picking_id] = origin
+        for backorder, origin in backorder_links.items():
+            backorder._release_link_backorder(origin)
 
     def _assign_picking_post_process(self, new=False):
         super()._assign_picking_post_process(new)
