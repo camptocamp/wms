@@ -74,7 +74,7 @@ class TestScanProduct(CommonCase):
         new_picking = self.get_new_picking()
         self.assertTrue(new_picking)
         self.assertEqual(move_line.picking_id, new_picking)
-        self.assertEqual(move_line.qty_done, 1.0)
+        self.assertEqual(move_line.qty_done, 1)
         self.assertEqual(move_line.product_uom_qty, 10.0)
 
     def test_scan_product_no_move_line(self):
@@ -481,3 +481,20 @@ class TestScanProduct(CommonCase):
     def test_action_cancel(self):
         response = self.service.dispatch("scan_product__action_cancel")
         self.assert_response(response, next_state="select_location", data={})
+
+    def test_scan_product_packaging(self):
+        location = self.location_src
+        packaging = self.product_a_packaging
+        product = packaging.product_id
+        self._add_stock_to_product(product, location, 10)
+        picking = self._create_picking(lines=[(product, 10)])
+        response = self.service.dispatch(
+            "scan_product",
+            params={"location_id": location.id, "barcode": packaging.barcode},
+        )
+        move_line = picking.move_line_ids
+        self.assertTrue(move_line.picking_id.user_id)
+        data = {
+            "move_line": self._data_for_move_line(move_line),
+        }
+        self.assert_response(response, next_state="set_quantity", data=data)
