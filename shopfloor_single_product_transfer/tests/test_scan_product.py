@@ -63,6 +63,7 @@ class TestScanProduct(CommonCase):
         product = self.product_a
         self._add_stock_to_product(product, location, 10)
         # Without argument, a multi line picking is created
+        # with product_a and product_b
         picking = self._create_picking()
         move_line = picking.move_line_ids.filtered(lambda l: l.product_id == product)
         self.service.dispatch(

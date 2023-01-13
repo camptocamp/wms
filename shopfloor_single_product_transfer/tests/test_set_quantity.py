@@ -203,10 +203,9 @@ class TestSetQuantity(CommonCase):
         # Now, calling the same endpoint with confirm=True should be ok
         params["confirmation"] = True
         response = self.service.dispatch("set_quantity", params=params)
-        expected_message = {
-            "message_type": "success",
-            "body": f"Transfer {move_line.picking_id.name} done",
-        }
+        expected_message = self.service.msg_store.transfer_done_success(
+            move_line.picking_id
+        )
         self.assert_response(
             response, next_state="select_location", message=expected_message, data={}
         )
@@ -226,10 +225,7 @@ class TestSetQuantity(CommonCase):
                 "barcode": self.dispatch_location.name,
             },
         )
-        expected_message = {
-            "message_type": "success",
-            "body": f"Transfer {move_line.picking_id.name} done",
-        }
+        expected_message = self.msg_store.transfer_done_success(move_line.picking_id)
         self.assert_response(
             response, next_state="select_location", message=expected_message, data={}
         )
