@@ -4,6 +4,7 @@
 import functools
 from collections import defaultdict
 
+from odoo.exceptions import UserError
 from odoo.fields import first
 from odoo.tools.float_utils import float_compare, float_is_zero
 
@@ -785,7 +786,15 @@ class ZonePicking(Component):
         # destination location set to the scanned one
         self._write_destination_on_lines(move_line, location)
         stock = self._actions_for("stock")
-        stock.mark_move_line_as_picked(move_line, quantity)
+        try:
+            stock.mark_move_line_as_picked(move_line, quantity, check_user=True)
+        except UserError:
+            response = self._response_for_set_line_destination(
+                move_line,
+                message=self.msg_store.line_assigned_to_another_user(),
+                qty_done=quantity,
+            )
+            return (location_changed, response)
         stock.validate_moves(move_line.move_id)
         location_changed = True
         # Zero check
@@ -846,7 +855,17 @@ class ZonePicking(Component):
             )
             return (package_changed, response)
         stock = self._actions_for("stock")
-        stock.mark_move_line_as_picked(move_line, quantity, package)
+        try:
+            stock.mark_move_line_as_picked(
+                move_line, quantity, package, check_user=True
+            )
+        except UserError:
+            response = self._response_for_set_line_destination(
+                move_line,
+                message=self.msg_store.line_assigned_to_another_user(),
+                qty_done=quantity,
+            )
+            return (package_changed, response)
         package_changed = True
         # Zero check
         zero_check = self.picking_type.shopfloor_zero_check

@@ -1,5 +1,7 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+from odoo.exceptions import UserError
+
 from odoo.addons.component.core import Component
 
 
@@ -11,10 +13,14 @@ class StockAction(Component):
     _usage = "stock"
 
     def mark_move_line_as_picked(
-        self, move_lines, quantity=None, package=None, user=None
+        self, move_lines, quantity=None, package=None, user=None, check_user=False
     ):
         """Set the qty_done and extract lines in new order"""
         user = user or self.env.user
+        if check_user:
+            picking_users = move_lines.mapped("picking_id.user_id")
+            if not all(pick_user == user for pick_user in picking_users):
+                raise UserError("Someone already working on this")
         for line in move_lines:
             qty_done = quantity if quantity is not None else line.product_uom_qty
             line.qty_done = qty_done
