@@ -1,8 +1,10 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-from odoo.exceptions import UserError
+from odoo import _
 
 from odoo.addons.component.core import Component
+
+from ..exceptions import ConcurentWorkOnTransfer
 
 
 class StockAction(Component):
@@ -20,7 +22,9 @@ class StockAction(Component):
         if check_user:
             picking_users = move_lines.mapped("picking_id.user_id")
             if not all(pick_user == user for pick_user in picking_users):
-                raise UserError("Someone already working on this")
+                raise ConcurentWorkOnTransfer(
+                    _("Someone is already working on these transfers")
+                )
         for line in move_lines:
             qty_done = quantity if quantity is not None else line.product_uom_qty
             line.qty_done = qty_done

@@ -11,6 +11,7 @@ from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.addons.base_rest.components.service import to_bool, to_int
 from odoo.addons.component.core import Component
 
+from ..exceptions import ConcurentWorkOnTransfer
 from ..utils import to_float
 
 
@@ -859,7 +860,7 @@ class ZonePicking(Component):
             stock.mark_move_line_as_picked(
                 move_line, quantity, package, check_user=True
             )
-        except UserError:
+        except ConcurentWorkOnTransfer:
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.line_assigned_to_another_user(),

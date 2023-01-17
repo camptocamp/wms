@@ -583,7 +583,7 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
     def test_set_destination_error_concurent_work(self):
         """Scanned barcode is the destination package.
 
-        Move line is already being workd on by someone else
+        Move line is already being worked on by someone else
         """
         zone_location = self.zone_location
         picking_type = self.picking1.picking_type_id
