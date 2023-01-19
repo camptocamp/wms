@@ -606,6 +606,9 @@ class ZonePickingSetLineDestinationCase(ZonePickingCommonCase):
             zone_location,
             picking_type,
             move_line,
-            message=self.service.msg_store.line_assigned_to_another_user(),
+            message={
+                "message_type": "error",
+                "body": "Someone is already working on these transfers",
+            },
             qty_done=move_line.product_uom_qty,
         )

@@ -125,12 +125,6 @@ class MessageAction(Component):
             ),
         }
 
-    def line_assigned_to_another_user(self):
-        return {
-            "message_type": "error",
-            "body": _("A line is being processed by another user."),
-        }
-
     def record_not_found(self):
         return {
             "message_type": "error",

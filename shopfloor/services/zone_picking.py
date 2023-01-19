@@ -4,7 +4,6 @@
 import functools
 from collections import defaultdict
 
-from odoo.exceptions import UserError
 from odoo.fields import first
 from odoo.tools.float_utils import float_compare, float_is_zero
 
@@ -789,10 +788,13 @@ class ZonePicking(Component):
         stock = self._actions_for("stock")
         try:
             stock.mark_move_line_as_picked(move_line, quantity, check_user=True)
-        except UserError:
+        except ConcurentWorkOnTransfer as error:
             response = self._response_for_set_line_destination(
                 move_line,
-                message=self.msg_store.line_assigned_to_another_user(),
+                message={
+                    "message_type": "error",
+                    "body": str(error),
+                },
                 qty_done=quantity,
             )
             return (location_changed, response)
@@ -860,10 +862,13 @@ class ZonePicking(Component):
             stock.mark_move_line_as_picked(
                 move_line, quantity, package, check_user=True
             )
-        except ConcurentWorkOnTransfer:
+        except ConcurentWorkOnTransfer as error:
             response = self._response_for_set_line_destination(
                 move_line,
-                message=self.msg_store.line_assigned_to_another_user(),
+                message={
+                    "message_type": "error",
+                    "body": str(error),
+                },
                 qty_done=quantity,
             )
             return (package_changed, response)
