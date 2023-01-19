@@ -62,6 +62,7 @@ class ShopfloorSingleProductTransfer(Component):
 
     def _response_for_select_product(self, location, message=None):
         data = {"location": self.data.location(location)}
+        # import pdb; pdb.set_trace()
         return self._response(next_state="select_product", data=data, message=message)
 
     def _response_for_set_quantity(self, move_line, message=None):
@@ -494,7 +495,7 @@ class ShopfloorSingleProductTransfer(Component):
         stock = self._actions_for("stock")
         stock.validate_moves(move_line.move_id)
         message = self.msg_store.transfer_done_success(move_line.picking_id)
-        return self._response_for_select_location(message=message)
+        return self._response_for_select_product(move_line.location_id, message=message)
 
     def _find_user_move_line_domain(self, user):
         return [
@@ -704,7 +705,7 @@ class ShopfloorSingleProductTransferValidatorResponse(Component):
         return {"select_location"}
 
     def _set_quantity_next_states(self):
-        return {"set_quantity", "select_location"}
+        return {"set_quantity", "select_product"}
 
     def _set_quantity__action_cancel_next_states(self):
         return {"select_location"}

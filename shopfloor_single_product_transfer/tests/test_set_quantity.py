@@ -188,14 +188,15 @@ class TestSetQuantity(CommonCase):
 
         With no_prefill_qty disabled.
         """
-        self._add_stock_to_product(self.product, self.location, 10)
+        location = self.location
+        self._add_stock_to_product(self.product, location, 10)
         self._enable_create_move_line()
         response = self.service.dispatch(
             "scan_product",
-            params={"location_id": self.location.id, "barcode": self.packaging.barcode},
+            params={"location_id": location.id, "barcode": self.packaging.barcode},
         )
         domain = self.service._scan_product__select_move_line_domain(
-            self.product, self.location
+            self.product, location
         )
         move_line = self.env["stock.move.line"].search(domain, limit=1)
         self.assertEqual(move_line.qty_done, self.packaging.qty)
@@ -206,9 +207,10 @@ class TestSetQuantity(CommonCase):
                 "barcode": self.dispatch_location.barcode,
             },
         )
+        data = {"location": self._data_for_location(location)}
         expected_message = self.msg_store.transfer_done_success(move_line.picking_id)
         self.assert_response(
-            response, next_state="select_location", message=expected_message, data={}
+            response, next_state="select_product", message=expected_message, data=data
         )
 
     def test_set_quantity_scan_packaging_with_allow_move_create_and_no_prefill_qty(
@@ -218,15 +220,16 @@ class TestSetQuantity(CommonCase):
 
         With no_prefill_qty enabled.
         """
-        self._add_stock_to_product(self.product, self.location, 10)
+        location = self.location
+        self._add_stock_to_product(self.product, location, 10)
         self._enable_create_move_line()
         self._enable_no_prefill_qty()
         response = self.service.dispatch(
             "scan_product",
-            params={"location_id": self.location.id, "barcode": self.packaging.barcode},
+            params={"location_id": location.id, "barcode": self.packaging.barcode},
         )
         domain = self.service._scan_product__select_move_line_domain(
-            self.product, self.location
+            self.product, location
         )
         move_line = self.env["stock.move.line"].search(domain, limit=1)
         self.assertEqual(move_line.qty_done, self.packaging.qty)
@@ -249,9 +252,10 @@ class TestSetQuantity(CommonCase):
                 "barcode": self.dispatch_location.barcode,
             },
         )
+        data = {"location": self._data_for_location(location)}
         expected_message = self.msg_store.transfer_done_success(move_line.picking_id)
         self.assert_response(
-            response, next_state="select_location", message=expected_message, data={}
+            response, next_state="select_product", message=expected_message, data=data
         )
 
     def test_set_quantity_invalid_dest_location(self):
@@ -275,9 +279,10 @@ class TestSetQuantity(CommonCase):
 
     def test_set_quantity_menu_default_location(self):
         picking = self._setup_picking()
+        location = self.location
         self.service.dispatch(
             "scan_product",
-            params={"location_id": self.location.id, "barcode": self.product.barcode},
+            params={"location_id": location.id, "barcode": self.product.barcode},
         )
         # Change the destination on the move_line
         move_line = picking.move_line_ids
@@ -305,15 +310,17 @@ class TestSetQuantity(CommonCase):
         expected_message = self.service.msg_store.transfer_done_success(
             move_line.picking_id
         )
+        data = {"location": self._data_for_location(location)}
         self.assert_response(
-            response, next_state="select_location", message=expected_message, data={}
+            response, next_state="select_product", message=expected_message, data=data
         )
 
     def test_set_quantity_child_move_location(self):
         picking = self._setup_picking()
+        location = self.location
         self.service.dispatch(
             "scan_product",
-            params={"location_id": self.location.id, "barcode": self.product.barcode},
+            params={"location_id": location.id, "barcode": self.product.barcode},
         )
         # Change the destination on the move_line
         move_line = picking.move_line_ids
@@ -325,8 +332,9 @@ class TestSetQuantity(CommonCase):
             },
         )
         expected_message = self.msg_store.transfer_done_success(move_line.picking_id)
+        data = {"location": self._data_for_location(location)}
         self.assert_response(
-            response, next_state="select_location", message=expected_message, data={}
+            response, next_state="select_product", message=expected_message, data=data
         )
 
     def test_action_cancel(self):
