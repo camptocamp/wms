@@ -502,6 +502,18 @@ class MessageAction(Component):
             "body": _("This lot is part of multiple packages, please scan a package."),
         }
 
+    def lot_not_found(self):
+        return {
+            "message_type": "error",
+            "body": _("This lot does not exist anymore."),
+        }
+
+    def lot_not_found_in_picking(self):
+        return {
+            "message_type": "error",
+            "body": _("Lot is not in the current transfer."),
+        }
+
     def lot_not_found_in_pickings(self):
         return {
             "message_type": "warning",
