@@ -191,82 +191,88 @@ class Checkout(Component):
           destination pack set
         """
         search = self._actions_for("search")
-        picking = search.picking_from_scan(barcode)
-        if not picking:
-            location = search.location_from_scan(barcode)
-            if location:
-                if not self.is_src_location_valid(location):
-                    return self._response_for_select_document(
-                        message=self.msg_store.location_not_allowed()
-                    )
-                lines = location.source_move_line_ids
-                pickings = lines.mapped("picking_id")
-                if len(pickings) == 1:
-                    picking = pickings
-                else:
-                    return self._response_for_select_document(
-                        message={
-                            "message_type": "error",
-                            "body": _(
-                                "Several transfers found, please scan a package"
-                                " or select a transfer manually."
-                            ),
-                        }
-                    )
-        if not picking:
-            package = search.package_from_scan(barcode)
-            if package:
-                pickings = package.move_line_ids.filtered(
-                    lambda ml: ml.state not in ("cancel", "done")
-                ).mapped("picking_id")
-                if len(pickings) > 1:
-                    # Filter only if we find several pickings to narrow the
-                    # selection to one of the good type. If we have one picking
-                    # of the wrong type, it will be caught in _select_picking
-                    # with the proper error message.
-                    # Side note: rather unlikely to have several transfers ready
-                    # and moving the same things
-                    pickings = pickings.filtered(
-                        lambda p: p.picking_type_id in self.picking_types
-                    )
-                if len(pickings) == 1:
-                    picking = pickings
-        if not picking:
-            # Try to find the product first
-            product = search.product_from_scan(barcode)
-            # TODO Filter lines on picking_type before
-            # line_domain = [
-            #     ("move_id.picking_id.picking_type_id", "in", self.picking_types.ids)
-            # ]
-            line_domain = []
-            if not product:
-                # Then, try to find a packaging matching the barcode
-                packaging = search.packaging_from_scan(barcode)
-                if packaging:
-                    # And retrieve its product
-                    product = packaging.product_id
-                    # The picking should have a move line for the product
-                    # where qty >= packaging.qty, since it doesn't makes sense
-                    # to select a move line which have less qty than the packaging
-                    line_domain.append(("product_uom_qty", ">=", packaging.qty))
-            if product:
-                line_domain.extend(
-                    [
-                        ("product_id", "=", product.id),
-                        ("state", "not in", ("cancel", "done")),
-                        ("package_id", "=", False),
-                    ]
-                )
-                lines = self.env["stock.move.line"].search(line_domain)
-                picking = self.env["stock.picking"].search(
-                    [
-                        ("id", "in", lines.move_id.picking_id.ids),
-                        ("picking_type_id", "in", self.picking_types.ids),
-                    ],
-                    order="priority desc, scheduled_date asc, id desc",
-                    limit=1,
-                )
+
+        search_result = search.find(
+            barcode,
+            types=(
+                "picking",
+                "location",
+                "package",
+                "product",
+                "packaging",
+            ),
+        )
+        result_handler = getattr(self, "_select_document_from_" + search_result.type)
+        return result_handler(search_result.record)
+
+    def _select_document_from_picking(self, picking, **kw):
         return self._select_picking(picking, "select_document")
+
+    def _select_document_from_location(self, location, **kw):
+        if not self.is_src_location_valid(location):
+            return self._response_for_select_document(
+                message=self.msg_store.location_not_allowed()
+            )
+        lines = location.source_move_line_ids
+        pickings = lines.mapped("picking_id")
+        if len(pickings) >= 1:
+            return self._response_for_select_document(
+                message={
+                    "message_type": "error",
+                    "body": _(
+                        "Several transfers found, please scan a package"
+                        " or select a transfer manually."
+                    ),
+                }
+            )
+        return self._select_picking(pickings, "select_document")
+
+    def _select_document_from_package(self, package, **kw):
+        pickings = package.move_line_ids.filtered(
+            lambda ml: ml.state not in ("cancel", "done")
+        ).mapped("picking_id")
+        if len(pickings) > 1:
+            # Filter only if we find several pickings to narrow the
+            # selection to one of the good type. If we have one picking
+            # of the wrong type, it will be caught in _select_picking
+            # with the proper error message.
+            # Side note: rather unlikely to have several transfers ready
+            # and moving the same things
+            pickings = pickings.filtered(
+                lambda p: p.picking_type_id in self.picking_types
+            )
+        if len(pickings) == 1:
+            picking = pickings
+        return self._select_picking(picking, "select_document")
+
+    def _select_document_from_product(self, product, line_domain=None, **kw):
+        line_domain = line_domain or []
+        line_domain.extend(
+            [
+                ("product_id", "=", product.id),
+                ("state", "not in", ("cancel", "done")),
+                ("package_id", "=", False),
+            ]
+        )
+        lines = self.env["stock.move.line"].search(line_domain)
+        picking = self.env["stock.picking"].search(
+            [
+                ("id", "in", lines.move_id.picking_id.ids),
+                ("picking_type_id", "in", self.picking_types.ids),
+            ],
+            order="priority desc, scheduled_date asc, id desc",
+            limit=1,
+        )
+        return self._select_picking(picking, "select_document")
+
+    def _select_document_from_packaging(self, packaging, **kw):
+        # And retrieve its product
+        product = packaging.product_id
+        # The picking should have a move line for the product
+        # where qty >= packaging.qty, since it doesn't makes sense
+        # to select a move line which have less qty than the packaging
+        line_domain = [("product_uom_qty", ">=", packaging.qty)]
+        return self._select_document_from_product(product, line_domain=line_domain)
 
     def _select_picking(self, picking, state_for_error):
         if not picking:
@@ -883,86 +889,96 @@ class Checkout(Component):
         search = self._actions_for("search")
 
         selected_lines = self.env["stock.move.line"].browse(selected_line_ids).exists()
+        search_result = search.find(
+            barcode,
+            types=(
+                "package",
+                "product",
+                "packaging",
+                "lot",
+                "serial",
+                "delivery_packaging",
+            ),
+            handler_kw=dict(
+                lot=dict(products=picking.move_lines.product_id),
+                serial=dict(products=picking.move_lines.product_id),
+            ),
+        )
+        result_handler = getattr(
+            self, "_scan_package_action_from_" + search_result.type
+        )
+        return result_handler(picking, selected_lines, search_result.record)
 
-        packaging = None
-        product = search.product_from_scan(barcode)
-        if not product:
-            packaging = search.packaging_from_scan(barcode)
-            product = packaging.product_id
-        if product:
-            if product.tracking in ("lot", "serial"):
-                return self._response_for_select_package(
-                    picking,
-                    selected_lines,
-                    message=self.msg_store.scan_lot_on_product_tracked_by_lot(),
-                )
-            product_lines = selected_lines.filtered(lambda l: l.product_id == product)
-            if self.work.menu.no_prefill_qty:
-                quantity_increment = packaging.qty if packaging else 1
-                return self._increment_custom_qty(
-                    picking,
-                    selected_lines,
-                    fields.first(product_lines),
-                    quantity_increment,
-                )
-            else:
-                return self._switch_line_qty_done(
-                    picking, selected_lines, product_lines
-                )
-
-        lot = search.lot_from_scan(barcode, products=selected_lines.product_id)
-        if lot:
-            lot_lines = selected_lines.filtered(lambda l: l.lot_id == lot)
-            if self.work.menu.no_prefill_qty:
-                return self._increment_custom_qty(
-                    picking, selected_lines, fields.first(lot_lines), 1
-                )
-            else:
-                return self._switch_line_qty_done(picking, selected_lines, lot_lines)
-
-        package = search.package_from_scan(barcode)
-        if package:
-            if not package.packaging_id:
-                return self._response_for_select_package(
-                    picking,
-                    selected_lines,
-                    message=self.msg_store.dest_package_not_valid(package),
-                )
-            return self._put_lines_in_package(picking, selected_lines, package)
-
-        # Scan delivery packaging
-        carrier = self._get_carrier(picking)
-        packaging, is_valid = self._scan_delivery_package(carrier, barcode)
-        if packaging:
-            if carrier and not is_valid:
-                return self._response_for_select_package(
-                    picking,
-                    selected_lines,
-                    message=self.msg_store.packaging_invalid_for_carrier(
-                        packaging, carrier
-                    ),
-                )
-            return self._create_and_assign_new_packaging(
-                picking, selected_lines, packaging
+    def _scan_package_action_from_product(
+        self, picking, selected_lines, product, packaging=None, **kw
+    ):
+        if product.tracking in ("lot", "serial"):
+            return self._response_for_select_package(
+                picking,
+                selected_lines,
+                message=self.msg_store.scan_lot_on_product_tracked_by_lot(),
             )
+        product_lines = selected_lines.filtered(lambda l: l.product_id == product)
+        if self.work.menu.no_prefill_qty:
+            quantity_increment = packaging.qty if packaging else 1
+            return self._increment_custom_qty(
+                picking,
+                selected_lines,
+                fields.first(product_lines),
+                quantity_increment,
+            )
+        return self._switch_line_qty_done(picking, selected_lines, product_lines)
+
+    def _scan_package_action_from_packaging(
+        self, picking, selected_lines, packaging, **kw
+    ):
+        return self._scan_package_action_from_product(
+            picking, selected_lines, packaging.product_id, packaging=packaging
+        )
+
+    def _scan_package_action_from_lot(self, picking, selected_lines, lot, **kw):
+        lot_lines = selected_lines.filtered(lambda l: l.lot_id == lot)
+        if self.work.menu.no_prefill_qty:
+            return self._increment_custom_qty(
+                picking, selected_lines, fields.first(lot_lines), 1
+            )
+        return self._switch_line_qty_done(picking, selected_lines, lot_lines)
+
+    def _scan_package_action_from_package(self, picking, selected_lines, package, **kw):
+        if not package.packaging_id:
+            return self._response_for_select_package(
+                picking,
+                selected_lines,
+                message=self.msg_store.dest_package_not_valid(package),
+            )
+        return self._put_lines_in_package(picking, selected_lines, package)
+
+    def _scan_package_action_from_delivery_packaging(
+        self, picking, selected_lines, packaging, **kw
+    ):
+        carrier = self._get_carrier(picking)
+        if carrier:
+            # Validate against carrier
+            is_valid = self._packaging_good_for_carrier(packaging, carrier)
+        else:
+            is_valid = True
+        if carrier and not is_valid:
+            return self._response_for_select_package(
+                picking,
+                selected_lines,
+                message=self.msg_store.packaging_invalid_for_carrier(
+                    packaging, carrier
+                ),
+            )
+        return self._create_and_assign_new_packaging(picking, selected_lines, packaging)
+
+    def _scan_package_action_from_none(self, picking, selected_lines, record, **kw):
         return self._response_for_select_package(
             picking, selected_lines, message=self.msg_store.barcode_not_found()
         )
 
     def _get_carrier(self, picking):
         return picking.ship_carrier_id or picking.carrier_id
-
-    def _scan_delivery_package(self, carrier, barcode):
-        search = self._actions_for("search")
-        packaging = search.generic_packaging_from_scan(barcode)
-        valid = False
-        if packaging:
-            if carrier:
-                # Validate against carrier
-                valid = self._packaging_good_for_carrier(packaging, carrier)
-            else:
-                valid = True
-        return packaging, valid
 
     def _packaging_good_for_carrier(self, packaging, carrier):
         actions = self._actions_for("packaging")
