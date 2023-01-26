@@ -131,11 +131,7 @@ class CheckoutScanLineCase(CheckoutScanLineCaseBase):
         self.assert_response(
             response,
             next_state="select_line",
-            data={
-                "picking": self._stock_picking_data(picking),
-                "group_lines_by_location": True,
-                "need_confirm_pack_all": False,
-            },
+            data=self._data_for_select_line(picking),
             message=message,
         )
 
