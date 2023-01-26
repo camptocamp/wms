@@ -381,7 +381,8 @@ const Checkout = {
                 select_line: {
                     display_info: {
                         title: "Pick the product by scanning something",
-                        scan_placeholder: "Scan pack / product / lot",
+                        scan_placeholder:
+                            "Scan pack / product / lot / delivery package",
                     },
                     events: {
                         summary: "on_summary",
@@ -393,6 +394,7 @@ const Checkout = {
                             this.odoo.call("scan_line", {
                                 picking_id: this.state.data.picking.id,
                                 barcode: scanned.text,
+                                confirm_pack_all: this.state.data.need_confirm_pack_all,
                             })
                         );
                     },
@@ -404,6 +406,7 @@ const Checkout = {
                             this.odoo.call("select_line", {
                                 picking_id: this.state.data.picking.id,
                                 move_line_id: selected.id,
+
                                 package_id: _.result(
                                     selected,
                                     "package_dest.id",
