@@ -874,11 +874,10 @@ class Checkout(Component):
             return self._put_lines_in_package(picking, selected_lines, package)
 
         # Scan delivery packaging
-        packaging = search.generic_packaging_from_scan(barcode)
+        carrier = self._get_carrier(picking)
+        packaging, is_valid = self._scan_delivery_package(carrier, barcode)
         if packaging:
-            carrier = picking.ship_carrier_id or picking.carrier_id
-            # Validate against carrier
-            if carrier and not self._packaging_good_for_carrier(packaging, carrier):
+            if carrier and not is_valid:
                 return self._response_for_select_package(
                     picking,
                     selected_lines,
@@ -889,10 +888,22 @@ class Checkout(Component):
             return self._create_and_assign_new_packaging(
                 picking, selected_lines, packaging
             )
-
         return self._response_for_select_package(
             picking, selected_lines, message=self.msg_store.barcode_not_found()
         )
+
+    def _get_carrier(self, picking):
+        return picking.ship_carrier_id or picking.carrier_id
+
+    def _scan_delivery_package(self, carrier, barcode):
+        search = self._actions_for("search")
+        packaging = search.generic_packaging_from_scan(barcode)
+        valid = False
+        if packaging:
+            # Validate against carrier
+            if carrier and self._packaging_good_for_carrier(packaging, carrier):
+                valid = True
+        return packaging, valid
 
     def _packaging_good_for_carrier(self, packaging, carrier):
         actions = self._actions_for("packaging")
