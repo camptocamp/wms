@@ -40,14 +40,23 @@ class Checkout(Component):
     _usage = "checkout"
     _description = __doc__
 
-    def _response_for_select_line(self, picking, message=None):
+    def _response_for_select_line(self, picking, message=None, need_confirm_pack_all=False):
         if all(line.shopfloor_checkout_done for line in picking.move_line_ids):
             return self._response_for_summary(picking, message=message)
         return self._response(
             next_state="select_line",
-            data={"picking": self._data_for_stock_picking(picking)},
+            data=self._data_for_select_line(
+                picking,
+                need_confirm_pack_all=need_confirm_pack_all,
+            ),
             message=message,
         )
+
+    def _data_for_select_line(self, picking, need_confirm_pack_all=False):
+        return {
+            "picking": self._data_for_stock_picking(picking),
+            "need_confirm_pack_all": need_confirm_pack_all,
+        }
 
     def _response_for_summary(self, picking, need_confirm=False, message=None):
         return self._response(
@@ -1145,6 +1154,11 @@ class ShopfloorCheckoutValidator(Component):
         return {
             "picking_id": {"coerce": to_int, "required": True, "type": "integer"},
             "barcode": {"required": True, "type": "string"},
+            "confirm_pack_all": {
+                "type": "boolean",
+                "nullable": True,
+                "required": False,
+            },
         }
 
     def select_line(self):
@@ -1345,7 +1359,10 @@ class ShopfloorCheckoutValidatorResponse(Component):
 
     @property
     def _schema_stock_picking_details(self):
-        return self._schema_stock_picking()
+        return dict(
+            self._schema_stock_picking(),
+            need_confirm_pack_all={"type": "boolean"},
+        )
 
     @property
     def _schema_summary(self):

@@ -87,7 +87,7 @@ class CheckoutRemovePackageCase(CheckoutCommonCase):
         self.assert_response(
             response,
             next_state="select_line",
-            data={"picking": self._stock_picking_data(picking)},
+            data=self.service._data_for_select_line(picking),
             message={"body": "Package cancelled", "message_type": "success"},
         )
 
@@ -112,7 +112,7 @@ class CheckoutRemovePackageCase(CheckoutCommonCase):
         self.assert_response(
             response,
             next_state="select_line",
-            data={"picking": self._stock_picking_data(picking)},
+            data=self.service._data_for_select_line(picking),
             message={"body": "Line cancelled", "message_type": "success"},
         )
 
