@@ -944,6 +944,10 @@ class Checkout(Component):
             )
         return self._switch_line_qty_done(picking, selected_lines, lot_lines)
 
+    def _scan_package_action_from_serial(self, picking, selection_lines, lot, **kw):
+        # Search for serial number is actually the same as searching for lot (as of v14...)
+        return self._scan_package_action_from_lot(picking, selection_lines, lot, **kw)
+
     def _scan_package_action_from_package(self, picking, selected_lines, package, **kw):
         if not package.packaging_id:
             return self._response_for_select_package(
