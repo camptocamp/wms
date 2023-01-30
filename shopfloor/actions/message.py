@@ -91,6 +91,15 @@ class MessageAction(Component):
             ),
         }
 
+    def lot_different_change(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "You scanned a different lot with the same product, "
+                "do you want to change lot? Scan it again to confirm."
+            ),
+        }
+
     def package_not_available_in_picking(self, package, picking):
         return {
             "message_type": "warning",
@@ -375,6 +384,12 @@ class MessageAction(Component):
             "body": _("This lot does not exist anymore."),
         }
 
+    def lot_not_found_in_picking(self):
+        return {
+            "message_type": "error",
+            "body": _("Lot is not in the current transfer."),
+        }
+
     def lot_not_found_in_pickings(self):
         return {
             "message_type": "warning",
@@ -593,4 +608,14 @@ class MessageAction(Component):
                 "Pick + Pack mode ON: the picking {0.name} has no carrier set. "
                 "The system couldn't pack goods automatically."
             ).format(picking),
+        }
+
+    def confirm_put_all_goods_in_delivery_package(self, packaging_type):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Delivery package type scanned: %(name)s. "
+                "Scan again to place all goods in the same package."
+            )
+            % dict(name=packaging_type.name),
         }
