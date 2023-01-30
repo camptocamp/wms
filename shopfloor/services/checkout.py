@@ -4,7 +4,7 @@
 
 from werkzeug.exceptions import BadRequest
 
-from odoo import _
+from odoo import _, fields
 
 from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
@@ -40,7 +40,9 @@ class Checkout(Component):
     _usage = "checkout"
     _description = __doc__
 
-    def _response_for_select_line(self, picking, message=None, need_confirm_pack_all=False):
+    def _response_for_select_line(
+        self, picking, message=None, need_confirm_pack_all=False, need_confirm_lot=False
+    ):
         if all(line.shopfloor_checkout_done for line in picking.move_line_ids):
             return self._response_for_summary(picking, message=message)
         return self._response(
@@ -48,14 +50,16 @@ class Checkout(Component):
             data=self._data_for_select_line(
                 picking,
                 need_confirm_pack_all=need_confirm_pack_all,
+                need_confirm_lot=need_confirm_lot,
             ),
             message=message,
         )
 
-    def _data_for_select_line(self, picking, need_confirm_pack_all=False):
+    def _data_for_select_line(self, picking, need_confirm_pack_all=False, need_confirm_lot=False):
         return {
             "picking": self._data_for_stock_picking(picking),
             "need_confirm_pack_all": need_confirm_pack_all,
+            "need_confirm_lot": need_confirm_lot,
         }
 
     def _response_for_summary(self, picking, need_confirm=False, message=None):
@@ -377,7 +381,7 @@ class Checkout(Component):
             {"qty_done": 0, "shopfloor_user_id": False}
         )
 
-    def scan_line(self, picking_id, barcode):
+    def scan_line(self, picking_id, barcode, confirm_lot=False):
         """Scan move lines of the stock picking
 
         It allows to select move lines of the stock picking for the next
@@ -417,7 +421,9 @@ class Checkout(Component):
 
         lot = search.lot_from_scan(barcode, products=picking.move_lines.product_id)
         if lot:
-            return self._select_lines_from_lot(picking, selection_lines, lot)
+            return self._select_lines_from_lot(
+                picking, selection_lines, lot, confirm_lot=confirm_lot
+            )
 
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
@@ -475,13 +481,48 @@ class Checkout(Component):
         self._select_lines(lines)
         return self._response_for_select_package(picking, lines)
 
-    def _select_lines_from_lot(self, picking, selection_lines, lot):
+    def _change_lot_response_handler_ok(self, move_line, message=None):
+        return message
+
+    def _change_lot_response_handler_error(self, move_line, message=None):
+        return message
+
+    def _select_lines_from_lot(self, picking, selection_lines, lot, confirm_lot=False):
+        message = None
         lines = selection_lines.filtered(lambda l: l.lot_id == lot)
         if not lines:
-            return self._response_for_select_line(
-                picking,
-                message=self.msg_store.lot_not_found_in_picking(),
+            if not confirm_lot:
+                lines_same_product = selection_lines.filtered(
+                    lambda l : l.product_id == lot.product_id
+                )
+                # However if one line is matching the same product, invite the user
+                # to change the lot by scanning again the lot
+                if len(lines_same_product) == 1:
+                    return self._response_for_select_line(
+                        picking,
+                        message=self.msg_store.lot_different_change(),
+                        need_confirm_lot=True,
+                    )
+                return self._response_for_select_line(
+                    picking,
+                    message=self.msg_store.lot_not_found_in_picking(),
+                )
+            # Change lot confirmed
+            line = fields.first(
+                selection_lines.filtered(
+                    lambda l : l.product_id == lot.product_id
+                )
             )
+            response_ok_func = self._change_lot_response_handler_ok
+            response_error_func = self._change_lot_response_handler_error
+            change_package_lot = self._actions_for("change.package.lot")
+            message = change_package_lot.change_lot(
+                line, lot, response_ok_func, response_error_func
+            )
+            if message["message_type"] == "error":
+                return self._response_for_select_line(picking, message=message)
+            else:
+                lines = line
 
         # When lots are as units outside of packages, we can select them for
         # packing, but if they are in a package, we want the user to scan the packages.
@@ -492,6 +533,8 @@ class Checkout(Component):
         # package, but also if we have one lot as a package and the same lot as
         # a unit in another line. In both cases, we want the user to scan the
         # package.
+        # NOTE: change_pack_lot already checked this, so if we changed the lot
+        # we are already safe.
         if packages and len({line.package_id for line in lines}) > 1:
             return self._response_for_select_line(
                 picking, message=self.msg_store.lot_multiple_packages_scan_package()
@@ -499,10 +542,12 @@ class Checkout(Component):
         elif packages:
             # Select all the lines of the package when we scan a lot in a
             # package and we have only one.
-            return self._select_lines_from_package(picking, selection_lines, packages)
+            return self._select_lines_from_package(
+                picking, selection_lines, packages, message=message
+            )
 
         self._select_lines(lines)
-        return self._response_for_select_package(picking, lines)
+        return self._response_for_select_package(picking, lines, message=message)
 
     def _select_line_package(self, picking, selection_lines, package):
         if not package:
@@ -1159,6 +1204,11 @@ class ShopfloorCheckoutValidator(Component):
                 "nullable": True,
                 "required": False,
             },
+            "confirm_lot": {
+                "type": "boolean",
+                "nullable": True,
+                "required": False,
+            },
         }
 
     def select_line(self):
@@ -1362,6 +1412,7 @@ class ShopfloorCheckoutValidatorResponse(Component):
         return dict(
             self._schema_stock_picking(),
             need_confirm_pack_all={"type": "boolean"},
+            need_confirm_lot={"type": "boolean"},
         )
 
     @property
