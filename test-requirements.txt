@@ -1,2 +1,4 @@
 freezegun
 odoo_test_helper
+
+odoo14-addon-shopfloor @ git+https://github.com/OCA/wms.git/refs/pull/547/head#subdirectory=setup/shopfloor
