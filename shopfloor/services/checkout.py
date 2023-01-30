@@ -409,18 +409,19 @@ class Checkout(Component):
         if not selection_lines:
             return self._response_for_summary(picking)
 
-        package = search.package_from_scan(barcode)
-        if package:
-            return self._select_lines_from_package(picking, selection_lines, package)
+        search_result = search.find(
+            barcode,
+            types=("package", "product", "packaging", "lot", "serial"),
+            handler_kw=dict(
+                lot=dict(products=picking.move_lines.product_id),
+                serial=dict(products=picking.move_lines.product_id),
+            ),
+        )
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type)
+        return result_handler(picking, selection_lines, search_result.record)
 
-        product = search.product_from_scan(barcode)
-        if product:
-            return self._select_lines_from_product(picking, selection_lines, product)
-
-        lot = search.lot_from_scan(barcode, products=picking.move_lines.product_id)
-        if lot:
-            return self._select_lines_from_lot(picking, selection_lines, lot)
-
+    def _select_lines_from_none(self, picking, selection_lines, record):
+        """Handle result when no record is found."""
         return self._response_for_select_line(
             picking, message=self.msg_store.barcode_not_found()
         )
@@ -508,6 +509,10 @@ class Checkout(Component):
 
         self._select_lines(lines)
         return self._response_for_select_package(picking, lines)
+
+    def _select_lines_from_serial(self, picking, selection_lines, lot):
+        # Search for serial number is actually the same as searching for lot (as of v14...)
+        return self._select_lines_from_lot(picking, selection_lines, lot)
 
     def _select_line_package(self, picking, selection_lines, package):
         if not package:
