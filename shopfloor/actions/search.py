@@ -26,6 +26,11 @@ class SearchResult:
                 return False
         return True
 
+    @property
+    def records(self):
+        """In some cases we expect more than one records (eg: location limit > 1) or lots"""
+        return self.record if len(self.record) > 1 else None
+
 
 class SearchAction(Component):
     """Provide methods to search records from scanner
@@ -60,7 +65,6 @@ class SearchAction(Component):
         """
         return SearchResult(**kwargs)
 
-    # TODO: add tests + use it everywhere
     def find(self, barcode, types=None, handler_kw=None):
         """Find Odoo record matching given `barcode`.
 
