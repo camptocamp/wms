@@ -106,6 +106,15 @@ class MessageAction(Component):
             ),
         }
 
+    def lot_different_change(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "You scanned a different lot with the same product, "
+                "do you want to change lot? Scan it again to confirm."
+            ),
+        }
+
     def package_not_available_in_picking(self, package, picking):
         return {
             "message_type": "warning",
@@ -845,4 +854,16 @@ class MessageAction(Component):
         return {
             "message_type": "warning",
             "body": _("No line to pack found."),
+        }
+
+    def lot_changed(self):
+        return {
+            "message_type": "info",
+            "body": _("Lot changed"),
+        }
+
+    def lot_change_no_line_found(self):
+        return {
+            "message_type": "error",
+            "body": _("Unable to find a line with the same product but different lot."),
         }
