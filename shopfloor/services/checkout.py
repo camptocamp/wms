@@ -215,7 +215,7 @@ class Checkout(Component):
             )
         lines = location.source_move_line_ids
         pickings = lines.mapped("picking_id")
-        if len(pickings) >= 1:
+        if len(pickings) > 1:
             return self._response_for_select_document(
                 message={
                     "message_type": "error",
@@ -273,6 +273,10 @@ class Checkout(Component):
         # to select a move line which have less qty than the packaging
         line_domain = [("product_uom_qty", ">=", packaging.qty)]
         return self._select_document_from_product(product, line_domain=line_domain)
+
+    def _select_document_from_none(self, picking, **kw):
+        """Handle result when no record is found."""
+        return self._select_picking(picking, "select_document")
 
     def _select_picking(self, picking, state_for_error):
         if not picking:
