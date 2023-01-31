@@ -395,6 +395,7 @@ const Checkout = {
                                 picking_id: this.state.data.picking.id,
                                 barcode: scanned.text,
                                 confirm_pack_all: this.state.data.need_confirm_pack_all,
+                                confirm_lot: this.state.data.need_confirm_lot,
                             })
                         );
                     },
