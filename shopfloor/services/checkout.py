@@ -190,20 +190,23 @@ class Checkout(Component):
         * summary: stock.picking is selected and all its lines have a
           destination pack set
         """
-        search = self._actions_for("search")
-
-        search_result = search.find(
-            barcode,
-            types=(
-                "picking",
-                "location",
-                "package",
-                "product",
-                "packaging",
-            ),
-        )
+        search_result = self._scan_document_find(barcode)
         result_handler = getattr(self, "_select_document_from_" + search_result.type)
         return result_handler(search_result.record)
+
+    def _scan_document_find(self, barcode, search_types=None):
+        search = self._actions_for("search")
+        search_types = (
+            "picking",
+            "location",
+            "package",
+            "product",
+            "packaging",
+        )
+        return search.find(
+            barcode,
+            types=search_types,
+        )
 
     def _select_document_from_picking(self, picking, **kw):
         return self._select_picking(picking, "select_document")
@@ -426,30 +429,33 @@ class Checkout(Component):
         if message:
             return self._response_for_select_document(message=message)
 
-        search = self._actions_for("search")
-
         selection_lines = self._lines_to_pack(picking)
         if not selection_lines:
             return self._response_for_summary(picking)
 
-        search_result = search.find(
+        search_result = self._scan_line_find(picking, barcode)
+        result_handler = getattr(self, "_select_lines_from_" + search_result.type)
+        kw = {"confirm_pack_all": confirm_pack_all}
+        return result_handler(picking, selection_lines, search_result.record, **kw)
+
+    def _scan_line_find(self, picking, barcode, search_types=None):
+        search = self._actions_for("search")
+        search_types = (
+            "package",
+            "product",
+            "packaging",
+            "lot",
+            "serial",
+            "delivery_packaging",
+        )
+        return search.find(
             barcode,
-            types=(
-                "package",
-                "product",
-                "packaging",
-                "lot",
-                "serial",
-                "delivery_packaging",
-            ),
+            types=search_types,
             handler_kw=dict(
                 lot=dict(products=picking.move_lines.product_id),
                 serial=dict(products=picking.move_lines.product_id),
             ),
         )
-        result_handler = getattr(self, "_select_lines_from_" + search_result.type)
-        kw = {"confirm_pack_all": confirm_pack_all}
-        return result_handler(picking, selection_lines, search_result.record, **kw)
 
     def _select_lines_from_none(self, picking, selection_lines, record, **kw):
         """Handle result when no record is found."""
@@ -890,28 +896,32 @@ class Checkout(Component):
         message = self._check_picking_status(picking)
         if message:
             return self._response_for_select_document(message=message)
-        search = self._actions_for("search")
 
         selected_lines = self.env["stock.move.line"].browse(selected_line_ids).exists()
-        search_result = search.find(
+        search_result = self._scan_package_find(picking, barcode)
+        result_handler = getattr(
+            self, "_scan_package_action_from_" + search_result.type
+        )
+        return result_handler(picking, selected_lines, search_result.record)
+
+    def _scan_package_find(self, picking, barcode, search_types=None):
+        search = self._actions_for("search")
+        search_types = (
+            "package",
+            "product",
+            "packaging",
+            "lot",
+            "serial",
+            "delivery_packaging",
+        )
+        return search.find(
             barcode,
-            types=(
-                "package",
-                "product",
-                "packaging",
-                "lot",
-                "serial",
-                "delivery_packaging",
-            ),
+            types=search_types,
             handler_kw=dict(
                 lot=dict(products=picking.move_lines.product_id),
                 serial=dict(products=picking.move_lines.product_id),
             ),
         )
-        result_handler = getattr(
-            self, "_scan_package_action_from_" + search_result.type
-        )
-        return result_handler(picking, selected_lines, search_result.record)
 
     def _scan_package_action_from_product(
         self, picking, selected_lines, product, packaging=None, **kw
