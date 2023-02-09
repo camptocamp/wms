@@ -7,6 +7,9 @@
     Define states for checkout scenario.
     @param $instance VueJS component instance
 */
+
+import event_hub from "/shopfloor_mobile_base/static/wms/src/services/event_hub.js";
+
 export const checkout_states = function ($instance) {
     return {
         select_document: {
@@ -110,11 +113,19 @@ export const checkout_states = function ($instance) {
             },
             on_scan: (scanned) => {
                 $instance.wait_call(
-                    $instance.odoo.call("scan_package_action", {
-                        picking_id: $instance.state.data.picking.id,
-                        selected_line_ids: $instance.selectable_line_ids(),
-                        barcode: scanned.text,
-                    })
+                    $instance.odoo
+                        .call("scan_package_action", {
+                            picking_id: $instance.state.data.picking.id,
+                            selected_line_ids: $instance.selectable_line_ids(),
+                            barcode: scanned.text,
+                        })
+                        .then((res) => {
+                            event_hub.$emit(
+                                "manual_select:handle_scan",
+                                res.data.select_package
+                            );
+                            return res;
+                        })
                 );
             },
             on_select: (selected) => {
