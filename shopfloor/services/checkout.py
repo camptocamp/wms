@@ -543,7 +543,14 @@ class Checkout(Component):
         if not lines:
             if not kw.get("confirm_lot"):
                 lines_same_product = selection_lines.filtered(
-                    lambda l: l.product_id == lot.product_id
+                    lambda l: (
+                        l.product_id == lot.product_id
+                        # We cannot change a lot on a move having ancestors.
+                        # That would mean we already picked up the wrong lot
+                        # on the previous move(s) and Odoo already restricts
+                        # the reservation based on the previous move(s).
+                        and not l.move_id.move_orig_ids
+                    )
                 )
                 # If there's at least one product matching we are good to go.
                 # In any case, only the 1st line matching will be affected.
