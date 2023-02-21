@@ -565,8 +565,15 @@ class Checkout(Component):
                 )
             # Change lot confirmed
             line = fields.first(
-                selection_lines.filtered(lambda l: l.product_id == lot.product_id)
+                selection_lines.filtered(
+                    lambda l: l.product_id == lot.product_id and l.lot_id != lot
+                )
             )
+            if not line:
+                return self._response_for_select_line(
+                    picking,
+                    message=self.msg_store.lot_change_no_line_found(),
+                )
             response_ok_func = self._change_lot_response_handler_ok
             response_error_func = self._change_lot_response_handler_error
             change_package_lot = self._actions_for("change.package.lot")
@@ -577,6 +584,9 @@ class Checkout(Component):
                 return self._response_for_select_line(picking, message=message)
             else:
                 lines = line
+                # Some lines have been recreated, refresh the recordset
+                # to avoid CacheMiss error
+                selection_lines = self._lines_to_pack(picking)
 
         # When lots are as units outside of packages, we can select them for
         # packing, but if they are in a package, we want the user to scan the packages.

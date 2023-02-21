@@ -772,3 +772,9 @@ class MessageAction(Component):
             "message_type": "info",
             "body": _("Lot changed"),
         }
+
+    def lot_change_no_line_found(self):
+        return {
+            "message_type": "error",
+            "body": _("Unable to find a line with the same product but different lot."),
+        }
