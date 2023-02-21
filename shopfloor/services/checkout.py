@@ -41,7 +41,7 @@ class Checkout(Component):
     _description = __doc__
 
     def _response_for_select_line(
-        self, picking, message=None, need_confirm_pack_all=False, need_confirm_lot=False
+        self, picking, message=None, need_confirm_pack_all=False, need_confirm_lot=None
     ):
         if all(line.shopfloor_checkout_done for line in picking.move_line_ids):
             return self._response_for_summary(picking, message=message)
@@ -56,7 +56,7 @@ class Checkout(Component):
         )
 
     def _data_for_select_line(
-        self, picking, need_confirm_pack_all=False, need_confirm_lot=False
+        self, picking, need_confirm_pack_all=False, need_confirm_lot=None
     ):
         return {
             "picking": self._data_for_stock_picking(picking),
@@ -427,7 +427,7 @@ class Checkout(Component):
             {"qty_done": 0, "shopfloor_user_id": False}
         )
 
-    def scan_line(self, picking_id, barcode, confirm_pack_all=False, confirm_lot=False):
+    def scan_line(self, picking_id, barcode, confirm_pack_all=False, confirm_lot=None):
         """Scan move lines of the stock picking
 
         It allows to select move lines of the stock picking for the next
@@ -582,12 +582,18 @@ class Checkout(Component):
                     return self._response_for_select_line(
                         picking,
                         message=self.msg_store.lot_different_change(),
-                        need_confirm_lot=True,
+                        need_confirm_lot=lot.name,
                     )
                     # TODO: add a msg saying the lot has been changed
                 return self._response_for_select_line(
                     picking,
                     message=self.msg_store.lot_not_found_in_picking(),
+                )
+            # Validate the scanned lot against the previous one
+            if lot.name != kw["confirm_lot"]:
+                return self._response_for_select_line(
+                    picking,
+                    message=self.msg_store.lot_change_wrong_lot(kw["confirm_lot"]),
                 )
             # Change lot confirmed
             line = fields.first(
@@ -1533,7 +1539,7 @@ class ShopfloorCheckoutValidator(Component):
                 "required": False,
             },
             "confirm_lot": {
-                "type": "boolean",
+                "type": "string",
                 "nullable": True,
                 "required": False,
             },
@@ -1759,7 +1765,7 @@ class ShopfloorCheckoutValidatorResponse(Component):
             group_lines_by_location={"type": "boolean"},
             show_oneline_package_content={"type": "boolean"},
             need_confirm_pack_all={"type": "boolean"},
-            need_confirm_lot={"type": "boolean"},
+            need_confirm_lot={"type": "string", "nullable": True},
         )
 
     @property
