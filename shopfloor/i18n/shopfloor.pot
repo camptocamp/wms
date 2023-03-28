@@ -659,6 +659,12 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "No transfer found for the scanned lot."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "No transfer found for the scanned packaging."
 msgstr ""
 
@@ -828,12 +834,6 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Packaging not found in the current transfer or already in a package."
-msgstr ""
-
-#. module: shopfloor
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
 msgid "Packaging not found in the current transfer."
 msgstr ""
 
@@ -929,12 +929,6 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Product not found in the current transfer or already in a package."
-msgstr ""
-
-#. module: shopfloor
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
 msgid "Product not found in the current transfer."
 msgstr ""
 
@@ -1020,6 +1014,16 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Same package {} is already assigned."
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__scan_location_or_pack_first_is_possible
+msgid "Scan Location Or Pack First Is Possible"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__scan_location_or_pack_first
+msgid "Scan first location or pack"
 msgstr ""
 
 #. module: shopfloor
@@ -1321,6 +1325,12 @@ msgid "The package %s doesn't exist"
 msgstr ""
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "The picked quantity must be a value above zero."
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_location__shopfloor_picking_sequence
 msgid ""
 "The picking done in Shopfloor scenarios will respect this order. The "
@@ -1544,6 +1554,13 @@ msgid "When picking, prevent unloading the whole bin when full."
 msgstr ""
 
 #. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__scan_location_or_pack_first
+msgid ""
+"When selecting work, force the user to first scan a location or pack,then "
+"the product or lot."
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Working location changed to {}"
@@ -1648,6 +1665,12 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "{} is not a valid destination package."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "{} not found in the current transfer or already in a package."
 msgstr ""
 
 #. module: shopfloor

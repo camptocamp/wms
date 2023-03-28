@@ -108,6 +108,23 @@
                     />
                   <field name="show_oneline_package_content" />
               </group>
+              <group
+                    name="scan_location_or_pack_first"
+                    attrs="{'invisible': [('scan_location_or_pack_first_is_possible', '=', False)]}"
+                >
+                  <field name="scan_location_or_pack_first_is_possible" invisible="1" />
+                  <field name="scan_location_or_pack_first" />
+              </group>
+              <group
+                    name="allow_alternative_destination"
+                    attrs="{'invisible': [('allow_alternative_destination_is_possible', '=', False)]}"
+                >
+                    <field
+                        name="allow_alternative_destination_is_possible"
+                        invisible="1"
+                    />
+                    <field name="allow_alternative_destination" />
+                </group>
             </group>
         </field>
     </record>
