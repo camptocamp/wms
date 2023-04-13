@@ -1,4 +1,5 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
+# Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import logging
 
@@ -417,11 +418,13 @@ class MessageAction(Component):
             "body": _("Product not found in the current transfer."),
         }
 
-    def product_not_found_or_already_in_dest_package(self):
+    def x_not_found_or_already_in_dest_package(self, message_code):
         return {
             "message_type": "warning",
             "body": _(
-                "Product not found in the current transfer or already in a package."
+                "{} not found in the current transfer or already in a package.".format(
+                    message_code
+                )
             ),
         }
 
@@ -429,14 +432,6 @@ class MessageAction(Component):
         return {
             "message_type": "warning",
             "body": _("Packaging not found in the current transfer."),
-        }
-
-    def packaging_not_found_or_already_in_dest_package(self):
-        return {
-            "message_type": "warning",
-            "body": _(
-                "Packaging not found in the current transfer or already in a package."
-            ),
         }
 
     def expiration_date_missing(self):
@@ -455,6 +450,12 @@ class MessageAction(Component):
         return {
             "message_type": "error",
             "body": _("No transfer found for the scanned packaging."),
+        }
+
+    def no_transfer_for_lot(self):
+        return {
+            "message_type": "error",
+            "body": _("No transfer found for the scanned lot."),
         }
 
     def create_new_pack_ask_confirmation(self, barcode):
@@ -600,6 +601,12 @@ class MessageAction(Component):
             "body": _(
                 "No quantity has been processed, unable to complete the transfer."
             ),
+        }
+
+    def picking_zero_quantity(self):
+        return {
+            "message_type": "error",
+            "body": _("The picked quantity must be a value above zero."),
         }
 
     def recovered_previous_session(self):

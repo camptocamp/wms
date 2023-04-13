@@ -62,8 +62,20 @@ export var Searchbar = Vue.component("searchbar", {
         },
     },
     mounted: function () {
-        // As the inputMode is set to none when inserted in the DOM, we need to force the focus
-        if (this.autofocus) this.$refs.searchbar.focus();
+        // Force focus because when the widget is injected in the DOM
+        // `inputmode` is set to `none`.
+        this.capture_focus();
+        /* When you click on other elements on the page
+        the focus is normally obtainable via the `onblur` binding.
+        However, when `click` triggers a screen reload after an api call
+        that is not enough.
+        */
+        event_hub.$on("screen:reload", () => {
+            if (this.autofocus) this.capture_focus();
+        });
+    },
+    updated: function () {
+        this.capture_focus();
     },
     computed: {
         // defined as computed property to put a new instance in cache each
@@ -102,6 +114,9 @@ export var Searchbar = Vue.component("searchbar", {
         },
     },
     methods: {
+        capture_focus: function () {
+            if (this.autofocus) this.$refs.searchbar.focus();
+        },
         show_virtual_keyboard: function (elem) {
             elem.inputMode = this.input_inputmode;
             elem.classList.add("searchbar-keyboard");

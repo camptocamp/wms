@@ -26,8 +26,30 @@ const new_template =
         :record="state.data.package"
     />
 
-    <v-form>
+    <v-form ref="form_measurement">
         <v-container>
+            <v-row>
+                <v-text-field
+                    label="Length"
+                    type="number"
+                    :suffix="state.data.package.dimension_uom.name"
+                    placeholder="Package Length"
+                    v-if="state.data.package_requirement.length"
+                    v-model="state.data.package.length"
+                    :rules="validate_measurement()"
+                ></v-text-field>
+            </v-row>
+            <v-row>
+                <v-text-field
+                    label="Width"
+                    type="number"
+                    :suffix="state.data.package.dimension_uom.name"
+                    placeholder="Package Width"
+                    v-if="state.data.package_requirement.width"
+                    v-model="state.data.package.width"
+                    :rules="validate_measurement()"
+                ></v-text-field>
+            </v-row>
             <v-row>
                 <v-text-field
                     label="Height"
@@ -40,32 +62,13 @@ const new_template =
             </v-row>
             <v-row>
                 <v-text-field
-                    label="Length"
-                    type="number"
-                    :suffix="state.data.package.dimension_uom.name"
-                    placeholder="Package Length"
-                    v-if="state.data.package_requirement.length"
-                    v-model="state.data.package.length"
-                ></v-text-field>
-            </v-row>
-            <v-row>
-                <v-text-field
-                    label="Width"
-                    type="number"
-                    :suffix="state.data.package.dimension_uom.name"
-                    placeholder="Package Width"
-                    v-if="state.data.package_requirement.width"
-                    v-model="state.data.package.width"
-                ></v-text-field>
-            </v-row>
-            <v-row>
-                <v-text-field
                     label="Shipping Weight"
                     type="number"
                     :suffix="state.data.package.weight_uom.name"
                     placeholder="Package Shipping Weight"
                     v-if="state.data.package_requirement.shipping_weight"
                     v-model="state.data.package.shipping_weight"
+                    :rules="validate_measurement()"
                 ></v-text-field>
             </v-row>
         </v-container>
@@ -107,6 +110,9 @@ const CheckoutWithPackageMeasurement = process_registry.extend("checkout", {
                     picking_id: this.state.data.picking.id,
                     package_id: this.state.data.package.id,
                 };
+                if (!this.$refs.form_measurement.validate()) {
+                    return;
+                }
                 // Only update required measurement
                 const measurement = ["height", "length", "shipping_weight", "width"];
                 for (const measure of measurement) {
@@ -118,6 +124,9 @@ const CheckoutWithPackageMeasurement = process_registry.extend("checkout", {
             },
         };
         return states;
+    },
+    "methods.validate_measurement": function () {
+        return [(value) => value > 0 || "A valid positive number is required"];
     },
 });
 
