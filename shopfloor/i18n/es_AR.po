@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 13.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-02-21 07:53+0000\n"
+"PO-Revision-Date: 2023-03-12 20:14+0000\n"
 "Last-Translator: Ignacio Buioli <ibuioli@gmail.com>\n"
 "Language-Team: none\n"
 "Language: es_AR\n"
@@ -343,7 +343,7 @@ msgstr "Mostrar Nombre"
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__show_oneline_package_content
 msgid "Display the content of package if it contains 1 line only"
-msgstr ""
+msgstr "Mostrar el contenido del paquete si contiene solo 1 línea"
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__no_prefill_qty
@@ -716,6 +716,12 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "No transfer found for the scanned lot."
+msgstr "No se encontraron transferencias para el lote escaneado."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "No transfer found for the scanned packaging."
 msgstr "No se ha encontrado ninguna transferencia para el paquete escaneado."
 
@@ -892,12 +898,6 @@ msgstr "El Empaquetado cambió en el paquete {}"
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Packaging not found in the current transfer or already in a package."
-msgstr "Paquete no encontrado en la transferencia actual o ya en un paquete."
-
-#. module: shopfloor
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
 msgid "Packaging not found in the current transfer."
 msgstr "Paquete no encontrado en la transferencia actual."
 
@@ -997,12 +997,6 @@ msgstr "El Producto no está en la transferencia actual."
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Product not found in the current transfer or already in a package."
-msgstr "Producto no encontrado en la transferencia actual o ya en un paquete."
-
-#. module: shopfloor
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
 msgid "Product not found in the current transfer."
 msgstr "Producto no encontrado en la transferencia actual."
 
@@ -1092,6 +1086,16 @@ msgstr "Taller Descargado"
 #, python-format
 msgid "Same package {} is already assigned."
 msgstr "El mismo paquete {} ya está asignado."
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__scan_location_or_pack_first_is_possible
+msgid "Scan Location Or Pack First Is Possible"
+msgstr "Escanear Ubicación O Paquete Primero es Posible"
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__scan_location_or_pack_first
+msgid "Scan first location or pack"
+msgstr "Escanear ubicación o paquete primero"
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
@@ -1258,12 +1262,12 @@ msgstr "Mostrar Obtener Trabajo en el inicio"
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__show_oneline_package_content_is_possible
 msgid "Show Oneline Package Content Is Possible"
-msgstr ""
+msgstr "Mostrar Paquetes de Una Línea Es Posible"
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__show_oneline_package_content
 msgid "Show one-line package content"
-msgstr ""
+msgstr "Mostrar contenido de paquete de una-línea"
 
 #. module: shopfloor
 #: model:shopfloor.scenario,name:shopfloor.scenario_single_pack_transfer
@@ -1412,6 +1416,12 @@ msgstr "El paquete %s no contiene un producto para empaquetar."
 #, python-format
 msgid "The package %s doesn't exist"
 msgstr "El paquete %s no existe"
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "The picked quantity must be a value above zero."
+msgstr "La cantidad seleccionada debe ser un valor por encima de cero."
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_location__shopfloor_picking_sequence
@@ -1651,6 +1661,15 @@ msgstr ""
 "Al hacer el picking, evite descargar todo el contenedor cuando esté lleno."
 
 #. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__scan_location_or_pack_first
+msgid ""
+"When selecting work, force the user to first scan a location or pack,then "
+"the product or lot."
+msgstr ""
+"Cuando seleccione un trabajo, fuerza al usuario a escanear primero una "
+"ubicación o paquete, después el producto o lote."
+
+#. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Working location changed to {}"
@@ -1764,8 +1783,24 @@ msgstr "{} no es un paquete de destino válido."
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "{} not found in the current transfer or already in a package."
+msgstr "{} no encontrado en la transferencia actual o ya está en un paquete."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "{} {} put in {}"
 msgstr "{} {} poner en {}"
+
+#, python-format
+#~ msgid "Packaging not found in the current transfer or already in a package."
+#~ msgstr ""
+#~ "Paquete no encontrado en la transferencia actual o ya en un paquete."
+
+#, python-format
+#~ msgid "Product not found in the current transfer or already in a package."
+#~ msgstr ""
+#~ "Producto no encontrado en la transferencia actual o ya en un paquete."
 
 #~ msgid ""
 #~ "Created from backorder <a href=# data-oe-model=stock.picking data-oe-id="
