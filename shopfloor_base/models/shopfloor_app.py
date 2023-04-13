@@ -2,7 +2,7 @@
 # @author Simone Orsi <simahawk@gmail.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
 
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 from odoo.tools import DotDict
 
 from odoo.addons.base_rest.tools import _inspect_methods
@@ -161,10 +161,40 @@ class ShopfloorApp(models.Model):
         # `endpoint.route.sync.mixin` api
         return [x[0] for x in self._registered_routes()]
 
+    def _register_hook(self):
+        super()._register_hook()
+        if not tools.sql.column_exists(self.env.cr, self._table, "registry_sync"):
+            # `registry_sync` has been introduced recently.
+            # If an env is loaded before the column gets created this can be broken.
+            return True
+        self._boot_base_rest_endpoints()
+
+    def _boot_base_rest_endpoints(self):
+        """Satisfy `base_rest` requirements for REST requests.
+
+        1. register root paths
+        2. decorate non decorated endpoints
+
+        Note that at runtime this is done by
+        `_register_controllers` and `_prepare_endpoint_rules`.
+
+        TODO: trash for v16 if using `fastapi`.
+        """
+        domain = [("active", "=", True), ("registry_sync", "=", True)]
+        self.search(domain)._register_base_rest_routes()
+        services = self._get_services()
+        for service in services:
+            self._prepare_non_decorated_endpoints(service)
+
     def _register_controllers(self, init=False, options=None):
         super()._register_controllers(init=init, options=options)
         if not self:
             return
+        self._register_base_rest_routes()
+
+    def _register_base_rest_routes(self):
+        # base_rest patches odoo http request to handle json request
+        # using a special registry for rest routes
         for rec in self:
             self.env["rest.service.registration"]._register_rest_route(rec.api_route)
 
