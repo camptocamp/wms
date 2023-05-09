@@ -56,15 +56,8 @@ const template_mobile = `
         </div>
 
         <div v-if="state_is('select_line')">
-            <manual-select
-                v-if="device_mode == 'mobile'"
-                :records="state.data.move_lines"
-                :options="select_line_move_line_detail_options()"
-                :key="make_state_component_key(['manual-select'])"
-                />
 
             <v-data-table
-                v-if="device_mode == 'desktop'"
                 :headers="select_line_table_headers()"
                 :items="select_line_table_items()"
                 :key="make_state_component_key(['data-table'])"
@@ -621,7 +614,6 @@ const ZonePicking = {
                         },
                     },
                     events: {
-                        select: "on_select",
                         go_back: "on_back",
                     },
                     on_back: () => {
@@ -634,19 +626,6 @@ const ZonePicking = {
                     },
                     on_scan: (scanned) => {
                         this.scan_source(scanned.text);
-                    },
-                    on_select: (selected) => {
-                        const path = "package_src.name";
-                        let barcode = _.result(selected, path);
-                        while (!barcode) {
-                            _.forEach(
-                                ["lot.name", "product.barcode", "location_src.barcode"],
-                                function (path) {
-                                    barcode = _.result(selected, path);
-                                }
-                            );
-                        }
-                        this.scan_source(barcode);
                     },
                     on_unload_at_destination: () => {
                         this.wait_call(this.odoo.call("prepare_unload", {}));
