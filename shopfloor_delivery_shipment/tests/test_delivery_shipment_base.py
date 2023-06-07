@@ -105,12 +105,14 @@ class DeliveryShipmentCommonCase(common.CommonCase):
     def assert_response_scan_document(
         self, response, shipment_advice, picking=None, message=None
     ):
+        content = self.service._data_for_content_to_load_from_pickings(shipment_advice)
         data = {
             "shipment_advice": self._data_for_shipment_advice(shipment_advice),
+            "content": content,
         }
         if picking:
             data["picking"] = self.service.data.picking(picking)
-            data["content"] = self.service._data_for_content_to_load(
+            data["content"] = self.service._data_for_content_to_load_from_picking(
                 shipment_advice, picking
             )
         self.assert_response(
