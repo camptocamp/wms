@@ -272,7 +272,8 @@ class Reception(Component):
         self._assign_user_to_line(line)
         line.qty_done += qty_done
         if product.tracking not in ("lot", "serial") or (line.lot_id or line.lot_name):
-            return self._response_for_set_quantity(picking, line)
+            # return self._response_for_set_quantity(picking, line)
+            return self._before_response_for_set_quantity(picking, line)
         return self._response_for_set_lot(picking, line)
 
     def _select_line__filter_lines_by_packaging__return(self, lines, packaging):
@@ -748,6 +749,10 @@ class Reception(Component):
             message=message,
         )
 
+    def _before_response_for_set_quantity(self, picking, line):
+        # Used by shopfloor_reception_packaging_dimension
+        return self._response_for_set_quantity(picking, line)
+
     def _response_for_set_quantity(
         self, picking, line, message=None, asking_confirmation=False
     ):
@@ -1003,7 +1008,7 @@ class Reception(Component):
         message = self._check_expiry_date(selected_line)
         if message:
             return self._response_for_set_lot(picking, selected_line, message=message)
-        return self._response_for_set_quantity(picking, selected_line)
+        return self._before_response_for_set_quantity(picking, selected_line)
 
     def _check_expiry_date(self, line):
         use_expiration_date = (
