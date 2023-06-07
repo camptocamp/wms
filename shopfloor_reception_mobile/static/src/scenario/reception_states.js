@@ -6,13 +6,13 @@
 
 /*
     Define states for reception scenario.
-    @param this VueJS component instance
+    @param $instance VueJS component instance
 */
-export const reception_states = function () {
+export const reception_states = function ($instance) {
     return {
         init: {
             enter: () => {
-                this.wait_call(this.odoo.call("start"));
+                $instance.wait_call($instance.odoo.call("start"));
             },
         },
         select_document: {
@@ -24,21 +24,21 @@ export const reception_states = function () {
                 select: "on_select",
             },
             on_select: (selected) => {
-                this.wait_call(
-                    this.odoo.call("scan_document", {
+                $instance.wait_call(
+                    $instance.odoo.call("scan_document", {
                         barcode: selected.name,
                     })
                 );
             },
             on_scan: (barcode) => {
-                this.wait_call(
-                    this.odoo.call("scan_document", {
+                $instance.wait_call(
+                    $instance.odoo.call("scan_document", {
                         barcode: barcode.text,
                     })
                 );
             },
             on_manual_selection: () => {
-                this.wait_call(this.odoo.call("list_stock_pickings"));
+                $instance.wait_call($instance.odoo.call("list_stock_pickings"));
             },
         },
         manual_selection: {
@@ -48,16 +48,16 @@ export const reception_states = function () {
                 go_back: "on_back",
             },
             on_select: (selected) => {
-                this.wait_call(
-                    this.odoo.call("scan_document", {
+                $instance.wait_call(
+                    $instance.odoo.call("scan_document", {
                         barcode: selected.name,
                     })
                 );
             },
             on_back: () => {
-                this.state_to("select_document");
-                this.reset_notification();
-                this.reset_picking_filter();
+                $instance.state_to("select_document");
+                $instance.reset_notification();
+                $instance.reset_picking_filter();
             },
         },
         select_move: {
@@ -69,27 +69,27 @@ export const reception_states = function () {
                 cancel_picking_line: "on_cancel",
             },
             on_scan: (barcode) => {
-                this.wait_call(
-                    this.odoo.call("scan_line", {
-                        picking_id: this.state.data.picking.id,
+                $instance.wait_call(
+                    $instance.odoo.call("scan_line", {
+                        picking_id: $instance.state.data.picking.id,
                         barcode: barcode.text,
                     })
                 );
             },
             on_mark_as_done: () => {
-                this.wait_call(
-                    this.odoo.call("done_action", {
-                        picking_id: this.state.data.picking.id,
+                $instance.wait_call(
+                    $instance.odoo.call("done_action", {
+                        picking_id: $instance.state.data.picking.id,
                     })
                 );
             },
             on_cancel: () => {
-                // TODO: this endpoing is currently missing in the backend,
+                // TODO: $instance endpoing is currently missing in the backend,
                 // and it's currently in the roadmap.
-                // Once it's implemented, uncomment this call.
-                // this.wait_call(
-                //     this.odoo.call("cancel", {
-                //         package_level_id: this.state.data.id,
+                // Once it's implemented, uncomment $instance call.
+                // $instance.wait_call(
+                //     $instance.odoo.call("cancel", {
+                //         package_level_id: $instance.state.data.id,
                 //     })
                 // );
             },
@@ -103,16 +103,16 @@ export const reception_states = function () {
                 go_back: "on_back",
             },
             on_confirm: () => {
-                this.wait_call(
-                    this.odoo.call("done_action", {
-                        picking_id: this.state.data.picking.id,
+                $instance.wait_call(
+                    $instance.odoo.call("done_action", {
+                        picking_id: $instance.state.data.picking.id,
                         confirmation: true,
                     })
                 );
             },
             on_back: () => {
-                this.state_to("select_move");
-                this.reset_notification();
+                $instance.state_to("select_move");
+                $instance.reset_notification();
             },
         },
         set_lot: {
@@ -123,34 +123,39 @@ export const reception_states = function () {
             },
             on_scan: (barcode) => {
                 // Scan a lot
-                this.wait_call(
-                    this.odoo.call("set_lot", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
-                        lot_name: barcode.text,
-                    })
-                ).then(() => {
-                    // We need to wait for the call to the backend to be over
-                    // to update the date-picker-input component
-                    // with the expiration_date of the selected lot.
-                    event_hub.$emit("datepicker:newdate", this.line_being_handled.lot);
-                });
+                $instance
+                    .wait_call(
+                        $instance.odoo.call("set_lot", {
+                            picking_id: $instance.state.data.picking.id,
+                            selected_line_id: $instance.line_being_handled.id,
+                            lot_name: barcode.text,
+                        })
+                    )
+                    .then(() => {
+                        // We need to wait for the call to the backend to be over
+                        // to update the date-picker-input component
+                        // with the expiration_date of the selected lot.
+                        event_hub.$emit(
+                            "datepicker:newdate",
+                            $instance.line_being_handled.lot
+                        );
+                    });
             },
             on_date_picker_selected: (expiration_date) => {
                 // Select expiration_date
-                this.wait_call(
-                    this.odoo.call("set_lot", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("set_lot", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                         expiration_date: expiration_date,
                     })
                 );
             },
             on_confirm_action: () => {
-                this.wait_call(
-                    this.odoo.call("set_lot_confirm_action", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("set_lot_confirm_action", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                     })
                 );
             },
@@ -165,60 +170,60 @@ export const reception_states = function () {
                 go_back: "on_back",
             },
             on_qty_edit: (qty) => {
-                this.scan_destination_qty = parseInt(qty, 10);
+                $instance.scan_destination_qty = parseInt(qty, 10);
             },
             on_scan: (barcode) => {
-                this.wait_call(
-                    this.odoo.call("set_quantity", {
+                $instance.wait_call(
+                    $instance.odoo.call("set_quantity", {
                         // TODO: add quantity from qty-picker
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
-                        quantity: this.scan_destination_qty,
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
+                        quantity: $instance.scan_destination_qty,
                         barcode: barcode.text,
-                        confirmation: this.state.data.confirmation_required,
+                        confirmation: $instance.state.data.confirmation_required,
                     })
                 );
             },
             on_cancel: () => {
-                // TODO: this endpoing is currently missing in the backend,
+                // TODO: $instance endpoing is currently missing in the backend,
                 // and it's currently in the roadmap.
-                // Once it's implemented, uncomment this call.
-                // this.wait_call(
-                //     this.odoo.call("cancel", {
-                //         package_level_id: this.state.data.id,
+                // Once it's implemented, uncomment $instance call.
+                // $instance.wait_call(
+                //     $instance.odoo.call("cancel", {
+                //         package_level_id: $instance.state.data.id,
                 //     })
                 // );
             },
             on_add_to_existing_pack: () => {
-                this.wait_call(
-                    this.odoo.call("process_with_existing_pack", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
-                        quantity: this.scan_destination_qty,
+                $instance.wait_call(
+                    $instance.odoo.call("process_with_existing_pack", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
+                        quantity: $instance.scan_destination_qty,
                     })
                 );
             },
             on_create_new_pack: () => {
-                this.wait_call(
-                    this.odoo.call("process_with_new_pack", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
-                        quantity: this.scan_destination_qty,
+                $instance.wait_call(
+                    $instance.odoo.call("process_with_new_pack", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
+                        quantity: $instance.scan_destination_qty,
                     })
                 );
             },
             on_process_without_pack: () => {
-                this.wait_call(
-                    this.odoo.call("process_without_pack", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
-                        quantity: this.scan_destination_qty,
+                $instance.wait_call(
+                    $instance.odoo.call("process_without_pack", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
+                        quantity: $instance.scan_destination_qty,
                     })
                 );
             },
             on_back: () => {
-                this.state_to("set_lot");
-                this.reset_notification();
+                $instance.state_to("set_lot");
+                $instance.reset_notification();
             },
         },
         set_destination: {
@@ -227,10 +232,10 @@ export const reception_states = function () {
                 scan_placeholder: "Scan destination location",
             },
             on_scan: (location) => {
-                this.wait_call(
-                    this.odoo.call("set_destination", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("set_destination", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                         location_name: location.text,
                         confirmation: true,
                     })
@@ -246,19 +251,19 @@ export const reception_states = function () {
                 select: "on_select",
             },
             on_scan: (barcode) => {
-                this.wait_call(
-                    this.odoo.call("select_dest_package", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("select_dest_package", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                         barcode: barcode.text,
                     })
                 );
             },
             on_select: (selected) => {
-                this.wait_call(
-                    this.odoo.call("select_dest_package", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("select_dest_package", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                         barcode: selected.name,
                     })
                 );
@@ -273,18 +278,18 @@ export const reception_states = function () {
                 go_back: "on_back",
             },
             on_confirm: () => {
-                this.wait_call(
-                    this.odoo.call("select_dest_package", {
-                        picking_id: this.state.data.picking.id,
-                        selected_line_id: this.line_being_handled.id,
+                $instance.wait_call(
+                    $instance.odoo.call("select_dest_package", {
+                        picking_id: $instance.state.data.picking.id,
+                        selected_line_id: $instance.line_being_handled.id,
                         confirmation: true,
-                        barcode: this.state.data.new_package_name,
+                        barcode: $instance.state.data.new_package_name,
                     })
                 );
             },
             on_back: () => {
-                this.state_to("select_dest_package");
-                this.reset_notification();
+                $instance.state_to("select_dest_package");
+                $instance.reset_notification();
             },
         },
     };
