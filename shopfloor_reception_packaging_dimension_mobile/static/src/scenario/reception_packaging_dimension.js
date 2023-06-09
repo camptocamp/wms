@@ -106,7 +106,7 @@ const new_template =
 const ReceptionPackageDimension = process_registry.extend("reception", {
     template: new_template,
     "methods._get_states": function () {
-        let states = reception_states(this);
+        let states = reception_states.bind(this)();
         states["set_packaging_dimension"] = {
             display_info: {
                 title: "Set packaging dimension",
