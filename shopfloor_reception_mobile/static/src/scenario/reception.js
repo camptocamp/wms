@@ -469,7 +469,7 @@ const Reception = {
             return picking.origin.includes(input);
         },
         _get_states: function () {
-            return reception_states(this);
+            return reception_states.bind(this)();
         },
     },
     data: function () {
