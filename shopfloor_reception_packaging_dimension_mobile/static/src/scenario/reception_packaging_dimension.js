@@ -12,7 +12,6 @@ const reception_scenario = process_registry.get("reception");
 const template = reception_scenario.component.template;
 // And inject the new state template (for this module) into it
 const pos = template.indexOf("</Screen>");
-
 const new_template =
     template.substring(0, pos) +
     `
@@ -77,7 +76,7 @@ const new_template =
                     v-model="state.data.packaging.max_weight"
                 ></v-text-field>
             </v-row>
-
+            <!-- extend -->
        </v-container>
     </v-form>
 
@@ -105,6 +104,9 @@ const new_template =
 //   - the js code for the new state
 const ReceptionPackageDimension = process_registry.extend("reception", {
     template: new_template,
+    "methods.get_packaging_measurements": function () {
+        return ["length", "width", "height", "max_weight", "qty", "barcode"];
+    },
     "methods._get_states": function () {
         let states = reception_states.bind(this)();
         states["set_packaging_dimension"] = {
@@ -120,15 +122,7 @@ const ReceptionPackageDimension = process_registry.extend("reception", {
                     selected_line_id: this.state.data.selected_move_line.id,
                     packaging_id: this.state.data.packaging.id,
                 };
-                const measurements = [
-                    "length",
-                    "width",
-                    "height",
-                    "max_weight",
-                    "qty",
-                    "barcode",
-                ];
-                for (const measurement of measurements) {
+                for (const measurement of this.get_packaging_measurements()) {
                     values[measurement] = this.state.data.packaging[measurement];
                 }
                 return values;
