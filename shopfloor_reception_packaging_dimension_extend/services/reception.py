@@ -43,7 +43,10 @@ class Reception(Component):
         if not res:
             dimension_to_check = ["is_bundeable", "is_prepackaged"]
             return any(
-                [self.dimension_to_update.get(dim, False) for dim in dimension_to_check]
+                [
+                    self.work.dimension_to_update.get(dim, False)
+                    for dim in dimension_to_check
+                ]
             )
         return res
 
@@ -51,7 +54,7 @@ class Reception(Component):
         super()._update_packaging_dimension(packaging)
         dimension_to_update = ["is_bundeable", "is_prepackaged"]
         for dimension in dimension_to_update:
-            value = self.dimension_to_update.get(dimension, None)
+            value = self.work.dimension_to_update.get(dimension, None)
             if value is not None:
                 packaging[dimension] = value
 
