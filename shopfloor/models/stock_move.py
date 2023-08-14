@@ -68,6 +68,8 @@ class StockMove(models.Model):
         """
         picking = self.picking_id
         picking.ensure_one()
+        sql = "SELECT id FROM stock_picking WHERE ID IN %s FOR UPDATE"
+        self.env.cr.execute(sql, (tuple(self.picking_id.ids),))
         data = {
             "name": "/",
             "move_lines": [],
