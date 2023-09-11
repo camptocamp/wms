@@ -582,7 +582,7 @@ class Checkout(Component):
                     return self._response_for_select_line(
                         picking,
                         message=self.msg_store.lot_different_change(),
-                        need_confirm_lot=lot.name,
+                        need_confirm_lot=lot.id,
                     )
                     # TODO: add a msg saying the lot has been changed
                 return self._response_for_select_line(
@@ -590,10 +590,11 @@ class Checkout(Component):
                     message=self.msg_store.lot_not_found_in_picking(),
                 )
             # Validate the scanned lot against the previous one
-            if lot.name != kw["confirm_lot"]:
+            if lot.id != kw["confirm_lot"]:
+                expected_lot = lot.browse(kw["confirm_lot"]).exists()
                 return self._response_for_select_line(
                     picking,
-                    message=self.msg_store.lot_change_wrong_lot(kw["confirm_lot"]),
+                    message=self.msg_store.lot_change_wrong_lot(expected_lot.name),
                 )
             # Change lot confirmed
             line = fields.first(
@@ -1539,7 +1540,7 @@ class ShopfloorCheckoutValidator(Component):
                 "required": False,
             },
             "confirm_lot": {
-                "type": "string",
+                "type": "integer",
                 "nullable": True,
                 "required": False,
             },
@@ -1765,7 +1766,7 @@ class ShopfloorCheckoutValidatorResponse(Component):
             group_lines_by_location={"type": "boolean"},
             show_oneline_package_content={"type": "boolean"},
             need_confirm_pack_all={"type": "boolean"},
-            need_confirm_lot={"type": "string", "nullable": True},
+            need_confirm_lot={"type": "integer", "nullable": True},
         )
 
     @property

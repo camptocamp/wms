@@ -275,7 +275,7 @@ class CheckoutScanLineCase(CheckoutScanLineCaseBase):
             params={
                 "picking_id": picking.id,
                 "barcode": lot.name,
-                "confirm_lot": lot.name,
+                "confirm_lot": lot.id,
             },
         )
         message = self.msg_store.lot_replaced_by_lot(previous_lot, lot)
