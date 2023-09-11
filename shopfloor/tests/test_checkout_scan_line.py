@@ -267,7 +267,7 @@ class CheckoutScanLineCase(CheckoutScanLineCaseBase):
             picking,
             lot.name,
             self.msg_store.lot_different_change(),
-            need_confirm_lot=lot.name,
+            need_confirm_lot=lot.id,
         )
         # Second scan to confirm the change of lot
         response = self.service.dispatch(
