@@ -590,7 +590,7 @@ class Checkout(Component):
                     # TODO: add a msg saying the lot has been changed
                 return self._response_for_select_line(
                     picking,
-                    message=self.msg_store.lot_not_found_in_picking(),
+                    message=self.msg_store.lot_not_found_in_picking(lot, picking),
                 )
             # Validate the scanned lot against the previous one
             if lot.id != kw["confirm_lot"]:
