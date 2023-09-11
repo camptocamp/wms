@@ -540,7 +540,10 @@ class Checkout(Component):
             # Select all the lines of the package when we scan a product in a
             # package and we have only one.
             return self._select_lines_from_package(
-                picking, selection_lines, packages, prefill_qty=prefill_qty,
+                picking,
+                selection_lines,
+                packages,
+                prefill_qty=prefill_qty,
                 message=kw.get("message"),
             )
         else:
