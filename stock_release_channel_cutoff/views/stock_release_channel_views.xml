@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="stock_release_channel_form_view" model="ir.ui.view">
+        <field name="name">stock.release.channel.form.inherited</field>
+        <field name="model">stock.release.channel</field>
+        <field
+            name="inherit_id"
+            ref="stock_release_channel.stock_release_channel_form_view"
+        />
+        <field name="arch" type="xml">
+            <field name="release_forbidden" position="after">
+                <field name="cutoff_time" />
+                <field name="cutoff_datetime" />
+            </field>
+        </field>
+    </record>
+    <record id="stock_release_channel_kanban_view" model="ir.ui.view">
+        <field name="name">stock.release.channel.kanban.inherited</field>
+        <field name="model">stock.release.channel</field>
+        <field
+            name="inherit_id"
+            ref="stock_release_channel.stock_release_channel_kanban_view"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_release_allowed']" position="after">
+                <field name="cutoff_time" />
+                <field name="cutoff_datetime" />
+            </xpath>
+
+            <xpath
+                expr="//div[hasclass('o_kanban_card_header_title')]"
+                position="after"
+            >
+                <div
+                    class="mt-2 row"
+                    attrs="{'invisible': ['|', ('cutoff_datetime', '=', False), ('cutoff_time', '=', False)]}"
+                >
+                    <div class="col-4">
+                        <field
+                            name="cutoff_time"
+                            widget="badge"
+                            decoration-info="state == 'open' and cutoff_datetime &gt; now "
+                            decoration-danger="state == 'open' and cutoff_datetime &lt; now"
+                        />
+                    </div>
+                    <div class="col-4">
+                        <field
+                            name="cutoff_datetime"
+                            widget="badge"
+                            decoration-info="state == 'open' and cutoff_datetime &gt; now "
+                            decoration-danger="state == 'open' and cutoff_datetime &lt; now"
+                        />
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
