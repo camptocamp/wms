@@ -1,0 +1,2 @@
+odoo-addon-stock_release_channel_process_end_time @ git+https://github.com/OCA/wms.git@refs/pull/550/head#subdirectory=setup/stock_release_channel_process_end_time
+odoo-addon-stock_storage_type @ git+https://github.com/OCA/wms.git@refs/pull/760/head#subdirectory=setup/stock_storage_type
