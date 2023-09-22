@@ -261,7 +261,7 @@ class Reception(Component):
             # the remaining quantity to do of its move.
             line.product_uom_qty = move.product_uom_qty - move.quantity_done
         else:
-            qty_todo_remaining = move.product_uom_qty - move.quantity_done
+            qty_todo_remaining = max(0, move.product_uom_qty - move.quantity_done)
             values = move._prepare_move_line_vals(quantity=qty_todo_remaining)
             line = self.env["stock.move.line"].create(values)
         return self._scan_line__assign_user(picking, line, qty_done)
@@ -693,8 +693,10 @@ class Reception(Component):
 
     # DATA METHODS
 
-    def _data_for_stock_picking(self, picking, with_lines=False):
-        data = self.data.picking(picking, with_progress=True)
+    def _data_for_stock_picking(self, picking, with_lines=False, **kw):
+        if "with_progress" not in kw:
+            kw["with_progress"] = True
+        data = self.data.picking(picking, **kw)
         if with_lines:
             data.update({"moves": self._data_for_moves(picking.move_lines)})
         return data

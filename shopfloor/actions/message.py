@@ -106,6 +106,16 @@ class MessageAction(Component):
             ),
         }
 
+    def lot_different_change(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "You scanned a different lot with the same product, "
+                "do you want to change lot? Scan it again to confirm. "
+                "The first line matching this product will be updated. "
+            ),
+        }
+
     def package_not_available_in_picking(self, package, picking):
         return {
             "message_type": "warning",
@@ -124,6 +134,14 @@ class MessageAction(Component):
         return {
             "message_type": "warning",
             "body": _("Package {} is already used.").format(package.name),
+        }
+
+    def package_different_picking_type(self, package, picking_type):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Package {} contains already lines from a different operation type {}"
+            ).format(package.name, picking_type.name),
         }
 
     def dest_package_required(self):
@@ -429,6 +447,16 @@ class MessageAction(Component):
             "body": _("No transfer found for this product."),
         }
 
+    def product_not_found_in_location_or_transfer(self, product, location, picking):
+        return {
+            "message_type": "error",
+            "body": _(
+                "Product {} not found in location {} or transfer {}.".format(
+                    product.name, location.name, picking.name
+                )
+            ),
+        }
+
     def x_not_found_or_already_in_dest_package(self, message_code):
         return {
             "message_type": "warning",
@@ -502,10 +530,30 @@ class MessageAction(Component):
             "body": _("This lot is part of multiple packages, please scan a package."),
         }
 
+    def lot_not_found(self):
+        return {
+            "message_type": "error",
+            "body": _("This lot does not exist anymore."),
+        }
+
     def lot_not_found_in_pickings(self):
         return {
             "message_type": "warning",
             "body": _("No transfer found for this lot."),
+        }
+
+    def lot_not_found_in_location(self, lot, location):
+        return {
+            "message_type": "error",
+            "body": _("Lot {} not found in location {}").format(
+                lot.name, location.name
+            ),
+        }
+
+    def lot_not_found_in_picking(self, lot, picking):
+        return {
+            "message_type": "error",
+            "body": _("Lot {} not found in transfer {}").format(lot.name, picking.name),
         }
 
     def batch_transfer_complete(self):
@@ -722,6 +770,22 @@ class MessageAction(Component):
             "body": _("Package {} cannot be used: {} ").format(package.name, error_msg),
         }
 
+    def package_not_found_in_location(self, package, location):
+        return {
+            "message_type": "error",
+            "body": _("Package {} not found in location {}").format(
+                package.name, location.name
+            ),
+        }
+
+    def package_not_found_in_picking(self, package, picking):
+        return {
+            "message_type": "error",
+            "body": _("Package {} not found in transfer {}").format(
+                package.name, picking.name
+            ),
+        }
+
     def cannot_change_lot_already_picked(self, lot):
         return {
             "message_type": "error",
@@ -833,4 +897,34 @@ class MessageAction(Component):
         return {
             "message_type": "warning",
             "body": _("No line to pack found."),
+        }
+
+    def package_transfer_not_allowed_scan_location(self):
+        return {
+            "message_type": "warning",
+            "body": _(
+                "Transferring to a different package is not allowed, "
+                "please scan a location instead."
+            ),
+        }
+
+    def lot_changed(self):
+        return {
+            "message_type": "info",
+            "body": _("Lot changed"),
+        }
+
+    def lot_change_wrong_lot(self, lot_name):
+        return {
+            "message_type": "error",
+            "body": _("Scanned lot differs from the previous scan: %(lot)s.")
+            % {
+                "lot": lot_name,
+            },
+        }
+
+    def lot_change_no_line_found(self):
+        return {
+            "message_type": "error",
+            "body": _("Unable to find a line with the same product but different lot."),
         }
