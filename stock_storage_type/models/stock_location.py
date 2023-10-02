@@ -442,14 +442,15 @@ class StockLocation(models.Model):
         """
         if not self.leaf_child_location_ids:
             return self.leaf_child_location_ids
-        query = self._where_calc([("id", "in", self.leaf_child_location_ids.ids)])
-        from_clause, where_clause, where_params = query.get_sql()
+        query = self._where_calc([("id", "in", self.leaf_child_location_ids.ids)], with_cte=True)
+        cte_clause, from_clause, where_clause, where_params = query.get_sql()
         orderby_clause, orderby_params = self._get_sorted_leaf_locations_orderby(
             products
         )
         query = sql.SQL(
-            "SELECT id FROM {table} WHERE {where} ORDER BY {orderby}"
+            "{cte_clause} SELECT id FROM {table} WHERE {where} ORDER BY {orderby}"
         ).format(
+            cte_clause=cte_clause, 
             table=sql.Identifier(self._table),
             where=sql.SQL(where_clause),
             orderby=sql.SQL(orderby_clause),
