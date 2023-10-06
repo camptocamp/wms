@@ -2,3 +2,4 @@
 odoo-addon-shipment_advice_planner @ git+https://github.com/OCA/stock-logistics-transport.git@refs/pull/88/head#subdirectory=setup/shipment_advice_planner
 odoo-addon-stock_release_channel_process_end_time @ git+https://github.com/OCA/wms.git@refs/pull/550/head#subdirectory=setup/stock_release_channel_process_end_time
 odoo-addon-stock-release-channel-plan @ git+https://github.com/OCA/wms.git@refs/pull/695/head#subdirectory=setup/stock_release_channel_plan
+odoo-addon-stock_storage_type @ git+https://github.com/OCA/wms.git@refs/pull/760/head#subdirectory=setup/stock_storage_type
