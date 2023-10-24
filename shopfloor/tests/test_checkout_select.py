@@ -24,6 +24,33 @@ class CheckoutListStockPickingCase(CheckoutCommonCase):
 
         self.assert_response(response, next_state="manual_selection", data=expected)
 
+    def test_list_stock_picking_order_by_priority(self):
+        self.menu.sudo().order_pickings_by_priority = True
+        # Pickings should be ordered by priority,
+        # and they should also return their priority number to the frontend.
+        picking1 = self._create_picking()
+        picking1.priority = "0"
+        picking2 = self._create_picking()
+        picking2.priority = "1"
+        picking3 = self._create_picking()
+        picking3.priority = "1"
+        picking4 = self._create_picking()
+        picking4.priority = "0"
+        to_assign = picking1 | picking2 | picking3 | picking4
+        self._fill_stock_for_moves(to_assign.move_lines, in_package=True)
+        to_assign.action_assign()
+        response = self.service.dispatch("list_stock_picking", params={})
+        expected = {
+            "pickings": [
+                self._picking_summary_data(picking2, with_priority=True),
+                self._picking_summary_data(picking3, with_priority=True),
+                self._picking_summary_data(picking1, with_priority=True),
+                self._picking_summary_data(picking4, with_priority=True),
+            ]
+        }
+
+        self.assert_response(response, next_state="manual_selection", data=expected)
+
 
 class CheckoutSelectCase(CheckoutCommonCase):
     @classmethod
