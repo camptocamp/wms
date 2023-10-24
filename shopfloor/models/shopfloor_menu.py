@@ -53,6 +53,12 @@ If enabled, they will also be allowed
 to scan a destination package.
 """
 
+ALLOW_ORDER_PICKINGS_BY_PRIORITY_HELP = """
+When listing all transfers in the scenario, display the priority number
+(corresponding to the stars in each transfer in Odoo)
+and order them by priority as well.
+"""
+
 
 class ShopfloorMenu(models.Model):
     _inherit = "shopfloor.menu"
@@ -225,6 +231,14 @@ class ShopfloorMenu(models.Model):
     )
     allow_alternative_destination_package_is_possible = fields.Boolean(
         compute="_compute_allow_alternative_destination_package_is_possible"
+    )
+    order_pickings_by_priority = fields.Boolean(
+        string="Order transfers by priority",
+        default=False,
+        help=ALLOW_ORDER_PICKINGS_BY_PRIORITY_HELP,
+    )
+    order_pickings_by_priority_is_possible = fields.Boolean(
+        compute="_compute_order_pickings_by_priority_is_possible"
     )
 
     @api.onchange("unload_package_at_destination")
@@ -454,4 +468,11 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.allow_alternative_destination_package_is_possible = (
                 menu.scenario_id.has_option("allow_alternative_destination_package")
+            )
+
+    @api.depends("scenario_id")
+    def _compute_order_pickings_by_priority_is_possible(self):
+        for menu in self:
+            menu.order_pickings_by_priority_is_possible = menu.scenario_id.has_option(
+                "order_pickings_by_priority"
             )

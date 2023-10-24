@@ -91,7 +91,10 @@ class Checkout(Component):
             self._domain_for_list_stock_picking(),
             order=self._order_for_list_stock_picking(),
         )
-        data = {"pickings": self.data.pickings(pickings)}
+        order_by_priority = self.work.menu.order_pickings_by_priority
+        data = {
+            "pickings": self.data.pickings(pickings, with_priority=order_by_priority)
+        }
         return self._response(next_state="manual_selection", data=data, message=message)
 
     def _response_for_select_package(self, picking, lines, message=None):
@@ -360,7 +363,10 @@ class Checkout(Component):
         ]
 
     def _order_for_list_stock_picking(self):
-        return "scheduled_date asc, id asc"
+        base_order = "scheduled_date asc, id asc"
+        if self.work.menu.order_pickings_by_priority:
+            return "priority desc, " + base_order
+        return base_order
 
     def list_stock_picking(self):
         """List stock.picking records available

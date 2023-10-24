@@ -34,8 +34,8 @@ class CheckoutCommonCase(CommonCase):
         return self.service._data_for_locations(locations, **kw)
 
     # we test the methods that structure data in test_actions_data.py
-    def _picking_summary_data(self, picking):
-        return self.data.picking(picking)
+    def _picking_summary_data(self, picking, **kw):
+        return self.data.picking(picking, **kw)
 
     def _move_line_data(self, move_line):
         return self.data.move_line(move_line)

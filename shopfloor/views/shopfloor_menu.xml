@@ -167,7 +167,17 @@
                         invisible="1"
                     />
                     <field name="allow_alternative_destination_package" />
-                </group>
+              </group>
+              <group
+                    name="order_pickings_by_priority"
+                    attrs="{'invisible': [('order_pickings_by_priority_is_possible', '=', False)]}"
+                >
+                    <field
+                        name="order_pickings_by_priority_is_possible"
+                        invisible="1"
+                    />
+                    <field name="order_pickings_by_priority" />
+              </group>
             </group>
         </field>
     </record>
