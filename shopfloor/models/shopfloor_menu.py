@@ -33,6 +33,12 @@ by scanning a product or product packaging EAN to increase the quantity
 (i.e. +1 Unit or +1 Box)
 """
 
+ALLOW_ORDER_PICKINGS_BY_PRIORITY_HELP = """
+When listing all pickings in the scenario, display the priority number
+(corresponding to the stars in each transfer in Odoo)
+and order them by priority as well.
+"""
+
 
 class ShopfloorMenu(models.Model):
     _inherit = "shopfloor.menu"
@@ -157,6 +163,14 @@ class ShopfloorMenu(models.Model):
     )
     show_oneline_package_content_is_possible = fields.Boolean(
         compute="_compute_show_oneline_package_content_is_possible"
+    )
+    order_pickings_by_priority = fields.Boolean(
+        string="Order pickings by priority",
+        default=False,
+        help=ALLOW_ORDER_PICKINGS_BY_PRIORITY_HELP,
+    )
+    order_pickings_by_priority_is_possible = fields.Boolean(
+        compute="_compute_order_pickings_by_priority_is_possible"
     )
 
     @api.onchange("unload_package_at_destination")
@@ -366,4 +380,11 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.show_oneline_package_content_is_possible = menu.scenario_id.has_option(
                 "show_oneline_package_content"
+            )
+
+    @api.depends("scenario_id")
+    def _compute_order_pickings_by_priority_is_possible(self):
+        for menu in self:
+            menu.order_pickings_by_priority_is_possible = menu.scenario_id.has_option(
+                "order_pickings_by_priority"
             )
