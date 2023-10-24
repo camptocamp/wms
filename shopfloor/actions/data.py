@@ -36,10 +36,12 @@ class DataAction(Component):
         # Thus, we make it optional.
         if "with_progress" in kw:
             parser.append("progress")
+        if kw.get("with_priority"):
+            parser.append("priority")
         return self._jsonify(record, parser, **kw)
 
     def pickings(self, record, **kw):
-        return self.picking(record, multi=True)
+        return self.picking(record, multi=True, **kw)
 
     @property
     def _picking_parser(self, **kw):
