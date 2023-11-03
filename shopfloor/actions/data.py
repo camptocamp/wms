@@ -40,8 +40,7 @@ class DataAction(Component):
             ("barcode", lambda rec, fname: rec[fname] if rec[fname] else rec.name),
         ]
 
-    @ensure_model("stock.picking")
-    def picking(self, record, **kw):
+    def _get_picking_parser(self, record, **kw):
         parser = self._picking_parser
         # progress is a heavy computed field,
         # and it may reduce performance significatively
@@ -49,7 +48,11 @@ class DataAction(Component):
         # Thus, we make it optional.
         if "with_progress" in kw:
             parser.append("progress")
-        return self._jsonify(record, parser, **kw)
+        return parser
+
+    @ensure_model("stock.picking")
+    def picking(self, record, **kw):
+        return self._jsonify(record, self._get_picking_parser(record, **kw), **kw)
 
     def pickings(self, record, **kw):
         return self.picking(record, multi=True)
@@ -102,7 +105,7 @@ class DataAction(Component):
             ]
             operation_progress = self._get_operation_progress(domain)
             data.update({"operation_progress": operation_progress})
-        if data and picking:
+        if kw.get("with_package_move_line_count") and data and picking:
             move_line_count = self.env["stock.move.line"].search_count(
                 [
                     ("picking_id.picking_type_id", "=", picking.picking_type_id.id),
@@ -125,6 +128,10 @@ class DataAction(Component):
             "name",
             "shopfloor_weight:weight",
             ("package_storage_type_id:storage_type", ["id", "name"]),
+            (
+                "quant_ids:total_quantity",
+                lambda rec, fname: sum(rec.quant_ids.mapped("quantity")),
+            ),
         ]
 
     @property

@@ -255,7 +255,11 @@ class ZonePickingSelectLineCase(ZonePickingCommonCase):
     def test_scan_source_package_many_products(self):
         """Scan source: scanned package that several product, aborting
         next step 'select_line expected.
+
+        This is only when no prefill quantity option is enabled. If not
+        the related package will be move in one step.
         """
+        self.menu.sudo().no_prefill_qty = True
         pack = self.picking1.package_level_ids[0].package_id
         self._update_qty_in_location(pack.location_id, self.product_b, 2, pack)
         response = self.service.dispatch(
@@ -273,6 +277,28 @@ class ZonePickingSelectLineCase(ZonePickingCommonCase):
             move_lines=move_lines,
             package=pack,
             message=self.service.msg_store.several_products_in_package(pack),
+            location_first=False,
+        )
+
+    def test_scan_source_empty_package(self):
+        """Scan source: scanned an empty package."""
+        pack_empty = self.env["stock.quant.package"].create({})
+        response = self.service.dispatch(
+            "scan_source",
+            params={"barcode": pack_empty.name},
+        )
+        move_lines = self.service._find_location_move_lines(
+            locations=self.zone_location
+        )
+        move_lines = move_lines.sorted(lambda l: l.move_id.priority, reverse=True)
+        self.assert_response_select_line(
+            response,
+            zone_location=self.zone_location,
+            picking_type=self.picking_type,
+            move_lines=move_lines,
+            message=self.service.msg_store.package_has_no_product_to_take(
+                pack_empty.name
+            ),
             location_first=False,
         )
 

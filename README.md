@@ -27,43 +27,46 @@ addon | version | maintainers | summary
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 14.0.1.1.1 |  | Integration between Sales and Available to Promise Release
 [sale_stock_available_to_promise_release_cutoff](sale_stock_available_to_promise_release_cutoff/) | 14.0.1.1.1 |  | Cutoff management with respect to stock availability
 [sale_stock_available_to_promise_release_dropshipping](sale_stock_available_to_promise_release_dropshipping/) | 14.0.1.0.0 |  | Glue module between sale_stock_available_to_promise_release and stock_dropshipping
-[shopfloor](shopfloor/) | 14.0.3.5.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
-[shopfloor_base](shopfloor_base/) | 14.0.2.10.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
+[shopfloor](shopfloor/) | 14.0.4.2.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
+[shopfloor_base](shopfloor_base/) | 14.0.2.10.1 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
 [shopfloor_base_multicompany](shopfloor_base_multicompany/) | 14.0.1.0.0 |  | Provide multi-company support and validation to Shopfloor applications.
 [shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 14.0.1.2.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Create batch transfers for Cluster Picking
 [shopfloor_checkout_package_measurement](shopfloor_checkout_package_measurement/) | 14.0.1.1.0 | [![TDu](https://github.com/TDu.png?size=30px)](https://github.com/TDu) | Add a screen on checkout scenario for required package measurements.
 [shopfloor_checkout_package_measurement_mobile](shopfloor_checkout_package_measurement_mobile/) | 14.0.1.0.3 |  | Frontend for package measurement on the checkout shopfloor scenario
 [shopfloor_checkout_sync](shopfloor_checkout_sync/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Glue module
-[shopfloor_dangerous_goods](shopfloor_dangerous_goods/) | 14.0.1.0.1 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) | Glue Module Between Shopfloor and Stock Dangerous Goods
+[shopfloor_dangerous_goods](shopfloor_dangerous_goods/) | 14.0.1.1.0 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) | Glue Module Between Shopfloor and Stock Dangerous Goods
 [shopfloor_dangerous_goods_mobile](shopfloor_dangerous_goods_mobile/) | 14.0.1.1.1 |  | Glue module between Shopfloor Mobile and Shopfloor Dangerous Goods
-[shopfloor_delivery_shipment](shopfloor_delivery_shipment/) | 14.0.1.3.0 | [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) [![TDu](https://github.com/TDu.png?size=30px)](https://github.com/TDu) | Manage delivery process with shipment advices
-[shopfloor_delivery_shipment_mobile](shopfloor_delivery_shipment_mobile/) | 14.0.1.2.0 |  | Frontend for delivery shipment scenario for shopfloor
+[shopfloor_delivery_shipment](shopfloor_delivery_shipment/) | 14.0.1.4.2 | [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) [![TDu](https://github.com/TDu.png?size=30px)](https://github.com/TDu) | Manage delivery process with shipment advices
+[shopfloor_delivery_shipment_mobile](shopfloor_delivery_shipment_mobile/) | 14.0.1.3.1 |  | Frontend for delivery shipment scenario for shopfloor
 [shopfloor_example](shopfloor_example/) | 14.0.1.2.0 |  | Show how to customize the Shopfloor app frontend.
-[shopfloor_manual_product_transfer](shopfloor_manual_product_transfer/) | 14.0.1.5.0 | [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Manage manual product transfers
+[shopfloor_manual_product_transfer](shopfloor_manual_product_transfer/) | 14.0.1.5.1 | [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Manage manual product transfers
 [shopfloor_manual_product_transfer_mobile](shopfloor_manual_product_transfer_mobile/) | 14.0.1.3.0 |  | Frontend for manual product transfer scenario for Shopfloor
-[shopfloor_mobile](shopfloor_mobile/) | 14.0.1.31.2 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
-[shopfloor_mobile_base](shopfloor_mobile_base/) | 14.0.3.16.0 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
+[shopfloor_mobile](shopfloor_mobile/) | 14.0.1.33.0 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
+[shopfloor_mobile_base](shopfloor_mobile_base/) | 14.0.3.17.0 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
 [shopfloor_mobile_base_auth_api_key](shopfloor_mobile_base_auth_api_key/) | 14.0.2.1.0 |  | Provides authentication via API key to Shopfloor base mobile app
 [shopfloor_mobile_base_auth_user](shopfloor_mobile_base_auth_user/) | 14.0.2.0.1 |  | Provides authentication via standard user login
-[shopfloor_packing_info](shopfloor_packing_info/) | 14.0.1.0.1 |  | Allows to predefine packing information messages per partner.
-[shopfloor_reception](shopfloor_reception/) | 14.0.2.3.1 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) [![JuMiSanAr](https://github.com/JuMiSanAr.png?size=30px)](https://github.com/JuMiSanAr) | Reception scenario for shopfloor
+[shopfloor_packing_info](shopfloor_packing_info/) | 14.0.1.1.0 |  | Allows to predefine packing information messages per partner.
+[shopfloor_purchase_base](shopfloor_purchase_base/) | 14.0.1.1.0 | [![mt-software-de](https://github.com/mt-software-de.png?size=30px)](https://github.com/mt-software-de) | Module for Shopfloor Purchase Data connection
+[shopfloor_reception](shopfloor_reception/) | 14.0.2.5.0 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) [![JuMiSanAr](https://github.com/JuMiSanAr.png?size=30px)](https://github.com/JuMiSanAr) | Reception scenario for shopfloor
 [shopfloor_reception_mobile](shopfloor_reception_mobile/) | 14.0.0.7.0 | [![JuMiSanAr](https://github.com/JuMiSanAr.png?size=30px)](https://github.com/JuMiSanAr) | Scenario for receiving products
+[shopfloor_reception_purchase_partner_ref](shopfloor_reception_purchase_partner_ref/) | 14.0.1.1.0 | [![mt-software-de](https://github.com/mt-software-de.png?size=30px)](https://github.com/mt-software-de) | Adds the purchase partner ref field to shopfloor reception scenario
+[shopfloor_reception_purchase_partner_ref_mobile](shopfloor_reception_purchase_partner_ref_mobile/) | 14.0.1.1.0 | [![mt-software-de](https://github.com/mt-software-de.png?size=30px)](https://github.com/mt-software-de) | Adds the purchase partner ref field to shopfloor reception scenario
 [shopfloor_rest_log](shopfloor_rest_log/) | 14.0.1.2.1 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Integrate rest_log into Shopfloor app
-[shopfloor_single_product_transfer](shopfloor_single_product_transfer/) | 14.0.2.1.0 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) | Move an item from one location to another.
+[shopfloor_single_product_transfer](shopfloor_single_product_transfer/) | 14.0.2.1.1 | [![mmequignon](https://github.com/mmequignon.png?size=30px)](https://github.com/mmequignon) | Move an item from one location to another.
 [shopfloor_single_product_transfer_force_package](shopfloor_single_product_transfer_force_package/) | 14.0.1.0.0 | [![JuMiSanAr](https://github.com/JuMiSanAr.png?size=30px)](https://github.com/JuMiSanAr) | Force to select package if location already contains packages.
 [shopfloor_single_product_transfer_mobile](shopfloor_single_product_transfer_mobile/) | 14.0.1.1.0 | [![JuMiSanAr](https://github.com/JuMiSanAr.png?size=30px)](https://github.com/JuMiSanAr) | Mobile frontend for single product transfer scenario
 [shopfloor_single_product_transfer_unique_order_at_location](shopfloor_single_product_transfer_unique_order_at_location/) | 14.0.1.0.0 | [![TDu](https://github.com/TDu.png?size=30px)](https://github.com/TDu) | Prevent to mix sales order on same consolidation location.
-[shopfloor_workstation](shopfloor_workstation/) | 14.0.1.3.0 |  | Manage warehouse workstation with barcode scanners
+[shopfloor_workstation](shopfloor_workstation/) | 14.0.1.3.1 |  | Manage warehouse workstation with barcode scanners
 [shopfloor_workstation_label_printer](shopfloor_workstation_label_printer/) | 14.0.1.1.0 |  | Adds a label printer configuration to the user and shopfloor workstation.
 [shopfloor_workstation_mobile](shopfloor_workstation_mobile/) | 14.0.1.0.1 |  | Shopfloor mobile app integration for workstation
-[stock_available_to_promise_release](stock_available_to_promise_release/) | 14.0.2.1.1 |  | Release Operations based on available to promise
+[stock_available_to_promise_release](stock_available_to_promise_release/) | 14.0.2.1.2 |  | Release Operations based on available to promise
 [stock_available_to_promise_release_dynamic_routing](stock_available_to_promise_release_dynamic_routing/) | 14.0.1.0.0 |  | Glue between moves release and dynamic routing
 [stock_checkout_sync](stock_checkout_sync/) | 14.0.1.1.0 |  | Sync location for Checkout operations
-[stock_dynamic_routing](stock_dynamic_routing/) | 14.0.1.0.2 |  | Dynamic routing of stock moves
+[stock_dynamic_routing](stock_dynamic_routing/) | 14.0.1.1.0 | [![jbaudoux](https://github.com/jbaudoux.png?size=30px)](https://github.com/jbaudoux) | Dynamic routing of stock moves
 [stock_dynamic_routing_checkout_sync](stock_dynamic_routing_checkout_sync/) | 14.0.1.0.0 |  | Glue module for tests when dynamic routing and checkout sync are used
 [stock_dynamic_routing_reserve_rule](stock_dynamic_routing_reserve_rule/) | 14.0.1.0.1 |  | Glue module between dynamic routing and reservation rules
-[stock_move_source_relocate](stock_move_source_relocate/) | 14.0.1.1.0 |  | Change source location of unavailable moves
-[stock_move_source_relocate_dynamic_routing](stock_move_source_relocate_dynamic_routing/) | 14.0.1.0.1 |  | Glue module
+[stock_move_source_relocate](stock_move_source_relocate/) | 14.0.1.2.0 | [![jbaudoux](https://github.com/jbaudoux.png?size=30px)](https://github.com/jbaudoux) | Change source location of unavailable moves
+[stock_move_source_relocate_dynamic_routing](stock_move_source_relocate_dynamic_routing/) | 14.0.1.1.0 | [![jbaudoux](https://github.com/jbaudoux.png?size=30px)](https://github.com/jbaudoux) | Glue module
 [stock_picking_completion_info](stock_picking_completion_info/) | 14.0.1.1.0 |  | Display on current document completion information according to next operations
 [stock_picking_consolidation_priority](stock_picking_consolidation_priority/) | 14.0.1.1.0 |  | Raise priority of all transfers for a chain when started
 [stock_picking_type_shipping_policy](stock_picking_type_shipping_policy/) | 14.0.1.1.0 |  | Define different shipping policies according to picking type
@@ -72,13 +75,13 @@ addon | version | maintainers | summary
 [stock_reception_screen_measuring_device](stock_reception_screen_measuring_device/) | 14.0.1.0.0 | [![gurneyalex](https://github.com/gurneyalex.png?size=30px)](https://github.com/gurneyalex) | Allow to use a measuring device from a reception screen.for packaging measurement
 [stock_reception_screen_qty_by_packaging](stock_reception_screen_qty_by_packaging/) | 14.0.1.1.0 |  | Glue module for `stock_product_qty_by_packaging` and `stock_vertical_lift`.
 [stock_release_channel](stock_release_channel/) | 14.0.2.1.0 | [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Manage workload in WMS with release channels
-[stock_storage_type](stock_storage_type/) | 14.0.1.12.0 |  | Manage packages and locations storage types
+[stock_storage_type](stock_storage_type/) | 14.0.1.12.1 | [![jbaudoux](https://github.com/jbaudoux.png?size=30px)](https://github.com/jbaudoux) | Manage packages and locations storage types
 [stock_storage_type_buffer](stock_storage_type_buffer/) | 14.0.1.3.0 |  | Exclude storage locations from put-away if their buffer is full
 [stock_storage_type_putaway_abc](stock_storage_type_putaway_abc/) | 14.0.1.0.0 |  | Advanced storage strategy ABC for WMS
 [stock_unique_order_per_location](stock_unique_order_per_location/) | 14.0.1.0.0 | [![TDu](https://github.com/TDu.png?size=30px)](https://github.com/TDu) | Prevent to mix sales order on same consolidation location.
-[stock_warehouse_flow](stock_warehouse_flow/) | 14.0.2.0.1 |  | Configure routing flow for stock moves
+[stock_warehouse_flow](stock_warehouse_flow/) | 14.0.2.0.2 |  | Configure routing flow for stock moves
 [stock_warehouse_flow_product_packaging](stock_warehouse_flow_product_packaging/) | 14.0.2.0.0 | [![mt-software-de](https://github.com/mt-software-de.png?size=30px)](https://github.com/mt-software-de) | Configure packaging types on routing flows for stock moves
-[stock_warehouse_flow_release](stock_warehouse_flow_release/) | 14.0.2.0.0 |  | Warehouse flows integrated with Operation Release
+[stock_warehouse_flow_release](stock_warehouse_flow_release/) | 14.0.2.0.1 |  | Warehouse flows integrated with Operation Release
 
 [//]: # (end addons)
 
