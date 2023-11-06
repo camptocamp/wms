@@ -16,6 +16,7 @@ const template_mobile = `
             v-if="state.on_scan"
             v-on:found="on_scan"
             :input_placeholder="search_input_placeholder"
+            :autofocus="!screen_info.user_popup"
             />
 
         <div v-if="state_is('scan_location')">
