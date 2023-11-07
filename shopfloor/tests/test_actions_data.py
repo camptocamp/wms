@@ -83,12 +83,36 @@ class ActionsDataCase(ActionsDataCaseBase):
         expected = {
             "id": package.id,
             "name": package.name,
+            "packaging": self._expected_packaging(package.packaging_id),
+            "storage_type": self._expected_storage_type(
+                package.package_storage_type_id
+            ),
+            "total_quantity": 10.0,
+            "weight": 20.0,
+        }
+        self.assertDictEqual(data, expected)
+
+    def test_data_package_with_move_line_count(self):
+        package = self.move_a.move_line_ids.package_id
+        package.packaging_id = self.packaging.id
+        package.package_storage_type_id = self.storage_type_pallet
+        data = self.data.package(
+            package,
+            picking=self.picking,
+            with_packaging=True,
+            with_package_move_line_count=True,
+        )
+        self.assert_schema(self.schema.package(with_packaging=True), data)
+        expected = {
+            "id": package.id,
+            "name": package.name,
             "move_line_count": 2,
             "packaging": self._expected_packaging(package.packaging_id),
             "storage_type": self._expected_storage_type(
                 package.package_storage_type_id
             ),
             "weight": 20.0,
+            "total_quantity": sum(package.quant_ids.mapped("quantity")),
         }
         self.assertDictEqual(data, expected)
 
@@ -202,22 +226,28 @@ class ActionsDataCase(ActionsDataCaseBase):
             "package_src": {
                 "id": move_line.package_id.id,
                 "name": move_line.package_id.name,
-                "move_line_count": 1,
                 "weight": 20.0,
                 "storage_type": None,
+                "total_quantity": sum(
+                    move_line.package_id.quant_ids.mapped("quantity")
+                ),
             },
             "package_dest": {
                 "id": result_package.id,
                 "name": result_package.name,
-                "move_line_count": 1,
                 "weight": 6.0,
                 "storage_type": None,
+                "total_quantity": sum(result_package.quant_ids.mapped("quantity")),
             },
             "location_src": self._expected_location(move_line.location_id),
             "location_dest": self._expected_location(move_line.location_dest_id),
             "priority": "1",
             "progress": 30.0,
         }
+        self.assertDictEqual(data, expected)
+        data = self.data.move_line(move_line, with_package_move_line_count=True)
+        expected["package_src"]["move_line_count"] = 1
+        expected["package_dest"]["move_line_count"] = 1
         self.assertDictEqual(data, expected)
 
     def test_data_move_line_lot(self):
@@ -263,22 +293,31 @@ class ActionsDataCase(ActionsDataCaseBase):
             "package_src": {
                 "id": move_line.package_id.id,
                 "name": move_line.package_id.name,
-                "move_line_count": 2,
                 "weight": 30,
                 "storage_type": None,
+                "total_quantity": sum(
+                    move_line.package_id.quant_ids.mapped("quantity")
+                ),
             },
             "package_dest": {
                 "id": move_line.result_package_id.id,
                 "name": move_line.result_package_id.name,
-                "move_line_count": 2,
                 "weight": 0,
                 "storage_type": None,
+                "total_quantity": sum(
+                    move_line.result_package_id.quant_ids.mapped("quantity")
+                ),
             },
             "location_src": self._expected_location(move_line.location_id),
             "location_dest": self._expected_location(move_line.location_dest_id),
             "priority": "1",
             "progress": 0.0,
         }
+        self.assertDictEqual(data, expected)
+        data = self.data.move_line(move_line, with_package_move_line_count=True)
+        self.assert_schema(self.schema.move_line(), data)
+        expected["package_src"]["move_line_count"] = 2
+        expected["package_dest"]["move_line_count"] = 2
         self.assertDictEqual(data, expected)
 
     def test_data_move_line_raw(self):

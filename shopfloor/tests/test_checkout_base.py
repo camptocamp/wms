@@ -40,8 +40,10 @@ class CheckoutCommonCase(CommonCase):
     def _move_line_data(self, move_line):
         return self.data.move_line(move_line)
 
-    def _package_data(self, package, picking):
-        return self.data.package(package, picking=picking, with_packaging=True)
+    def _package_data(self, package, picking, **kwargs):
+        return self.data.package(
+            package, picking=picking, with_packaging=True, **kwargs
+        )
 
     def _packaging_data(self, packaging):
         return self.data.packaging(packaging)
@@ -52,6 +54,7 @@ class CheckoutCommonCase(CommonCase):
             "group_lines_by_location": True,
             "show_oneline_package_content": False,
             "need_confirm_pack_all": False,
+            "need_confirm_lot": None,
         }
         data.update(kw)
         return data
