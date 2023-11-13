@@ -1209,7 +1209,10 @@ class Checkout(Component):
         if message:
             return self._response_for_select_document(message=message)
         selected_lines = self.env["stock.move.line"].browse(selected_line_ids).exists()
-        selected_lines.write(
+        selected_lines_with_qty_done = selected_lines.filtered(
+            lambda line: line.qty_done > 0
+        )
+        selected_lines_with_qty_done.write(
             {"shopfloor_checkout_done": True, "result_package_id": False}
         )
         response = self._check_allowed_qty_done(picking, selected_lines)
@@ -1474,13 +1477,14 @@ class Checkout(Component):
                 )
         lines_done = self._lines_checkout_done(picking)
         dest_location = picking.location_dest_id
-        child_locations = self.env["stock.location"].search(
-            [("id", "child_of", dest_location.id), ("usage", "!=", "view")]
-        )
-        if len(child_locations) > 0 and child_locations != dest_location:
-            return self._response_for_select_child_location(
-                picking,
+        if self.work.menu.ask_for_leaf_destination_location:
+            child_locations = self.env["stock.location"].search(
+                [("id", "child_of", dest_location.id), ("usage", "!=", "view")]
             )
+            if len(child_locations) > 0 and child_locations != dest_location:
+                return self._response_for_select_child_location(
+                    picking,
+                )
         stock = self._actions_for("stock")
         stock.validate_moves(lines_done.move_id)
         return self._response_for_select_document(
