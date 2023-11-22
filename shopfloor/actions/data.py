@@ -34,7 +34,7 @@ class DataAction(Component):
         # and it may reduce performance significatively
         # when dealing with a large number of pickings.
         # Thus, we make it optional.
-        if "with_progress" in kw:
+        if kw.get("with_progress"):
             parser.append("progress")
         return self._jsonify(record, parser, **kw)
 
@@ -56,6 +56,7 @@ class DataAction(Component):
             "bulk_line_count",
             "total_weight:weight",
             "scheduled_date",
+            "priority",
         ]
 
     @ensure_model("stock.quant.package")
