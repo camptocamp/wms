@@ -6,4 +6,4 @@ from odoo import fields, models
 class ProductPackagingType(models.Model):
     _inherit = "product.packaging.type"
 
-    icon = fields.Image()
+    icon = fields.Binary()
