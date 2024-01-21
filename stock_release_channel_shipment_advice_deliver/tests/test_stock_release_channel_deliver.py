@@ -10,7 +10,7 @@ from .common import TestStockReleaseChannelDeliverCommon
 
 
 class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
-    def test_action_deliver_allowed(self):
+    def test_00(self):
         """Test action_deliver allowed."""
         self.channel.action_unlock()
         self.assertEqual(self.channel.state, "open")
@@ -19,7 +19,7 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
         ):
             self.channel.action_deliver()
 
-    def test_deliver_process(self):
+    def test_01(self):
         """Shipment advices are created and automatically processed."""
         self._do_internal_pickings()
         with trap_jobs() as trap_rc:
@@ -51,7 +51,7 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
     @mute_logger(
         "odoo.addons.stock_release_channel_shipment_advice_deliver.models.shipment_advice"
     )
-    def test_deliver_error_message(self):
+    def test_02(self):
         """An error occurred while processing the shipment advices.
 
         The release channel is notified and the error is logged
@@ -75,14 +75,14 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
             f"{shipment_advice.name}.",
         )
 
-    def test_deliver_retry(self):
+    def test_03(self):
         """Re-deliver after fail."""
-        self.test_deliver_error_message()
+        self.test_02()
         self.assertEqual(self.channel.state, "delivering_error")
         self.channel.dock_id = self.dock
-        self.test_deliver_process()
+        self.test_01()
 
-    def test_deliver_error_empty(self):
+    def test_04(self):
         """No picking to deliver, an error should be raised."""
         self._do_internal_pickings()
         self.pickings.write({"release_channel_id": False})
@@ -91,7 +91,7 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
         ):
             self.channel.action_deliver()
 
-    def test_deliver_backorder_not_reassigned(self):
+    def test_05(self):
         """
         Deliver with backorder, no other channel available:
 
@@ -101,29 +101,29 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
         self._update_qty_in_location(self.output_loc, self.product2, 10)
         self.pickings.do_unreserve()
         self.pickings.action_assign()
-        self.test_deliver_process()
+        self.test_01()
         backorder = self.pickings.backorder_ids
         self.assertFalse(backorder.release_channel_id)
         self.assertFalse(backorder.planned_shipment_advice_id)
 
-    def test_deliver_backorder_reassigned(self):
+    def test_06(self):
         """
         Deliver with backorder, another channel available:
 
         - the backorder should be assigned to the available channel
         - the backorder should not be assigned to the shipment advice
         """
-        channel = self.channel.copy({"name": "channel 2", "state": "open"})
+        channel = self.channel.copy({"name": "channel 2"})
         self._do_internal_pickings()
         self._update_qty_in_location(self.output_loc, self.product2, 10)
         self.pickings.do_unreserve()
         self.pickings.action_assign()
-        self.test_deliver_process()
+        self.test_01()
         backorder = self.pickings.backorder_ids
         self.assertEqual(backorder.release_channel_id, channel)
         self.assertFalse(backorder.planned_shipment_advice_id)
 
-    def test_deliver_fails_picking_printed(self):
+    def test_07(self):
         """Deliver is not allowed if one of the pickings is started."""
         self.internal_pickings[0].printed = True
         with self.assertRaises(
@@ -132,7 +132,7 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
         ):
             self.channel.action_deliver()
 
-    def test_deliver_remaining_picking_unreleased(self):
+    def test_08(self):
         """Deliver is allowed by a user confirmation.
 
         If one of the released picking is not done, the undone picking will be unreleased
@@ -159,10 +159,8 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
         self.assertEqual(self.channel.state, "delivered")
         self.assertEqual(not_done_picking.state, "cancel")
 
-    def test_deliver_fails_picking_started(self):
-        """Picking started.
-
-        Deliver is not allowed if one of the released picking is not done
+    def test_09(self):
+        """Deliver is not allowed if one of the released picking is not done
         and the unrelease is not possible."""
         self._do_picking(self.internal_pickings[0])
         self._do_picking(self.internal_pickings[1])
@@ -177,20 +175,3 @@ class TestStockReleaseChannelDeliver(TestStockReleaseChannelDeliverCommon):
             " Please handle them manually before proceeding with the delivery.",
         ):
             self.channel.action_deliver()
-
-    def test_deliver_partial_pick_without_bo(self):
-        """Partial picking without backorder creation.
-
-        Deliver must be allowed"""
-        # Process 2 out of 5
-        self.internal_pickings.picking_type_id.create_backorder = "never"
-        for move in self.internal_pickings[0].move_ids:
-            move.quantity_done = 2
-        self.internal_pickings[0].button_validate()
-        res = self.channel.action_deliver()
-        self.assertIsInstance(res, dict)
-        wizard = (
-            self.env[res.get("res_model")].with_context(**res.get("context")).create({})
-        )
-        wizard.with_context(test_queue_job_no_delay=True).action_deliver()
-        self.assertEqual(self.channel.state, "delivered")

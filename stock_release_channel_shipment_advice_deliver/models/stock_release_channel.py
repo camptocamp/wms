@@ -136,23 +136,14 @@ class StockReleaseChannel(models.Model):
             ]
         )
 
-    def _shipping_moves_to_unrelease(self):
-        moves = self.picking_ids.move_ids.filtered(
-            lambda m: m.picking_type_id.code == "outgoing"
-            and not m.need_release
-            and m.state in ("waiting", "partially_available")
+    def _shippings_to_unrelease(self):
+        return self.picking_ids.filtered(
+            lambda p: p.picking_type_code == "outgoing"
+            and any(
+                not m.need_release and m.state in ("waiting", "partially_available")
+                for m in p.move_ids
+            )
         )
-        # The internal operation could have been processed without backorder.
-        # In this case, we don't have something to unrelease
-        for move in moves:
-            for internal_moves in move.move_orig_ids._get_chained_moves_iterator(
-                "move_orig_ids"
-            ):
-                if any(im.state not in ("cancel", "done") for im in internal_moves):
-                    break
-            else:
-                moves -= move
-        return moves
 
     def _deliver_cleanup_printed(self):
         """Unset "printed" on non ready transfer
@@ -177,17 +168,15 @@ class StockReleaseChannel(models.Model):
             )
         self._deliver_check_has_picking_planned()
         self._deliver_cleanup_printed()
-        moves_to_unrelease = self._shipping_moves_to_unrelease()
-        if moves_to_unrelease:
-            if any(not m.unrelease_allowed for m in moves_to_unrelease):
+        shippings_to_unrelease = self._shippings_to_unrelease()
+        if shippings_to_unrelease:
+            if any(not m.unrelease_allowed for m in shippings_to_unrelease.move_ids):
                 self._deliver_check_no_picking_printed()
                 raise UserError(
                     _(
                         "Some deliveries have not been prepared but cannot be unreleased."
                         "\n\n%(shipping)s",
-                        shipping=", ".join(
-                            moves_to_unrelease.picking_id.mapped("name")
-                        ),
+                        shipping=", ".join(shippings_to_unrelease.mapped("name")),
                     )
                 )
             return {
@@ -296,8 +285,8 @@ class StockReleaseChannel(models.Model):
         return res
 
     def unrelease_picking(self):
-        shipping_moves_to_unrelease = self._shipping_moves_to_unrelease()
-        shipping_moves_to_unrelease.unrelease(safe_unrelease=True)
+        shippings_to_unrelease = self._shippings_to_unrelease()
+        shippings_to_unrelease.unrelease(safe_unrelease=True)
 
     def unrelease_backorders(self):
         backorders = (
@@ -315,4 +304,10 @@ class StockReleaseChannel(models.Model):
                         lambda r: r.state == "done"
                     ).sorted("id", reverse=True)
                 )
+        return res
+
+    @api.model
+    def _get_print_shipment_allowed_states(self):
+        res = super()._get_print_shipment_allowed_states()
+        res.append("delivered")
         return res
