@@ -15,6 +15,7 @@
         "stock_release_channel_process_end_time",
     ],
     "data": [
+        "views/stock_release_channel_preparation_plan.xml",
         "wizards/launch_plan.xml",
     ],
     "demo": [
