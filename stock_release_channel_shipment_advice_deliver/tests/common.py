@@ -22,8 +22,10 @@ class TestStockReleaseChannelDeliverCommon(ChannelReleaseCase):
         cls.channel.dock_id = cls.dock
         cls.channel.action_lock()
         cls.channel.shipment_planning_method = "simple"
-        cls.internal_pickings = cls.channel.picking_ids.move_ids.move_orig_ids.picking_id.filtered(
-            lambda p: p.picking_type_code == "internal"
+        cls.internal_pickings = (
+            cls.channel.picking_ids.move_ids.move_orig_ids.picking_id.filtered(
+                lambda p: p.picking_type_code == "internal"
+            )
         )
         cls.pickings = cls.channel.picking_ids.filtered(
             lambda p: p.picking_type_code == "outgoing"
