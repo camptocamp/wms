@@ -137,7 +137,10 @@ class StockReleaseChannel(models.Model):
     def _shippings_to_unrelease(self):
         return self.picking_ids.filtered(
             lambda p: p.picking_type_code == "outgoing"
-            and any(not m.need_release and m.state in ("waiting", "partially_available") for m in p.move_ids)
+            and any(
+                not m.need_release and m.state in ("waiting", "partially_available")
+                for m in p.move_ids
+            )
         )
 
     def _deliver_cleanup_printed(self):
