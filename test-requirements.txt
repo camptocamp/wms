@@ -1,3 +1,4 @@
 # OCA/wms
 odoo-addon-stock-release-channel-process-end-time @ git+https://github.com/OCA/wms.git@refs/pull/550/head#subdirectory=setup/stock_release_channel_process_end_time
 odoo-addon-stock-release-channel-plan @ git+https://github.com/OCA/wms.git@refs/pull/695/head#subdirectory=setup/stock_release_channel_plan
+odoo-addon-shipment-advice @ git+https://github.com/OCA/stock-logistics-transport.git@refs/pull/114/head#subdirectory=setup/shipment_advice
