@@ -37,11 +37,19 @@ class StockReleaseChannel(models.Model):
     release_forbidden = fields.Boolean(string="Forbid to release this channel")
     sequence = fields.Integer(default=lambda self: self._default_sequence())
     color = fields.Integer()
+    company_id = fields.Many2one(
+        string="Company",
+        comodel_name="res.company",
+        required=True,
+        default=lambda s: s.env.company.id,
+        index=True,
+    )
     warehouse_id = fields.Many2one(
         "stock.warehouse",
         string="Warehouse",
         index=True,
         help="Warehouse for which this channel is relevant",
+        domain="[('company_id', '=', company_id)]",
     )
     picking_type_ids = fields.Many2many(
         "stock.picking.type",
