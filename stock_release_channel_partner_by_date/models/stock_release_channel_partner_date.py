@@ -38,9 +38,10 @@ class StockReleaseChannelPartnerDate(models.Model):
 
     @api.autovacuum
     def _gc_release_channel_partner_date(self):
-        pref_rcs = self.search(self._gc_release_channel_partner_date_domain())
+        pref_rcs = self.with_context(active_test=False).search(
+            self._gc_release_channel_partner_date_domain()
+        )
         pref_rcs.unlink()
 
     def _gc_release_channel_partner_date_domain(self):
-        # FIXME: handle TZ
         return [("date", "<", fields.Date.subtract(fields.Date.today(), months=3))]

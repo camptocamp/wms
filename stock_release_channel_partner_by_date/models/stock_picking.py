@@ -11,15 +11,21 @@ class StockPicking(models.Model):
 
     def _get_release_channel_partner_date_domain(self):
         assert self.scheduled_date
-        # FIXME: handle TZ
         return [
             ("partner_id", "=", self.partner_id.id),
             ("date", "=", max(self.scheduled_date.date(), fields.Date.today())),
         ]
 
     def _get_release_channel_partner_dates(self):
-        return self.env["stock.release.channel.partner.date"].search(
-            self._get_release_channel_partner_date_domain()
+        """Return specific channel entries corresponding to the transfer."""
+        return (
+            self.env["stock.release.channel.partner.date"]
+            .search(self._get_release_channel_partner_date_domain())
+            .filtered(
+                lambda o: o.release_channel_id.filtered_domain(
+                    self._get_release_channel_possible_candidate_domain_picking()
+                )
+            )
         )
 
     def _inject_possible_candidate_domain_partners(self):
