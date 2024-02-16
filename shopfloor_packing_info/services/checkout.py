@@ -10,7 +10,7 @@ class CheckoutExt(Checkout):
 
     def _data_for_packing_info(self, picking):
         res = super()._data_for_packing_info(picking)
-        if picking.picking_type_id.shopfloor_display_packing_info:
+        if picking.note:
             shopfloor_packing_info = (
                 picking.shopfloor_packing_info_id.text
                 if picking.shopfloor_packing_info_id

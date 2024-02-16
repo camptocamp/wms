@@ -17,6 +17,7 @@ class CheckoutScanLineCase(CheckoutScanLineCaseBase):
             .create({"name": "Test", "text": packing_info_text})
         )
         picking.sudo().partner_id.shopfloor_packing_info_id = shopfloor_packing_info
+        # TODO: shopfloor_display_packing_info doesn't exist anymore
         picking.sudo().picking_type_id.shopfloor_display_packing_info = True
         move1 = picking.move_lines[0]
         move2 = picking.move_lines[1]

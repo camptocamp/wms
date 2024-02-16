@@ -10,6 +10,3 @@ class StockPicking(models.Model):
         string="Packing information",
         related="partner_id.shopfloor_packing_info_id",
     )
-    shopfloor_display_packing_info = fields.Boolean(
-        related="picking_type_id.shopfloor_display_packing_info",
-    )

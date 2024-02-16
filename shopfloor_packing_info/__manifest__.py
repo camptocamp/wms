@@ -10,12 +10,11 @@
     "author": "Camptocamp, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "application": False,
-    "depends": ["shopfloor", "sales_team"],
+    "depends": ["shopfloor", "sales_team", "stock_picking_partner_note"],
     "data": [
         "security/ir.model.access.csv",
         "views/res_partner_views.xml",
         "views/shopfloor_packing_info_views.xml",
-        "views/stock_picking_type_views.xml",
         "views/stock_picking_views.xml",
         "views/menus.xml",
     ],
