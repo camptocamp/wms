@@ -3,4 +3,3 @@
 from . import res_partner
 from . import shopfloor_packing_info
 from . import stock_picking
-from . import stock_picking_type
