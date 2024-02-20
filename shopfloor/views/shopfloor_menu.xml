@@ -169,6 +169,13 @@
                     />
                     <field name="allow_alternative_destination_package" />
                 </group>
+                <group
+                    name="display_vendor_packagings"
+                    attrs="{'invisible': [('display_vendor_packagings_is_possible', '=', False)]}"
+                >
+                    <field name="display_vendor_packagings_is_possible" invisible="1" />
+                    <field name="display_vendor_packagings" />
+                </group>
             </group>
         </field>
     </record>
