@@ -9,7 +9,8 @@
       <field name="options_edit">
 {
       "auto_post_line": true,
-      "allow_return": true
+      "allow_return": true,
+      "display_vendor_packagings": true
 }
       </field>
   </record>
