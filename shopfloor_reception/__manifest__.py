@@ -1,7 +1,7 @@
 {
     "name": "Shopfloor Reception",
     "summary": "Reception scenario for shopfloor",
-    "version": "14.0.2.6.1",
+    "version": "14.0.2.9.0",
     "development_status": "Beta",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -9,7 +9,7 @@
     "maintainers": ["mmequignon", "JuMiSanAr"],
     "license": "AGPL-3",
     "installable": True,
-    "depends": ["shopfloor"],
+    "depends": ["shopfloor", "shopfloor_vendor_packaging"],
     "data": [
         "data/shopfloor_scenario_data.xml",
     ],

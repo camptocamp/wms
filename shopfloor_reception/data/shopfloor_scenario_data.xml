@@ -10,7 +10,7 @@
 {
       "auto_post_line": true,
       "allow_return": true,
-      "scan_location_or_pack_first": true
+      "scan_location_or_pack_first": true,
       "display_vendor_packagings": true
 }
       </field>
