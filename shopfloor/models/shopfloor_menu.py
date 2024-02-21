@@ -53,11 +53,6 @@ If enabled, they will also be allowed
 to scan a destination package.
 """
 
-DISPLAY_VENDOR_PACKAGINGS_HELP = """
-When enabled, the user will be able to see the vendor packagings
-in the frontend, e.g. in the qty picker.
-"""
-
 
 class ShopfloorMenu(models.Model):
     _inherit = "shopfloor.menu"
@@ -230,14 +225,6 @@ class ShopfloorMenu(models.Model):
     )
     allow_alternative_destination_package_is_possible = fields.Boolean(
         compute="_compute_allow_alternative_destination_package_is_possible"
-    )
-    display_vendor_packagings = fields.Boolean(
-        string="Display vendor packagings",
-        default=False,
-        help=DISPLAY_VENDOR_PACKAGINGS_HELP,
-    )
-    display_vendor_packagings_is_possible = fields.Boolean(
-        compute="_compute_display_vendor_packagings_is_possible",
     )
 
     @api.onchange("unload_package_at_destination")
@@ -467,11 +454,4 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.allow_alternative_destination_package_is_possible = (
                 menu.scenario_id.has_option("allow_alternative_destination_package")
-            )
-
-    @api.depends("scenario_id")
-    def _compute_display_vendor_packagings_is_possible(self):
-        for menu in self:
-            menu.display_vendor_packagings_is_possible = menu.scenario_id.has_option(
-                "display_vendor_packagings"
             )

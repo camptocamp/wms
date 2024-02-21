@@ -188,11 +188,7 @@ class DataAction(Component):
 
     @ensure_model("stock.move.line")
     def move_line(self, record, with_picking=False, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            location=record.location_id.id,
-            display_vendor_packagings=display_vendor_packagings,
-        )
+        record = record.with_context(location=record.location_id.id)
         parser = self._move_line_parser
         if with_picking:
             parser += [("picking_id:picking", self._picking_parser)]
@@ -238,11 +234,7 @@ class DataAction(Component):
 
     @ensure_model("stock.move")
     def move(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            location=record.location_id.id,
-            display_vendor_packagings=display_vendor_packagings,
-        )
+        record = record.with_context(location=record.location_id.id)
         parser = self._move_parser
         return self._jsonify(record, parser)
 
@@ -264,10 +256,6 @@ class DataAction(Component):
 
     @ensure_model("stock.package_level")
     def package_level(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings
-        )
         return self._jsonify(record, self._package_level_parser)
 
     def package_levels(self, records, **kw):
@@ -303,10 +291,6 @@ class DataAction(Component):
 
     @ensure_model("product.product")
     def product(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings
-        )
         return self._jsonify(record, self._product_parser, **kw)
 
     def products(self, record, **kw):
@@ -326,16 +310,8 @@ class DataAction(Component):
         ]
 
     def _product_packaging(self, rec, field):
-        display_vendor_packagings = rec.env.context["display_vendor_packagings"]
-        packagings = rec.packaging_ids
-        if display_vendor_packagings:
-            packagings = packagings.filtered(lambda x: x.qty)
-        else:
-            packagings = packagings.filtered(
-                lambda x: x.qty and not x.packaging_type_id.is_vendor_packaging
-            )
         return self._jsonify(
-            packagings,
+            rec.packaging_ids.filtered(lambda x: x.qty),
             self._packaging_parser,
             multi=True,
         )
