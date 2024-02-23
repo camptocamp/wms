@@ -30,6 +30,9 @@ const ClusterPicking = {
                 v-on:confirm="state.on_confirm"
                 v-on:cancel="state.on_cancel"
                 />
+            <v-alert type="info" tile v-if="state_is('start_line') && state.data.packing_info" class="packing-info">
+                <p v-text="state.data.packing_info" />
+            </v-alert>
             <batch-picking-line-detail
                 v-if="state_in(['start_line', 'scan_destination', 'change_pack_lot', 'stock_issue'])"
                 :line="state.data"

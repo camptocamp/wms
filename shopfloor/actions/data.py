@@ -1,5 +1,7 @@
 # Copyright 2020 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+import os
+
 from odoo import fields
 
 from odoo.addons.component.core import Component
@@ -369,3 +371,13 @@ class DataAction(Component):
             "done": operations_done,
             "to_do": operations_to_do,
         }
+
+    @ensure_model("stock.picking")
+    def packing_info(self, record):
+        """Return the packing information"""
+
+        record.ensure_one()
+        note = record.note
+        if note:
+            return "{}{}".format(os.linesep, note).strip()
+        return ""
