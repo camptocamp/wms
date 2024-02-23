@@ -1,0 +1,124 @@
+<odoo>
+    <record id="stock_release_channel_list_view" model="ir.ui.view">
+        <field name="model">stock.release.channel</field>
+        <field
+            name="inherit_id"
+            ref="stock_release_channel.stock_release_channel_tree_view"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//field[last()]" position="after">
+                <field name="volume_picking_all" optional="hide" />
+                <field name="volume_picking_release_ready" optional="hide" />
+                <field name="volume_picking_released" optional="hide" />
+                <field name="volume_picking_assigned" optional="hide" />
+                <field name="volume_picking_waiting" optional="hide" />
+                <field name="volume_picking_late" optional="hide" />
+                <field name="volume_picking_priority" optional="hide" />
+                <field name="volume_picking_done" optional="hide" />
+                <field name="volume_picking_full_progress" optional="hide" />
+                <field name="volume_move_all" optional="hide" />
+                <field name="volume_move_release_ready" optional="hide" />
+                <field name="volume_move_released" optional="hide" />
+                <field name="volume_move_assigned" optional="hide" />
+                <field name="volume_move_waiting" optional="hide" />
+                <field name="volume_move_late" optional="hide" />
+                <field name="volume_move_priority" optional="hide" />
+                <field name="volume_move_done" optional="hide" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_release_channel_kanban_view" model="ir.ui.view">
+        <field name="model">stock.release.channel</field>
+        <field name='type'>kanban</field>
+        <field
+            name='inherit_id'
+            ref="stock_release_channel.stock_release_channel_kanban_view"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//field[1]" position="after">
+                <field name="volume_picking_release_ready" />
+                <field name="volume_picking_released" />
+                <field name="volume_picking_done" />
+                <field name="volume_picking_waiting" />
+                <field name="volume_picking_late" />
+                <field name="volume_picking_priority" />
+                <field name="volume_move_assigned" />
+            </xpath>
+            <xpath
+                expr="//a[@name='action_picking_release_ready']/.."
+                position="attributes"
+            >
+                <attribute name="class">col-4</attribute>
+            </xpath>
+            <xpath
+                expr="//a[@name='action_picking_release_ready']/../following-sibling::div"
+                position="after"
+            >
+                <div class="col-3" style="padding-left: 0;">
+                    <field name="volume_picking_release_ready" widget="integer" />
+                    <span>m<sup>3</sup>
+                    </span>
+                </div>
+            </xpath>
+            <xpath expr="//a[@name='action_picking_released']/.." position="attributes">
+                <attribute name="class">col-4</attribute>
+            </xpath>
+            <xpath
+                expr="//a[@name='action_picking_released']/../following-sibling::div"
+                position="after"
+            >
+                <div class="col-3" style="padding-left: 0;">
+                    <field name="volume_picking_released" widget="integer" />
+                    <span>m<sup>3</sup>
+                    </span>
+                </div>
+            </xpath>
+            <xpath expr="//a[@name='action_picking_done']/.." position="attributes">
+                <attribute name="class">col-4</attribute>
+            </xpath>
+            <xpath
+                expr="//a[@name='action_picking_done']/../following-sibling::div"
+                position="after"
+            >
+                <div class="col-3" style="padding-left: 0;">
+                    <field name="volume_picking_done" widget="integer" />
+                    <span>m<sup>3</sup>
+                    </span>
+                </div>
+            </xpath>
+            <button
+                class="btn btn-primary"
+                name="action_picking_assigned"
+                type="object"
+                position="inside"
+            >
+                <br />
+                <field name="volume_move_assigned" widget="integer" />
+                <span>m<sup>3</sup>
+                </span>
+            </button>
+            <xpath
+                expr="//div//field[@name='count_picking_waiting']/.."
+                position="inside"
+            >
+                <field name="volume_picking_waiting" widget="integer" />
+                <span>m<sup>3</sup>
+                </span>
+            </xpath>
+            <xpath expr="//div//field[@name='count_picking_late']/.." position="inside">
+                <field name="volume_picking_late" widget="integer" />
+                <span>m<sup>3</sup>
+                </span>
+            </xpath>
+            <xpath
+                expr="//div//field[@name='count_picking_priority']/.."
+                position="inside"
+            >
+                <field name="volume_picking_priority" widget="integer" />
+                <span>m<sup>3</sup>
+                </span>
+            </xpath>
+        </field>
+    </record>
+</odoo>
