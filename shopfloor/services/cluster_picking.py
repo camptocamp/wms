@@ -1418,7 +1418,10 @@ class ShopfloorClusterPickingValidatorResponse(Component):
         """
         return {
             "confirm_start": self._schema_for_batch_details,
-            "start_line": self._schema_for_single_line_details,
+            "start_line": dict(
+                self._schema_for_single_line_details,
+                packing_info={"type": "string", "nullable": True},
+            ),
             "start": {},
             "manual_selection": self._schema_for_batch_selection,
             "scan_destination": self._schema_for_scan_destination,
