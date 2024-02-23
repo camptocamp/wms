@@ -402,6 +402,7 @@ class ClusterPicking(Component):
         data["package_dest"] = None
         data["batch"] = self.data.picking_batch(batch)
         data["picking"] = self.data.picking(picking)
+        data["packing_info"] = self.data.packing_info(picking)
         data["postponed"] = line.shopfloor_postponed
         data["product"]["qty_available"] = product.with_context(
             location=line.location_id.id
@@ -1418,7 +1419,10 @@ class ShopfloorClusterPickingValidatorResponse(Component):
         """
         return {
             "confirm_start": self._schema_for_batch_details,
-            "start_line": self._schema_for_single_line_details,
+            "start_line": dict(
+                self._schema_for_single_line_details,
+                packing_info={"type": "string", "nullable": True},
+            ),
             "start": {},
             "manual_selection": self._schema_for_batch_selection,
             "scan_destination": self._schema_for_scan_destination,
