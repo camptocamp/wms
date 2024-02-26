@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="res_partner_form_view">
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="stock_release_channel.res_partner_form_view" />
+        <field name="arch" type="xml">
+            <field name="stock_release_channel_ids" position="after">
+                <field name="stock_release_channel_delivery_weekday_ids" />
+            </field>
+        </field>
+    </record>
+</odoo>
