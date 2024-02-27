@@ -34,7 +34,7 @@ class TestMergeMoves(PromiseReleaseCommonCase):
 
     @classmethod
     def _prev_picking(cls, picking):
-        return picking.move_ids.move_orig_ids.picking_id
+        return picking.move_lines.move_orig_ids.picking_id
 
     def _procure(self, qty):
         """Create a procurement for a given quantity and run it.
@@ -46,7 +46,7 @@ class TestMergeMoves(PromiseReleaseCommonCase):
         values = {
             "company_id": self.wh.company_id,
             "group_id": self.shipping1.group_id,
-            "date_planned": self.shipping1.move_ids.date,
+            "date_planned": self.shipping1.move_lines.date,
             "warehouse_id": self.wh,
         }
         self.env["procurement.group"].run(
@@ -66,28 +66,29 @@ class TestMergeMoves(PromiseReleaseCommonCase):
 
     def test_unrelease_at_move_merge(self):
         self.assertFalse(self.shipping1.need_release)
-        self.assertEqual(1, len(self.shipping1.move_ids))
-        original_qty = self.shipping1.move_ids.product_uom_qty
+        self.assertEqual(1, len(self.shipping1.move_lines))
+        original_qty = self.shipping1.move_lines.product_uom_qty
         # run a new procurement that will create a move in the same shipment
         self._procure(2)
-        self.assertEqual(1, len(self.shipping1.move_ids))
-        self.assertEqual(original_qty + 2, self.shipping1.move_ids.product_uom_qty)
+        self.assertEqual(1, len(self.shipping1.move_lines))
+        self.assertEqual(original_qty + 2, self.shipping1.move_lines.product_uom_qty)
         self.assertTrue(self.shipping1.need_release)
         # since the shipment is no more released, the picking should be canceled
         self.assertEqual("cancel", self.picking1.state)
 
+    # FIXME negative quants do not work in v14.0
     def test_unrelease_at_move_merge_2(self):
         # create a negative quant to cancel teh qty to deliver
         self.assertFalse(self.shipping1.need_release)
-        self.assertEqual(1, len(self.shipping1.move_ids))
-        original_qty = self.shipping1.move_ids.product_uom_qty
+        self.assertEqual(1, len(self.shipping1.move_lines))
+        original_qty = self.shipping1.move_lines.product_uom_qty
         # run a new procurement that will create a move in the same shipment
         self._procure(-original_qty)
-        self.assertEqual(1, len(self.shipping1.move_ids))
-        self.assertEqual(0, self.shipping1.move_ids.product_uom_qty)
+        self.assertEqual(1, len(self.shipping1.move_lines))
+        self.assertEqual(0, self.shipping1.move_lines.product_uom_qty)
         # no more qty to deliver, the shipment and picking should be canceled
-        self.assertEqual("cancel", self.shipping1.state)
         self.assertEqual("cancel", self.picking1.state)
+        self.assertEqual("cancel", self.shipping1.state)
 
     def test_unrelease_at_move_merge_merged(self):
         # Create a new shipping for the same product and date
@@ -101,35 +102,35 @@ class TestMergeMoves(PromiseReleaseCommonCase):
         picking2 = self._prev_picking(shipping2)
         picking2.action_assign()
         self.assertEqual(self.picking1, picking2)
-        self.assertEqual(1, len(self.picking1.move_ids))
+        self.assertEqual(1, len(self.picking1.move_lines))
 
-        original_qty_1 = self.shipping1.move_ids.product_uom_qty
-        original_qty_2 = shipping2.move_ids.product_uom_qty
+        original_qty_1 = self.shipping1.move_lines.product_uom_qty
+        original_qty_2 = shipping2.move_lines.product_uom_qty
 
         # pick1 and pick2 are the same
         self.assertEqual(self.picking1, picking2)
 
         # partially process the picking
-        move = self.picking1.move_ids
+        move = self.picking1.move_lines
         move.move_line_ids.qty_done = 2
         # run a new procurement for the same product in the shipment 1
         self._procure(2)
 
         # the move should be merged with the existing one
-        self.assertEqual(1, len(self.shipping1.move_ids))
-        self.assertEqual(2 + original_qty_1, self.shipping1.move_ids.product_uom_qty)
+        self.assertEqual(1, len(self.shipping1.move_lines))
+        self.assertEqual(2 + original_qty_1, self.shipping1.move_lines.product_uom_qty)
         self.assertTrue(self.shipping1.need_release)
 
         # the pick should still contain a move with the processed qty
         # and the qty to do should be the one from shipping2
-        move = self.picking1.move_ids.filtered(lambda m: m.state == "assigned")
+        move = self.picking1.move_lines.filtered(lambda m: m.state == "assigned")
         self.assertEqual(2, move.move_line_ids.qty_done)
         self.assertEqual(3, move.product_uom_qty)
 
         # if we release the ship 1 again, a new move should be created
         # and merged with the existing one
         self.shipping1.release_available_to_promise()
-        move = self.picking1.move_ids.filtered(lambda m: m.state == "assigned")
+        move = self.picking1.move_lines.filtered(lambda m: m.state == "assigned")
         self.assertEqual(1, len(move))
         self.assertEqual(2 + original_qty_1 + original_qty_2, move.product_uom_qty)
         self.assertEqual(2, move.move_line_ids.qty_done)
