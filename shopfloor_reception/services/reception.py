@@ -710,13 +710,13 @@ class Reception(Component):
         ]
 
     def _data_for_move_lines(self, lines, **kw):
-        if self.work.menu.display_vendor_packagings:
-            kw["display_vendor_packagings"] = True
+        if self.work.menu.display_vendor_packaging:
+            kw["display_vendor_packaging"] = True
         return self.data.move_lines(lines, **kw)
 
     def _data_for_moves(self, moves, **kw):
-        if self.work.menu.display_vendor_packagings:
-            kw["display_vendor_packagings"] = True
+        if self.work.menu.display_vendor_packaging:
+            kw["display_vendor_packaging"] = True
         return self.data.moves(moves, **kw)
 
     # RESPONSES

@@ -23,15 +23,15 @@ def migrate(cr, version):
 
 def _update_scenario_options(scenario):
     options = scenario.options
-    options["display_vendor_packagings"] = True
+    options["display_vendor_packaging"] = True
     options_edit = json.dumps(options or {}, indent=4, sort_keys=True)
     scenario.write({"options_edit": options_edit})
-    _logger.info("Option display_vendor_packagings added to scenario Zone Picking")
+    _logger.info("Option display_vendor_packaging added to scenario Zone Picking")
 
 
 def _enable_option_in_menus(menus):
     for menu in menus:
-        menu.display_vendor_packagings = True
+        menu.display_vendor_packaging = True
         _logger.info(
-            "Option display_vendor_packagings enabled for menu {}".format(menu.name)
+            "Option display_vendor_packaging enabled for menu {}".format(menu.name)
         )

@@ -10,40 +10,36 @@ class DataAction(Component):
 
     @ensure_model("stock.move.line")
     def move_line(self, record, with_picking=False, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
+        display_vendor_packaging = kw.get("display_vendor_packaging")
         record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings,
+            display_vendor_packaging=display_vendor_packaging,
         )
         return super().move_line(record, with_picking, **kw)
 
     @ensure_model("stock.move")
     def move(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
+        display_vendor_packaging = kw.get("display_vendor_packaging")
         record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings,
+            display_vendor_packaging=display_vendor_packaging,
         )
         return super().move(record, **kw)
 
     @ensure_model("stock.package_level")
     def package_level(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings
-        )
+        display_vendor_packaging = kw.get("display_vendor_packaging")
+        record = record.with_context(display_vendor_packaging=display_vendor_packaging)
         return super().package_level(record, **kw)
 
     @ensure_model("product.product")
     def product(self, record, **kw):
-        display_vendor_packagings = kw.get("display_vendor_packagings")
-        record = record.with_context(
-            display_vendor_packagings=display_vendor_packagings
-        )
+        display_vendor_packaging = kw.get("display_vendor_packaging")
+        record = record.with_context(display_vendor_packaging=display_vendor_packaging)
         return super().product(record, **kw)
 
     def _product_packaging(self, rec, field):
-        display_vendor_packagings = rec.env.context.get("display_vendor_packagings")
+        display_vendor_packaging = rec.env.context.get("display_vendor_packaging")
         packagings = rec.packaging_ids
-        if display_vendor_packagings:
+        if display_vendor_packaging:
             packagings = packagings.filtered(lambda x: x.qty)
         else:
             packagings = packagings.filtered(
