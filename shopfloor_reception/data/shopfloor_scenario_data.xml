@@ -9,9 +9,7 @@
       <field name="options_edit">
 {
       "auto_post_line": true,
-      "allow_return": true,
-      "scan_location_or_pack_first": true,
-      "display_vendor_packagings": true
+      "allow_return": true
 }
       </field>
   </record>
