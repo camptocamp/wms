@@ -1,11 +1,13 @@
 # Copyright 2023 ACSONE SA/NV
 # Copyright 2024 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+from datetime import timedelta
+
 from odoo import api, fields, models
 
 from odoo.addons.base.models.res_partner import _tz_get
 
-from ..utils import float_to_time, next_datetime
+from ..utils import float_to_time, time_to_datetime
 
 
 class StockReleaseChannel(models.Model):
@@ -43,19 +45,23 @@ class StockReleaseChannel(models.Model):
 
     @api.depends("state", "process_end_time")
     def _compute_process_end_date(self):
-        now = fields.Datetime.now()
         for channel in self:
-            # We check if a date is not already set (manually)
-            if channel.state != "asleep" and not channel.process_end_date:
-                end = next_datetime(
-                    now,
+            if channel.state == "asleep":
+                channel.process_end_date = False
+            # otherwise we check if a date is not already set (manually)
+            elif channel.process_end_date:
+                continue
+            elif channel.process_end_time:
+                end = time_to_datetime(
                     float_to_time(
                         channel.process_end_time,
-                        tz=channel.process_end_time_tz,
                     ),
+                    tz=channel.process_end_time_tz,
                 )
+                while end < fields.Datetime.now():
+                    end += timedelta(days=1)
                 channel.process_end_date = end
-            elif channel.state == "asleep":
+            else:
                 channel.process_end_date = False
 
     @api.depends("warehouse_id.partner_id.tz")
