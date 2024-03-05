@@ -25,3 +25,13 @@ class StockMove(models.Model):
         if pickings:
             pickings._delay_assign_release_channel()
         return moves
+
+    def _release_get_expected_date(self):
+        """Return the new scheduled date of a single delivery move"""
+        channel = self.picking_id.release_channel_id
+        if not channel:
+            return super()._release_get_expected_date()
+        expected_date = channel._get_expected_date()
+        if not expected_date:
+            return super()._release_get_expected_date()
+        return expected_date
