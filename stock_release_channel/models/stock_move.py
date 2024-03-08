@@ -16,7 +16,11 @@ class StockMove(models.Model):
         # As moves can be merged (and then unlinked), we should ensure
         # they still exist.
         moves = self.exists()
-        moves.picking_id.assign_release_channel()
+        # Base on the flag that was configued on the Company,
+        # we decide to recompute the release channel after released picking
+        company = self.env.company
+        if company.recompute_release_channel_after_released:
+            moves.picking_id.assign_release_channel()
         return res
 
     def _action_confirm(self, merge=True, merge_into=False):

@@ -19,6 +19,7 @@
         "views/res_partner.xml",
         "views/stock_release_channel_views.xml",
         "views/stock_picking_views.xml",
+        "views/res_company.xml",
         "data/queue_job_data.xml",
         "data/ir_cron_data.xml",
         "security/stock_release_channel.xml",
