@@ -13,3 +13,8 @@ class ResCompany(models.Model):
         "and show transfer date",
         default=True,
     )
+    recompute_release_channel_after_released = fields.Boolean(
+        string="Recompute Release Channel After Released",
+        help="Will automatically recompute release channel on the picking after released",
+        default=True
+    )
