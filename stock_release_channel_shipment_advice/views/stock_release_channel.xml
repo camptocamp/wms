@@ -65,6 +65,26 @@
                     <span>Plan Shipment</span>
                 </button>
             </xpath>
+            <xpath expr="//div[@name='dropdown-menu-right-panel']" position="inside">
+                <t>
+                    <div role="menuitem">
+                        <a
+                            name="action_print_shipment"
+                            type="object"
+                            icon="fa-archive"
+                        >Print Shipment</a>
+                    </div>
+                </t>
+                <t>
+                    <div role="menuitem">
+                        <a
+                            name="action_print_deliveryslip"
+                            type="object"
+                            icon="fa-truck"
+                        >Print Deliveries</a>
+                    </div>
+                </t>
+            </xpath>
         </field>
     </record>
 
