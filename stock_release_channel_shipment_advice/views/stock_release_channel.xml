@@ -72,7 +72,7 @@
                             name="action_print_shipment"
                             type="object"
                             icon="fa-archive"
-                        >Print Shipment</a>
+                        ><span class="ms-2">Print Shipment</span></a>
                     </div>
                 </t>
                 <t>
@@ -81,7 +81,7 @@
                             name="action_print_deliveryslip"
                             type="object"
                             icon="fa-truck"
-                        >Print Deliveries</a>
+                        ><span class="ms-2">Print Deliveries</span></a>
                     </div>
                 </t>
             </xpath>
