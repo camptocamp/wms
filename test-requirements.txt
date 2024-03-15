@@ -1,0 +1,3 @@
+# OCA/wms
+odoo-addon-stock-release-channel-process-end-time @ git+https://github.com/OCA/wms.git@refs/pull/550/head#subdirectory=setup/stock_release_channel_process_end_time
+odoo-addon-stock-release-channel-plan @ git+https://github.com/OCA/wms.git@refs/pull/695/head#subdirectory=setup/stock_release_channel_plan
