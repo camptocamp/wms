@@ -7,6 +7,8 @@
 import {ScenarioBaseMixin} from "/shopfloor_mobile_base/static/wms/src/scenario/mixins.js";
 import {process_registry} from "/shopfloor_mobile_base/static/wms/src/services/process_registry.js";
 
+// TODO: consider replacing the dynamic "autofocus" in the searchbar by an event.
+// At the moment, we need autofocus to be disabled if there's a user popup.
 const ClusterPicking = {
     mixins: [ScenarioBaseMixin],
     template: `
@@ -18,6 +20,7 @@ const ClusterPicking = {
                 v-if="state.on_scan"
                 v-on:found="on_scan"
                 :input_placeholder="search_input_placeholder"
+                :autofocus="!screen_info.user_popup"
                 />
             <get-work
                 v-if="state_is('start')"
@@ -30,6 +33,9 @@ const ClusterPicking = {
                 v-on:confirm="state.on_confirm"
                 v-on:cancel="state.on_cancel"
                 />
+            <v-alert type="info" tile v-if="state_is('start_line') && state.data.picking.note" class="packing-info">
+                <p v-text="state.data.picking.note" />
+            </v-alert>
             <batch-picking-line-detail
                 v-if="state_in(['start_line', 'scan_destination', 'change_pack_lot', 'stock_issue'])"
                 :line="state.data"

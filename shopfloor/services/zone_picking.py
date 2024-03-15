@@ -667,12 +667,15 @@ class ZonePicking(Component):
                 )
             else:
                 change_package_lot = self._actions_for("change.package.lot")
+                move_line = first(move_lines)
                 response = change_package_lot.change_package(
-                    first(move_lines),
+                    move_line,
                     package,
-                    # FIXME we may need to pass the quantity being done
-                    self._response_for_set_line_destination,
-                    self._response_for_change_pack_lot,
+                    response_ok_func=functools.partial(
+                        self._response_for_set_line_destination,
+                        qty_done=self._get_prefill_qty(move_line, qty=0),
+                    ),
+                    response_error_func=self._response_for_change_pack_lot,
                 )
         else:
             response = self._list_move_lines(sublocation or self.zone_location)
@@ -959,7 +962,11 @@ class ZonePicking(Component):
 
         location_changed = True
         # Zero check
-        zero_check = self.picking_type.shopfloor_zero_check
+        # Only apply zero check if the product is of type "product".
+        zero_check = (
+            move_line.product_id.type == "product"
+            and self.picking_type.shopfloor_zero_check
+        )
         if zero_check and move_line.location_id.planned_qty_in_location_is_empty():
             response = self._response_for_zero_check(move_line)
         return (location_changed, response)
@@ -1042,7 +1049,11 @@ class ZonePicking(Component):
             return (package_changed, response)
         package_changed = True
         # Zero check
-        zero_check = self.picking_type.shopfloor_zero_check
+        # Only apply zero check if the product is of type "product".
+        zero_check = (
+            move_line.product_id.type == "product"
+            and self.picking_type.shopfloor_zero_check
+        )
         if zero_check and move_line.location_id.planned_qty_in_location_is_empty():
             response = self._response_for_zero_check(move_line)
         return (package_changed, response)
@@ -1434,7 +1445,10 @@ class ZonePicking(Component):
         # pre-configured callable used to generate the response as the
         # change.package.lot component is not aware of the needed response type
         # and related parameters for zone picking scenario
-        response_ok_func = functools.partial(self._response_for_set_line_destination)
+        response_ok_func = functools.partial(
+            self._response_for_set_line_destination,
+            qty_done=self._get_prefill_qty(move_line),
+        )
         response_error_func = functools.partial(self._response_for_change_pack_lot)
         response = None
         change_package_lot = self._actions_for("change.package.lot")

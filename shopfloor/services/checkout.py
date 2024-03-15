@@ -103,21 +103,12 @@ class Checkout(Component):
             data={
                 "selected_move_lines": self._data_for_move_lines(lines.sorted()),
                 "picking": self.data.picking(picking),
-                "packing_info": self._data_for_packing_info(picking),
                 "no_package_enabled": not self.options.get(
                     "checkout__disable_no_package"
                 ),
             },
             message=message,
         )
-
-    def _data_for_packing_info(self, picking):
-        """Return the packing information
-
-        Intended to be extended.
-        """
-        # TODO: This could be avoided if included in the picking parser.
-        return ""
 
     def _response_for_select_dest_package(self, picking, move_lines, message=None):
         packages = picking.mapped("move_line_ids.result_package_id").filtered(
@@ -363,7 +354,7 @@ class Checkout(Component):
         ]
 
     def _order_for_list_stock_picking(self):
-        return "scheduled_date asc, id asc"
+        return "priority desc, scheduled_date asc, id asc"
 
     def list_stock_picking(self):
         """List stock.picking records available
@@ -1478,11 +1469,8 @@ class Checkout(Component):
                     },
                 )
         lines_done = self._lines_checkout_done(picking)
-        dest_location = picking.location_dest_id
-        child_locations = self.env["stock.location"].search(
-            [("id", "child_of", dest_location.id), ("usage", "!=", "view")]
-        )
-        if len(child_locations) > 0 and child_locations != dest_location:
+        dest_location = lines_done.move_id.location_dest_id
+        if len(dest_location) != 1 or dest_location.usage == "view":
             return self._response_for_select_child_location(
                 picking,
             )

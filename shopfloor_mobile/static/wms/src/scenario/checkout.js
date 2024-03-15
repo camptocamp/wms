@@ -76,8 +76,8 @@ const Checkout = {
             </div>
 
             <div v-if="state_is('select_package')">
-                <v-alert type="info" tile v-if="state.data.packing_info" class="packing-info">
-                    <p v-text="state.data.packing_info" />
+                <v-alert type="info" tile v-if="state.data.picking.note" class="packing-info">
+                    <p v-text="state.data.picking.note" />
                 </v-alert>
                 <item-detail-card
                     v-if="state.data.picking.carrier"
@@ -293,6 +293,20 @@ const Checkout = {
                         {path: "origin"},
                         {path: "carrier.name", label: "Carrier"},
                         {path: "move_line_count", label: "Lines"},
+                        {
+                            path: "priority",
+                            render_component: "priority-widget",
+                            render_options: function (record) {
+                                const priority = parseInt(record.priority);
+                                // We need to pass the label to the component as an option instead of using "display_no_value"
+                                // because pickings with no priority will still have a string value of "0"
+                                // and the label would always be displayed.
+                                return {
+                                    priority,
+                                    label: priority ? "Priority: " : null,
+                                };
+                            },
+                        },
                     ],
                 },
             };
