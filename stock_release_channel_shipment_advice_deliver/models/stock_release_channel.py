@@ -234,6 +234,12 @@ class StockReleaseChannel(models.Model):
         else:
             self._plan_shipments()
 
+    def action_sleep(self):
+        self.in_process_shipment_advice_ids.write(
+            {"in_release_channel_auto_process": False}
+        )
+        return super().action_sleep()
+
     def _shipment_advice_auto_process_notify_success(self):
         self.ensure_one()
         shipment_states = set(self.in_process_shipment_advice_ids.mapped("state"))
