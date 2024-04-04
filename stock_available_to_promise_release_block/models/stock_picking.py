@@ -22,17 +22,11 @@ class StockPicking(models.Model):
         compute="_compute_release_blocked_label",
     )
 
-    @api.depends(
-        "move_ids.rule_id.available_to_promise_defer_pull",
-        "release_blocked",
-        "state",
-    )
+    @api.depends("need_release", "release_blocked", "state")
     def _compute_block_release_allowed(self):
         for rec in self:
-            rules = rec.move_ids.rule_id
-            release_enabled = any(rules.mapped("available_to_promise_defer_pull"))
             rec.block_release_allowed = (
-                release_enabled
+                rec.need_release
                 and not rec.release_blocked
                 and rec.state in ("confirmed", "waiting")
             )

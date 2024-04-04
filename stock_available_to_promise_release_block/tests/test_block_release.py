@@ -17,6 +17,7 @@ class TestBlockRelease(BlockReleaseCommon):
         # Moves are ready to be released, nothing is blocked
         self.assertTrue(picking.move_ids[0].release_ready)
         self.assertTrue(picking.move_ids[1].release_ready)
+        self.assertTrue(picking.need_release)
         self.assertTrue(picking.release_ready)
         self.assertFalse(picking.release_blocked)
         # Block one of the move: the transfer is still ready to be released and
@@ -24,6 +25,7 @@ class TestBlockRelease(BlockReleaseCommon):
         picking.move_ids[0].action_block_release()
         self.assertFalse(picking.move_ids[0].release_ready)
         self.assertTrue(picking.move_ids[1].release_ready)
+        self.assertTrue(picking.need_release)
         self.assertTrue(picking.release_ready)
         self.assertFalse(picking.release_blocked)
         # Block the remaining move: the transfer is not release ready anymore
@@ -31,12 +33,14 @@ class TestBlockRelease(BlockReleaseCommon):
         picking.move_ids[1].action_block_release()
         self.assertFalse(picking.move_ids[0].release_ready)
         self.assertFalse(picking.move_ids[1].release_ready)
+        self.assertTrue(picking.need_release)
         self.assertFalse(picking.release_ready)
         self.assertTrue(picking.release_blocked)
         # Unblock it
         picking.action_unblock_release()
         self.assertTrue(picking.move_ids[0].release_ready)
         self.assertTrue(picking.move_ids[1].release_ready)
+        self.assertTrue(picking.need_release)
         self.assertTrue(picking.release_ready)
         self.assertFalse(picking.release_blocked)
 
@@ -48,10 +52,11 @@ class TestBlockRelease(BlockReleaseCommon):
             )
         )
         # We can block the release even if the transfer is not ready
+        self.assertTrue(picking.need_release)
         self.assertFalse(picking.release_ready)
         self.assertTrue(picking.block_release_allowed)
-        # If we disable the release feature, we cannot block it anymore
-        self.wh.delivery_route_id.available_to_promise_defer_pull = False
+        # If moves do not need to be released, we cannot block the transfer
+        picking.move_ids.need_release = False
         self.assertFalse(picking.block_release_allowed)
 
     def test_autoblock_release_on_backorder(self):
