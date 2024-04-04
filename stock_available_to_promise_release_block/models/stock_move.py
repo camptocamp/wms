@@ -2,13 +2,22 @@
 # Copyright 2024 Camptocamp SA
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import _, api, fields, models
 
 
 class StockMove(models.Model):
     _inherit = "stock.move"
 
     release_blocked = fields.Boolean(readonly=True)
+    release_blocked_label = fields.Char(
+        string="Release Blocked",
+        compute="_compute_release_blocked_label",
+    )
+
+    @api.depends("release_blocked")
+    def _compute_release_blocked_label(self):
+        for rec in self:
+            rec.release_blocked_label = _("Blocked") if rec.release_blocked else ""
 
     def _get_release_ready_depends(self):
         depends = super()._get_release_ready_depends()

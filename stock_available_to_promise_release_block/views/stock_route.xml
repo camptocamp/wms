@@ -12,7 +12,10 @@
         />
         <field name="arch" type="xml">
             <field name="no_backorder_at_release" position="after">
-                <field name="autoblock_release_on_backorder" />
+                <field
+                    name="autoblock_release_on_backorder"
+                    attrs="{'invisible': [('available_to_promise_defer_pull', '=', False)]}"
+                />
             </field>
         </field>
     </record>
