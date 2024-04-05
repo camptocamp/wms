@@ -3,18 +3,20 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 {
-    "name": "Stock Available to Promise Release - Block from Sale",
-    "summary": """Block release of deliveries from sale orders.""",
+    "name": "Stock Available to Promise Release - Block from Sales",
+    "summary": """Block release of deliveries from sales orders.""",
     "version": "16.0.1.0.0",
     "license": "AGPL-3",
     "author": "Camptcamp, ACSONE SA/NV, BCIM, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/wms",
     "depends": [
-        # core
-        "sale_stock",
         # OCA/wms
+        "sale_stock_available_to_promise_release",
         "stock_available_to_promise_release_block",
     ],
-    "data": ["views/sale_order.xml"],
+    "data": [
+        "views/sale_order.xml",
+        # "views/sale_order_line.xml",
+    ],
     "installable": True,
 }
