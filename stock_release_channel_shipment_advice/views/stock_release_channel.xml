@@ -66,6 +66,30 @@
                     </div>
                 </t>
             </xpath>
+            <xpath expr="//div[@name='dropdown-menu-right-panel']" position="inside">
+                <field name="is_action_print_shipment_allowed" invisible="1" />
+                <div role="menuitem" class="o_kanban_card_manage_title">
+                     <span>Print</span>
+                </div>
+                <t t-if="record.is_action_print_shipment_allowed.raw_value">
+                    <div role="menuitem">
+                        <a
+                            name="action_print_shipment"
+                            type="object"
+                            icon="fa-archive"
+                        ><span class="ms-2">Print Shipment</span></a>
+                    </div>
+                </t>
+                <t t-if="record.is_action_print_shipment_allowed.raw_value">
+                    <div role="menuitem">
+                        <a
+                            name="action_print_deliveryslip"
+                            type="object"
+                            icon="fa-truck"
+                        ><span class="ms-2">Print Deliveries</span></a>
+                    </div>
+                </t>
+            </xpath>
         </field>
     </record>
 
