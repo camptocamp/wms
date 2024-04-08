@@ -61,6 +61,9 @@ class StockMove(models.Model):
                 iterator = move._get_chained_moves_iterator("move_orig_ids")
                 next(iterator)  # skip the current move
                 for origin_moves in iterator:
+                    origin_moves = origin_moves.filtered(
+                        lambda m: m.state not in ("done", "cancel")
+                    )
                     unrelease_allowed = move._is_unrelease_allowed_on_origin_moves(
                         origin_moves
                     )
@@ -98,9 +101,6 @@ class StockMove(models.Model):
             # The picking is printed, we can't unrelease the move
             # because the processing of the origin moves is started.
             return False
-        origin_moves = origin_moves.filtered(
-            lambda m: m.state not in ("done", "cancel")
-        )
         origin_qty_todo = sum(origin_moves.mapped("product_qty"))
         return (
             float_compare(
