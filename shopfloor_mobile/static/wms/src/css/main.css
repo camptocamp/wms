@@ -81,7 +81,9 @@ I tested only w/ checkout/select_package for now
     right: 5px;
 }
 
-.qty-picker-packaging-icon {
-    width: 30px;
-    height: 30px;
+/*
+Split the lines correctly in the picking note if there are multiple lines
+*/
+.picking-note {
+    white-space: pre-line;
 }
