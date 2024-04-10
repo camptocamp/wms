@@ -71,3 +71,10 @@ I tested only w/ checkout/select_package for now
     top: 5px;
     right: 5px;
 }
+
+/*
+Split the lines correctly in the picking note if there are multiple lines
+*/
+.picking-note {
+    white-space: pre-line;
+}
