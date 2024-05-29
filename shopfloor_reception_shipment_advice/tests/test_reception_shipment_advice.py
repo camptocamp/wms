@@ -1,6 +1,7 @@
 # Copyright 2023 Camptocamp SA (http://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
+from datetime import timedelta
 from odoo import fields
 
 from odoo.addons.shipment_advice.tests.common import Common
@@ -200,5 +201,110 @@ class ShopfloorReceptionShipmentAdvice(CommonCase, Common):
                 "picking": self.data.picking(self.picking),
                 "selected_move_line": self.data.move_lines(selected_move_line),
                 "confirmation_required": None,
+            },
+        )
+
+    def test_auto_post_line(self):
+        picking = self._create_picking(
+            scheduled_date=fields.Datetime.today() + timedelta(days=1)
+        )
+        move_line_a = picking.move_line_ids.filtered(
+            lambda l: l.product_id == self.product_a
+        )
+        move_line_a.write(
+            {
+                "shipment_advice_id": self.shipment_advice_in,
+                "qty_done": 10.0,
+            }
+        )
+        move_line_b = picking.move_line_ids.filtered(
+            lambda l: l.product_id == self.product_b
+        )
+        shipment_advice_in_2 = self.env["shipment.advice"].create(
+            {"shipment_type": "incoming"}
+        )
+        move_line_b.write(
+            {
+                "shipment_advice_id": shipment_advice_in_2,
+                "qty_done": 10.0,
+            }
+        )
+        self.assertEqual(move_line_a.shipment_advice_id.state, "confirmed")
+        self.assertEqual(move_line_b.shipment_advice_id.state, "draft")
+        self.assertEqual(picking.state, "assigned")
+        # Auto posting line a, shipment for line a should be done
+        self.service._auto_post_line(move_line_a)
+        self.assertEqual(move_line_a.shipment_advice_id.state, "done")
+        self.assertEqual(move_line_b.shipment_advice_id.state, "draft")
+        self.assertEqual(picking.state, "assigned")
+        # Auto posting line b, shipment for line b should be done
+        # When likes are posted, picking should be done too
+        self.service._auto_post_line(move_line_b)
+        self.assertEqual(move_line_a.shipment_advice_id.state, "done")
+        self.assertEqual(move_line_b.shipment_advice_id.state, "done")
+        self.assertEqual(picking.state, "done")
+
+    def test_handle_backorder(self):
+        picking = self._create_picking(
+            scheduled_date=fields.Datetime.today() + timedelta(days=1)
+        )
+        picking_due_today = self._create_picking(scheduled_date=fields.Datetime.today())
+        selected_move_line = picking.move_line_ids.filtered(
+            lambda l: l.product_id == self.product_a
+        )
+        selected_move_line.write(
+            {
+                "shipment_advice_id": self.shipment_advice_in,
+                "qty_done": 10.0,
+            }
+        )
+        unselected_move_line = picking.move_line_ids.filtered(
+            lambda l: l.product_id == self.product_b
+        )
+        shipment_advice_in_2 = self.env["shipment.advice"].create(
+            {"shipment_type": "incoming"}
+        )
+        unselected_move_line.write(
+            {
+                "shipment_advice_id": shipment_advice_in_2,
+            }
+        )
+        self.assertEqual(unselected_move_line.shipment_advice_id.state, "draft")
+        response = self.service.dispatch(
+            "done_action", params={"picking_id": picking.id}
+        )
+        # Checking if we get msg about creating backorder
+        self.assert_response(
+            response,
+            next_state="confirm_done",
+            data={"picking": self._data_for_picking_with_moves(picking)},
+            message={
+                "message_type": "warning",
+                "body": (
+                    "Not all lines have been processed with full quantity. "
+                    "Do you confirm partial operation?"
+                ),
+            },
+        )
+        self.assertEqual(selected_move_line.shipment_advice_id.state, "confirmed")
+        self.assertEqual(unselected_move_line.shipment_advice_id.state, "draft")
+        # On dispatch, we trigger done_action, which sets selected_move_line
+        # shipment_advice to "done" state if shipment is fully done
+        response = self.service.dispatch(
+            "done_action", params={"picking_id": picking.id, "confirmation": True}
+        )
+        self.assertEqual(selected_move_line.shipment_advice_id.state, "done")
+        self.assertEqual(picking.state, "done")
+        # Running backorder flow
+        backorder = picking.backorder_ids
+        self.assertEqual(backorder.move_line_ids.product_id, self.product_b)
+        self.assertEqual(unselected_move_line.shipment_advice_id.state, "draft")
+        self.assert_response(
+            response,
+            next_state="select_document",
+            data={"pickings": self._data_for_pickings(picking_due_today)},
+            message={
+                "message_type": "success",
+                "body": f"Transfer {picking.name} done",
             },
         )

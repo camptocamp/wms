@@ -174,6 +174,16 @@ class Reception(Component):
         message = self.msg_store.barcode_not_found()
         return self._response_for_select_move(None, message=message)
 
+    def _auto_post_line(self, selected_line):
+        super()._auto_post_line(selected_line)
+        if selected_line.shipment_advice_id:
+            selected_line.shipment_advice_id.validate_when_fully_done()
+
+    def _handle_backorder(self, picking, cancel_backorder=False):
+        super()._handle_backorder(picking, cancel_backorder)
+        if picking.loaded_shipment_advice_ids:
+            picking.loaded_shipment_advice_ids.validate_when_fully_done()
+
 
 class ShopfloorReceptionValidator(Component):
     _inherit = "shopfloor.reception.validator"
