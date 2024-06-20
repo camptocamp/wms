@@ -16,7 +16,7 @@ class StockReleaseChannel(models.Model):
             "done",
         ):
             return
-        sale_channel = picking.group_id.release_channel_id
+        sale_channel = picking.sale_id.release_channel_id
         if sale_channel:
             picking.release_channel_id = sale_channel
             return ""
