@@ -11,11 +11,13 @@
     "website": "https://github.com/OCA/wms",
     "depends": [
         # core
+        "sales_team",
         "sale_stock",
         # OCA/wms
         "stock_release_channel",
     ],
     "data": [
+        "security/ir_model_access.xml",
         "views/sale_order.xml",
     ],
     "installable": True,

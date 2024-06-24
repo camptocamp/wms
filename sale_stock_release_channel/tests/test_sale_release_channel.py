@@ -5,7 +5,7 @@ from .common import SaleReleaseChannelCase
 
 
 class TestSaleReleaseChannel(SaleReleaseChannelCase):
-    def test_sale_release_channel(self):
+    def test_sale_release_channel_auto(self):
         # Without channel: delivery gets automatically the default release channel
         order_auto_channel = self._create_sale_order()
         order_auto_channel.action_confirm()
@@ -13,6 +13,8 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
         self.assertFalse(picking_out.release_channel_id)
         self.env["stock.release.channel"].assign_release_channel(picking_out)
         self.assertEqual(picking_out.release_channel_id, self.default_channel)
+
+    def test_sale_release_channel_preferred(self):
         # Force the channel on order
         order_force_channel = self._create_sale_order(channel=self.test_channel)
         order_force_channel.action_confirm()

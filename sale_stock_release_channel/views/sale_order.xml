@@ -9,7 +9,30 @@
     <field name="inherit_id" ref="sale.view_order_form" />
     <field name="arch" type="xml">
       <xpath expr="//group[@name='sale_shipping']" position="inside">
-        <field name="release_channel_id" />
+        <!-- partner_shipping_id is readable only by group_delivery_invoice_address -->
+        <separator
+                    name="preferred_release_channels"
+                    string="Preferred Release Channels"
+                    groups="account.group_delivery_invoice_address"
+                />
+        <field
+                    name="preferred_release_channel_ids"
+                    nolabel="1"
+                    colspan="2"
+                    domain="warehouse_id and ['|', ('release_channel_id.warehouse_id', '=', warehouse_id), ('warehouse_id', '=', False)]"
+                    groups="account.group_delivery_invoice_address"
+                    context="{'default_partner_id': partner_shipping_id, 'default_date': commitment_date or expected_date}"
+                >
+          <tree editable="top">
+            <field name="partner_id" invisible="1" force_save="1" />
+            <field
+                            name="release_channel_id"
+                            options="{'no_create': True}"
+                            domain="parent.warehouse_id and ['|', ('warehouse_id', '=', parent.warehouse_id), ('warehouse_id', '=', False)]"
+                        />
+            <field name="date" />
+          </tree>
+        </field>
       </xpath>
     </field>
   </record>
