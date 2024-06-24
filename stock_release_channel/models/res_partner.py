@@ -15,3 +15,9 @@ class ResPartner(models.Model):
         column2="channel_id",
         string="Release Channels",
     )
+    preferred_release_channel_ids = fields.One2many(
+        comodel_name="stock.preferred.release.channel",
+        inverse_name="partner_id",
+        string="Preferred Release Channels by delivery date",
+        help="Preferred Release Channel for a delivery date.",
+    )
