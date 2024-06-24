@@ -120,10 +120,21 @@ class StockPicking(models.Model):
             "|",
             ("warehouse_id", "=", False),
             ("warehouse_id", "=", self.picking_type_id.warehouse_id.id),
+        ]
+
+    def _get_release_channel_possible_candidate_domain_partners(self):
+        return [
             "|",
             ("partner_ids", "=", False),
             ("partner_ids", "in", self.partner_id.ids),
         ]
+
+    def _inject_possible_candidate_domain_partners(self):
+        """Hooks that could be overridden.
+
+        Return a boolean.
+        """
+        return True
 
     def _get_release_channel_possible_candidate_domain(self):
         self.ensure_one()
