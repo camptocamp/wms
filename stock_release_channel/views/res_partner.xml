@@ -18,6 +18,25 @@
                             name="stock_release_channel_ids"
                             widget="many2many_tags"
                         />
+                        <label
+                            name="preferred_release_channel_ids"
+                            for="preferred_release_channel_ids"
+                            colspan="2"
+                        />
+                        <field
+                            name="preferred_release_channel_ids"
+                            nolabel="1"
+                            colspan="2"
+                        >
+                          <tree editable="top">
+                            <field name="partner_id" invisible="1" force_save="1" />
+                            <field
+                                    name="release_channel_id"
+                                    options="{'no_create': True}"
+                                />
+                            <field name="date" />
+                          </tree>
+                        </field>
                     </group>
                 </group>
             </xpath>
