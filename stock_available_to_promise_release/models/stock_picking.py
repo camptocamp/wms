@@ -35,6 +35,12 @@ class StockPicking(models.Model):
         help="It specifies how to release a transfer partially or all at once",
     )
 
+    def copy(self, default=None):
+        default = dict(default or {})
+        # Do not copy last release date on backorders
+        default["last_release_date"] = False
+        return super().copy(default)
+
     @api.depends("move_ids.need_release")
     def _compute_need_release(self):
         data = self.env["stock.move"].read_group(
