@@ -1,6 +1,7 @@
 # Copyright 2020 Camptocamp (https://www.camptocamp.com)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
+from odoo import fields
 
 from .common import ReleaseChannelCase
 
@@ -32,26 +33,44 @@ class TestReleaseChannelPartner(ReleaseChannelCase):
         cls.moves = cls.move + cls.move2
 
     def test_00(self):
-        """partner release channel is higher priority than other channels"""
+        """partner preferred release channel is higher priority than other channels"""
+        delivery_date_channel = self.partner_channel.copy({"name": "Preferred Channel"})
+        delivery_date_channel.action_wake_up()
+        delivery_date = fields.Datetime.now()
+        self.move.picking_id.date_deadline = delivery_date
+        pref_rc = self.env["stock.preferred.release.channel"]
+        self.partner.preferred_release_channel_ids = pref_rc.create(
+            {
+                "partner_id": self.partner.id,
+                "release_channel_id": delivery_date_channel.id,
+                "date": delivery_date,
+            }
+        )
+        self.moves.picking_id.assign_release_channel()
+        self.assertEqual(self.move.picking_id.release_channel_id, delivery_date_channel)
+        self.assertEqual(self.move2.picking_id.release_channel_id, self.other_channel)
+
+    def test_01(self):
+        """partner default release channel is second higher priority"""
         self.moves.picking_id.assign_release_channel()
         self.assertEqual(self.move.picking_id.release_channel_id, self.partner_channel)
         self.assertEqual(self.move2.picking_id.release_channel_id, self.other_channel)
 
-    def test_01(self):
+    def test_02(self):
         """partner channel is not assigned if isn't active"""
         self.partner_channel.active = False
         self.moves.picking_id.assign_release_channel()
         self.assertEqual(self.move.picking_id.release_channel_id, self.other_channel)
         self.assertEqual(self.move2.picking_id.release_channel_id, self.other_channel)
 
-    def test_02(self):
+    def test_03(self):
         """partner channel is not assigned if it's asleep"""
         self.partner_channel.state = "asleep"
         self.moves.picking_id.assign_release_channel()
         self.assertEqual(self.move.picking_id.release_channel_id, self.other_channel)
         self.assertEqual(self.move2.picking_id.release_channel_id, self.other_channel)
 
-    def test_03(self):
+    def test_04(self):
         """partner channel is assigned considering the sequence"""
         partner_channel_low_sequence = self._create_channel(
             name="Partner channel",
@@ -64,7 +83,7 @@ class TestReleaseChannelPartner(ReleaseChannelCase):
             self.move.picking_id.release_channel_id, partner_channel_low_sequence
         )
 
-    def test_04(self):
+    def test_05(self):
         """partner channel is assigned considering the sequence"""
         partner_channel_low_sequence = self._create_channel(
             name="Partner channel",

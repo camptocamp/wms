@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
 from odoo import _, exceptions, fields, models
+from odoo.osv import expression
 
 from odoo.addons.queue_job.job import identity_exact
 
@@ -106,9 +107,23 @@ class StockPicking(models.Model):
             .sorted(key=lambda r: (not bool(r.partner_ids), r.sequence))
         )
 
+    def _get_preferred_release_channel_domain(self):
+        assert self.date_deadline
+        return [
+            ("partner_id", "=", self.partner_id.id),
+            ("date", "=", self.date_deadline.date()),
+        ]
+
+    def _get_release_channel_possible_candidate_domain_partners(self):
+        return [
+            "|",
+            ("partner_ids", "=", False),
+            ("partner_ids", "in", self.partner_id.ids),
+        ]
+
     def _get_release_channel_possible_candidate_domain(self):
         self.ensure_one()
-        return [
+        domain = [
             ("is_manual_assignment", "=", False),
             ("state", "!=", "asleep"),
             "|",
@@ -117,7 +132,19 @@ class StockPicking(models.Model):
             "|",
             ("warehouse_id", "=", False),
             ("warehouse_id", "=", self.picking_type_id.warehouse_id.id),
-            "|",
-            ("partner_ids", "=", False),
-            ("partner_ids", "in", self.partner_id.ids),
         ]
+        # Look for a preferred release channel at first
+        preferred_rc_domain = None
+        if self.date_deadline:
+            preferred_rc = self.env["stock.preferred.release.channel"].search(
+                self._get_preferred_release_channel_domain(), limit=1
+            )
+            if preferred_rc:
+                preferred_rc_domain = [("id", "=", preferred_rc.release_channel_id.id)]
+        if preferred_rc_domain:
+            domain = expression.AND([domain, preferred_rc_domain])
+        else:
+            domain.extend(
+                self._get_release_channel_possible_candidate_domain_partners()
+            )
+        return domain
