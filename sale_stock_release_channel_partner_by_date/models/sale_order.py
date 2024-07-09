@@ -30,6 +30,8 @@ class SaleOrder(models.Model):
     def _inverse_release_channel_id(self):
         channel_date_model = self.env["stock.release.channel.partner.date"]
         for rec in self:
+            if not rec.release_channel_id:
+                continue
             if not rec.partner_shipping_id:
                 raise UserError(
                     _("A customer and shipping address has to be set " "first please.")
