@@ -106,9 +106,23 @@ class StockPicking(models.Model):
             .sorted(key=lambda r: (not bool(r.partner_ids), r.sequence))
         )
 
+    def _get_release_channel_possible_candidate_domain_partners(self):
+        return [
+            "|",
+            ("partner_ids", "=", False),
+            ("partner_ids", "in", self.partner_id.ids),
+        ]
+
+    def _inject_possible_candidate_domain_partners(self):
+        """Hooks that could be overridden.
+
+        Return a boolean.
+        """
+        return True
+
     def _get_release_channel_possible_candidate_domain(self):
         self.ensure_one()
-        return [
+        domain = [
             ("is_manual_assignment", "=", False),
             ("state", "!=", "asleep"),
             "|",
@@ -117,7 +131,9 @@ class StockPicking(models.Model):
             "|",
             ("warehouse_id", "=", False),
             ("warehouse_id", "=", self.picking_type_id.warehouse_id.id),
-            "|",
-            ("partner_ids", "=", False),
-            ("partner_ids", "in", self.partner_id.ids),
         ]
+        if self._inject_possible_candidate_domain_partners():
+            domain.extend(
+                self._get_release_channel_possible_candidate_domain_partners()
+            )
+        return domain
