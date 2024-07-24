@@ -21,7 +21,7 @@ class SaleOrder(models.Model):
     def _compute_release_channel_id(self):
         for rec in self:
             rec.release_channel_id = False
-            domain = self._get_release_channel_partner_date_domain()
+            domain = rec._get_release_channel_partner_date_domain()
             if not domain:
                 continue
             channel_date = self.env["stock.release.channel.partner.date"].search(domain)
