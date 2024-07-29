@@ -40,6 +40,15 @@ class SaleOrder(models.Model):
             delivery_date = date_ and date_.date()
             if not delivery_date:
                 raise UserError(_("No delivery or expected date defined."))
+            # Remove any existing specific channel entry
+            # for the current delivery address and date
+            existing_channel_date = channel_date_model.search(
+                [
+                    ("partner_id", "=", rec.partner_shipping_id.id),
+                    ("date", "=", delivery_date),
+                ]
+            )
+            existing_channel_date.unlink()
             if rec.release_channel_id:
                 channel_date_model.create(
                     {

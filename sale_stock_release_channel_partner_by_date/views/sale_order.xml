@@ -9,7 +9,10 @@
     <field name="inherit_id" ref="sale.view_order_form" />
     <field name="arch" type="xml">
       <xpath expr="//group[@name='sale_shipping']" position="inside">
-        <field name="release_channel_id" />
+        <field
+                    name="release_channel_id"
+                    attrs="{'readonly': [('state', 'in', ['sale', 'done'])]}"
+                />
       </xpath>
     </field>
   </record>
