@@ -8,9 +8,9 @@ class StockPicking(models.Model):
 
     _inherit = "stock.picking"
 
-    def _get_release_channel_possible_candidate_domain(self):
+    def _get_release_channel_possible_candidate_domain_partners(self):
         self.ensure_one()
-        domain = super()._get_release_channel_possible_candidate_domain()
+        domain = super()._get_release_channel_possible_candidate_domain_partners()
         if self.partner_id.in_geo_release_channel:
             domain += [
                 "|",
