@@ -106,11 +106,14 @@ class StockPicking(models.Model):
             .sorted(key=lambda r: (not bool(r.partner_ids), r.sequence))
         )
 
-    def _get_release_channel_possible_candidate_domain(self):
-        self.ensure_one()
+    def _get_release_channel_possible_candidate_domain_channel(self):
         return [
             ("is_manual_assignment", "=", False),
             ("state", "!=", "asleep"),
+        ]
+
+    def _get_release_channel_possible_candidate_domain_picking(self):
+        return [
             "|",
             ("picking_type_ids", "=", False),
             ("picking_type_ids", "in", self.picking_type_id.ids),
@@ -121,3 +124,14 @@ class StockPicking(models.Model):
             ("partner_ids", "=", False),
             ("partner_ids", "in", self.partner_id.ids),
         ]
+
+    def _get_release_channel_possible_candidate_domain(self):
+        self.ensure_one()
+        channel_domain = self._get_release_channel_possible_candidate_domain_channel()
+        picking_domain = self._get_release_channel_possible_candidate_domain_picking()
+        domain = channel_domain + picking_domain
+        if self._inject_possible_candidate_domain_partners():
+            domain.extend(
+                self._get_release_channel_possible_candidate_domain_partners()
+            )
+        return domain
