@@ -6,7 +6,7 @@
     "version": "16.0.1.0.0",
     "development_status": "Beta",
     "license": "AGPL-3",
-    "author": "Camptocamp, Odoo Community Association (OCA)",
+    "author": "Camptocamp, BCIM, Odoo Community Association (OCA)",
     "maintainers": ["sebalix"],
     "website": "https://github.com/OCA/wms",
     "depends": [

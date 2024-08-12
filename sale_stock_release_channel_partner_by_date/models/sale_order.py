@@ -17,11 +17,22 @@ class SaleOrder(models.Model):
             "Specific release channel for the current delivery address based "
             "on expected delivery date."
         ),
+        domain=lambda self: self._release_channel_id_domain(),
     )
     release_channel_partner_date_id = fields.Many2one(
         comodel_name="stock.release.channel.partner.date",
         compute="_compute_release_channel_partner_date_id",
     )
+
+    def _release_channel_id_domain(self):
+        parts = ", ".join(self._release_channel_id_domain_parts())
+        __import__("pdb").set_trace()
+        return f"[{parts}]"
+
+    def _release_channel_id_domain_parts(self):
+        return [
+            "'|', ('warehouse_id', '=', False), ('warehouse_id', '=', warehouse_id)",
+        ]
 
     def _get_release_channel_id_depends(self):
         return ["commitment_date"]
@@ -59,6 +70,7 @@ class SaleOrder(models.Model):
         if not delivery_date:
             return
         return [
+            ("release_channel_id.warehouse_id", "in", [False, self.warehouse_id.id]),
             ("partner_id", "=", self.partner_shipping_id.id),
             ("date", "=", delivery_date),
         ]
@@ -85,14 +97,15 @@ class SaleOrder(models.Model):
     def _create_release_channel_partner_date(self):
         self.ensure_one()
         model = self.env["stock.release.channel.partner.date"]
-        if self.state != "sale" or not self.release_channel_id:
+        if self.state not in ("sale", "done") or not self.release_channel_id:
             return model
-        channel_dates = (
-            self.release_channel_id.release_channel_partner_date_ids.filtered_domain(
-                self._get_release_channel_partner_date_domain()
-            )
+        channel = self.release_channel_id.with_context(active_test=False)
+        channel_dates = channel.release_channel_partner_date_ids.filtered_domain(
+            self._get_release_channel_partner_date_domain()
         )
-        if not channel_dates:
+        if channel_dates:
+            channel_dates.write({"active": True})
+        else:
             values = self._prepare_release_channel_partner_date_values()
             return model.create(values)
         return model
