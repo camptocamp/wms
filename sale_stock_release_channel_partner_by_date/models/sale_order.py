@@ -141,7 +141,11 @@ class SaleOrder(models.Model):
     def _get_delivery_date(self):
         self.ensure_one()
         date = self.commitment_date or self.expected_date
-        tz = self.warehouse_id.partner_id.tz or self.env.company.partner_id.tz or "UTC"
+        tz = (
+            self.sudo().warehouse_id.partner_id.tz
+            or self.env.company.partner_id.tz
+            or "UTC"
+        )
         return (
             date
             and fields.Datetime.context_timestamp(
