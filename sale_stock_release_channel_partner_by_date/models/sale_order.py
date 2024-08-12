@@ -26,7 +26,6 @@ class SaleOrder(models.Model):
 
     def _release_channel_id_domain(self):
         parts = ", ".join(self._release_channel_id_domain_parts())
-        __import__("pdb").set_trace()
         return f"[{parts}]"
 
     def _release_channel_id_domain_parts(self):
