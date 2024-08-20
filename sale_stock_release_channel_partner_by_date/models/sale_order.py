@@ -125,18 +125,23 @@ class SaleOrder(models.Model):
             return False
         # Check if specific channel entry is used by another order
         if channel_date:
-            other_orders = self.search(
-                [
-                    ("id", "!=", self.id),
-                    ("state", "in", ("draft", "sent", "sale")),
-                    ("delivery_status", "!=", "full"),
-                    ("release_channel_id", "=", channel_date.release_channel_id.id),
-                    ("partner_shipping_id", "=", channel_date.partner_id.id),
-                ]
-            ).filtered(lambda o: o._get_delivery_date() == channel_date.date)
+            domain = self._unlink_release_channel_partner_date_domain(channel_date)
+            other_orders = self.search(domain)
+            other_orders = other_orders.filtered(
+                lambda o: o._get_delivery_date() == channel_date.date
+            )
             if not other_orders:
                 channel_date.unlink()
         return False
+
+    def _unlink_release_channel_partner_date_domain(self, channel_date):
+        return [
+            ("id", "!=", self.id),
+            ("state", "in", ("draft", "sent", "sale", "done")),
+            ("delivery_status", "!=", "full"),
+            ("release_channel_id", "=", channel_date.release_channel_id.id),
+            ("partner_shipping_id", "=", channel_date.partner_id.id),
+        ]
 
     def _get_delivery_date(self):
         self.ensure_one()

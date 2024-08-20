@@ -57,3 +57,38 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
         order2.action_confirm()
         channel_date = order2._get_release_channel_partner_date()
         self.assertEqual(channel_date.release_channel_id, order2.release_channel_id)
+
+    def test_sale_cancel_unlink_channel_date(self):
+        # Create a specific channel entry on 1st order
+        now = fields.Datetime.now()
+        order1 = self._create_sale_order(channel=self.test_channel, date=now)
+        order1.action_confirm()
+        channel_date = order1._get_release_channel_partner_date()
+        # Create a 2nd order that matches the specific channel entry
+        order2 = self._create_sale_order(date=now)
+        order2.action_confirm()
+        self.assertEqual(order2._get_release_channel_partner_date(), channel_date)
+        # Cancel the 1st order: the specific channel entry is preserved
+        order1._action_cancel()
+        self.assertTrue(channel_date.exists())
+        # Cancel the 2nd (and last) order: the specific channel entry is removed
+        order2._action_cancel()
+        self.assertFalse(channel_date.exists())
+
+    def test_sale_different_warehouses(self):
+        # Create 1st order on default warehouse
+        now = fields.Datetime.now()
+        order1 = self._create_sale_order(channel=self.test_channel, date=now)
+        wh = order1.warehouse_id
+        order1.action_confirm()
+        channel_date = order1._get_release_channel_partner_date()
+        # Create 2nd order on another warehouse
+        wh2 = wh.copy({"name": "2nd WH", "code": "WH2"})
+        order2 = self._create_sale_order(date=now, warehouse=wh2)
+        # Specific channel entry matches the 1st order as the underlying release
+        # channel is not restricted on a given warehouse
+        self.assertEqual(order2._get_release_channel_partner_date(), channel_date)
+        # Restrict the release channel to the 1st warehouse: no specific channel
+        # entry is found
+        channel_date.release_channel_id.warehouse_id = wh
+        self.assertFalse(order2._get_release_channel_partner_date())
