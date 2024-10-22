@@ -35,7 +35,7 @@ class AlcPromiseReleaseImmediatelyExcludeTest(PromiseReleaseCommonCase):
         As the bin location is marked as
         to exclude from immediately available, new picking should not be generated.
         """
-        self.shipping.move_ids.unrelease()
+        self.shipping.move_lines.unrelease()
 
         # I can release again the move and a new pick is created
         self.shipping.release_available_to_promise()
