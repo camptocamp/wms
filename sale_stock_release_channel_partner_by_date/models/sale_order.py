@@ -24,6 +24,15 @@ class SaleOrder(models.Model):
         compute="_compute_release_channel_partner_date_id",
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        order_release_channel_id = {}
+        for vals in vals_list:
+            if vals.get("release_channel_id"):
+                order_release_channel_id[vals["id"]] = vals["release_channel_id"]
+        self = self.with_context(order_release_channel_id=order_release_channel_id)
+        return super(SaleOrder, self).create(vals_list)
+
     def _release_channel_id_domain(self):
         parts = ", ".join(self._release_channel_id_domain_parts())
         return f"[{parts}]"
@@ -42,6 +51,12 @@ class SaleOrder(models.Model):
             if not rec._check_release_channel_partner_date_requirements():
                 continue
             channel_date = rec.release_channel_partner_date_id
+            forced_release_channel_id = self.env.context.get(
+                "order_release_channel_id", {}
+            ).get(rec.id)
+            if not channel_date and forced_release_channel_id:
+                rec.release_channel_id = forced_release_channel_id
+                continue
             rec.release_channel_id = channel_date.release_channel_id
 
     @api.depends(
