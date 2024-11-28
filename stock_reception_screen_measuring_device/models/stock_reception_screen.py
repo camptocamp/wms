@@ -33,7 +33,6 @@ class StockReceptionScreen(models.Model):
         help="A scan from the measuring device was requested",
         default=False,
         compute="_compute_scan_requested",
-        store=True,
     )
 
     @api.depends(
