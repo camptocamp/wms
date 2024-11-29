@@ -34,10 +34,9 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
 
     def test_sale_order_without_carrier_with_channel_date(self):
         delivery_date = fields.Datetime.now()
-        # Create one specific channel that is matching the SO even if no carrier is set
-        # FIXME: not sure about this one, to check how it should behave
+        # Create one specific channel not matching the SO regarding the carrier
         channel_date_model = self.env["stock.release.channel.partner.date"]
-        channel_date = channel_date_model.create(
+        channel_date_model.create(
             {
                 "partner_id": self.customer.id,
                 "release_channel_id": self.carrier_channel.id,
@@ -46,14 +45,13 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
         )
         order = self._create_sale_order(date=delivery_date)
         self.assertFalse(order.carrier_id)
-        self.assertEqual(order.release_channel_id, self.carrier_channel)
+        self.assertFalse(order.release_channel_id)
         order.action_confirm()
-        self.assertEqual(order.release_channel_id, self.carrier_channel)
-        self.assertEqual(order._get_release_channel_partner_date(), channel_date)
+        self.assertFalse(order.release_channel_id)
+        self.assertFalse(order._get_release_channel_partner_date())
         picking_out = order.picking_ids
         self.assertFalse(picking_out.release_channel_id)
         # Then delivery gets the default channel
-        # FIXME it's not the expected channel from the user POV
         self.env["stock.release.channel"].assign_release_channel(picking_out)
         self.assertEqual(picking_out.release_channel_id, self.default_channel)
 
@@ -114,7 +112,9 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
                 "date": delivery_date.date(),
             }
         )
-        order = self._create_sale_order(date=delivery_date)
+        order = self._create_sale_order(
+            date=delivery_date, channel=self.carrier_channel
+        )
         self.assertEqual(order.release_channel_id, self.carrier_channel)
         #   => select a carrier
         order.carrier_id = self.carrier2
@@ -144,7 +144,9 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
                 "date": delivery_date.date(),
             }
         )
-        order = self._create_sale_order(date=delivery_date)
+        order = self._create_sale_order(
+            date=delivery_date, channel=self.carrier_channel
+        )
         self.assertEqual(order.release_channel_id, self.carrier_channel)
         channel_date_model = self.env["stock.release.channel.partner.date"]
         channel_date = channel_date_model.create(
