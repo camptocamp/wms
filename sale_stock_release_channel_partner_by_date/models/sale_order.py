@@ -43,7 +43,8 @@ class SaleOrder(models.Model):
             if not domain:
                 continue
             channel_date = rec.release_channel_partner_date_id
-            rec.release_channel_id = channel_date.release_channel_id
+            if channel_date:
+                rec.release_channel_id = channel_date.release_channel_id
 
     @api.depends(
         "state",

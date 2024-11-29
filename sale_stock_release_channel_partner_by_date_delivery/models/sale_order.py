@@ -30,3 +30,12 @@ class SaleOrder(models.Model):
             ]
             domain = expression.AND([domain, carrier_domain])
         return domain
+
+    def _compute_release_channel_id(self):
+        # pylint: disable=missing-return
+        super()._compute_release_channel_id()
+        for rec in self:
+            # Selected release channel and carrier have to be compatible
+            if rec.release_channel_id.carrier_ids and rec.carrier_id:
+                if rec.carrier_id not in rec.release_channel_id.carrier_ids:
+                    rec.release_channel_id = False
