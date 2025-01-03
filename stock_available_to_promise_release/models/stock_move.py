@@ -57,8 +57,9 @@ class StockMove(models.Model):
 
     @api.depends("need_release", "rule_id", "rule_id.available_to_promise_defer_pull")
     def _compute_unrelease_allowed(self):
+        user_is_allowed = self.env.user.has_group("stock.group_stock_user")
         for move in self:
-            unrelease_allowed = move._is_unreleaseable()
+            unrelease_allowed = user_is_allowed and move._is_unreleaseable()
             if unrelease_allowed:
                 iterator = move._get_chained_moves_iterator("move_orig_ids")
                 next(iterator)  # skip the current move
@@ -79,10 +80,8 @@ class StockMove(models.Model):
         _is_unrelease_allowed_on_origin_moves.
         """
         self.ensure_one()
-        user_is_allowed = self.env.user.has_group("stock.group_stock_user")
         return (
-            user_is_allowed
-            and not self.need_release
+            not self.need_release
             and self.state not in ("done", "cancel")
             and self.picking_type_id.code == "outgoing"
             and self.rule_id.available_to_promise_defer_pull
@@ -667,9 +666,11 @@ class StockMove(models.Model):
         The loop into the iterator is the current moves.
         """
         moves = self
+        visited_moves = self.browse()
         while moves:
             yield moves
-            moves = moves.mapped(chain_field)
+            visited_moves += moves
+            moves = moves.mapped(chain_field) - visited_moves
 
     def unrelease(self, safe_unrelease=False):
         """Unrelease unreleasable moves
@@ -711,6 +712,8 @@ class StockMove(models.Model):
         for picking, moves in itertools.groupby(
             moves_to_unrelease, lambda m: m.picking_id
         ):
+            if not picking:
+                continue
             move_names = "\n".join([m.display_name for m in moves])
             body = _(
                 "The following moves have been un-released: \n%(move_names)s",
@@ -761,3 +764,56 @@ class StockMove(models.Model):
         values = super()._get_new_picking_values()
         values["release_policy"] = values["move_type"]
         return values
+
+    def write(self, vals):
+        released_moves = self.browse()
+        if self.env.context.get("in_merge_mode") and "product_uom_qty" in vals:
+            # when a move is merged, we need to unrelease it if the quantity
+            # is changed and the move is unreleasable
+            released_moves = self.filtered(lambda m: m._is_unreleaseable())
+            # a change on the product_uom_qty on a released move with quantity
+            # partially done should not be possible. The 'safe_unrelease' flag
+            # is set to False to ensure this case is checked. Nevertheless,
+            # we should never reach this point as the merge candidates are
+            # filtered out in the method _update_candidate_moves_list to never
+            # merge releaseable moves with partially done quantity.
+            released_moves.unrelease(safe_unrelease=False)
+        ret = super().write(vals)
+        if released_moves:
+            released_moves.release_available_to_promise()
+        return ret
+
+    def _is_mergeable(self):
+        self.ensure_one()
+        return self.state not in ("done", "cancel") and (
+            not self._is_unreleaseable() or self.unrelease_allowed
+        )
+
+    def _update_candidate_moves_list(self, candidate_moves):
+        # filter out the moves that are not unreleasable
+        res = super()._update_candidate_moves_list(candidate_moves)
+        # candidate_moves is a list of recordset of moves
+        # it contains one recordset per move to merge
+        # each recordset contains the moves that we want to merge (an item of self)
+        # and the candidate moves to merge into
+        new_candidate_moves = [
+            candidates.filtered(
+                lambda m, moves_to_merge=self: m in moves_to_merge or m._is_mergeable()
+            )
+            for candidates in candidate_moves
+        ]
+        # filter given list of moves to keep only the new ones
+        candidate_moves[:] = new_candidate_moves
+        return res
+
+    def _merge_moves(self, merge_into=False):
+        # From here any write on the moves are done in the context of a merge
+        # and we need to unrelease them if the quantity is changed
+        self_ctx = self.with_context(in_merge_mode=True)
+        if merge_into:
+            merge_into = merge_into.filtered(lambda m: m._is_mergeable())
+        return (
+            super(StockMove, self_ctx)
+            ._merge_moves(merge_into=merge_into)
+            .with_context(in_merge_mode=False)
+        )
