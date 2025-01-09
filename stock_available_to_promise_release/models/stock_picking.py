@@ -3,7 +3,10 @@
 # Copyright 2024 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
 
-from odoo import _, api, exceptions, fields, models
+import datetime
+
+from odoo import _, api, exceptions, fields, models, tools
+from odoo.http import request
 
 
 class StockPicking(models.Model):
@@ -98,16 +101,57 @@ class StockPicking(models.Model):
     def _search_release_ready(self, operator, value):
         if operator != "=":
             raise exceptions.UserError(_("Unsupported operator %s") % (operator,))
+        # Read from cache for read-only requests such as 'web_search_read'.
+        # Cache will be valid for one minute so all requests performed within a
+        # minute will benefit from it.
+        now = fields.Datetime.now()
+        now = now.combine(now, datetime.time(hour=now.hour, minute=now.minute))
+        from_cache = False
+        if request and request.params.get("method") == "web_search_read":
+            from_cache = True
+        moves = self._get_moves_with_ordered_available_to_promise(
+            from_cache=from_cache, now=now
+        )
+        pickings = self._get_pickings_release_ready(
+            moves, from_cache=from_cache, now=now
+        )
+        return [("id", "in", pickings.ids)]
+
+    def _get_moves_with_ordered_available_to_promise(self, from_cache=False, now=None):
         # if we search moves with a promise qty > 0, we restrict
         # the number of moves / pickings to filter afterwards
-        moves = self.env["stock.move"].search(
+        if from_cache:
+            move_ids = self._get_moves_with_ordered_available_to_promise_from_cache(
+                self.env.context.get("allowed_company_ids", []), now
+            )
+            return self.env["stock.move"].browse(move_ids)
+        return self.env["stock.move"].search(
             [("ordered_available_to_promise_uom_qty", ">", 0)]
         )
+
+    def _get_pickings_release_ready(self, moves, from_cache=False, now=False):
         # computed field depends on ordered_available_to_promise_qty that has no
         # depends set, invalidate cache before reading
+        if from_cache:
+            picking_ids = self._get_pickings_release_ready_from_cache(moves.ids, now)
+            return self.browse(picking_ids)
         moves.picking_id.invalidate_recordset(["release_ready"])
-        pickings = moves.picking_id.filtered("release_ready")
-        return [("id", "in", pickings.ids)]
+        return moves.picking_id.filtered("release_ready")
+
+    @tools.ormcache("frozenset(allowed_company_ids)", "date")
+    def _get_moves_with_ordered_available_to_promise_from_cache(
+        self, allowed_company_ids, date
+    ):
+        return (
+            self.env["stock.move"]
+            .search([("ordered_available_to_promise_uom_qty", ">", 0)])
+            .ids
+        )
+
+    @tools.ormcache("frozenset(move_ids), date")
+    def _get_pickings_release_ready_from_cache(self, move_ids, date):
+        moves = self.env["stock.move"].browse(move_ids)
+        return moves.picking_id.filtered("release_ready").ids
 
     @api.depends("move_ids.date_priority")
     def _compute_date_priority(self):
