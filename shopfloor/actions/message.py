@@ -216,6 +216,15 @@ class MessageAction(Component):
     def already_done(self):
         return {"message_type": "info", "body": _("Operation already processed.")}
 
+    def transfer_cancelled(self):
+        return {
+            "message_type": "info",
+            "body": _(
+                "Transfer has been cancelled. "
+                "This cannot be processed using this scenario"
+            ),
+        }
+
     def move_already_done(self):
         return {"message_type": "warning", "body": _("Move already processed.")}
 
@@ -951,4 +960,14 @@ class MessageAction(Component):
         return {
             "message_type": "error",
             "body": _("Unable to find a line with the same product but different lot."),
+        }
+
+    def picking_type_is_return(self, picking):
+        body = _("Reserved for %(picking_type)s %(picking_name)s") % {
+            "picking_type": picking.picking_type_id.name,
+            "picking_name": picking.name,
+        }
+        return {
+            "message_type": "error",
+            "body": body,
         }
