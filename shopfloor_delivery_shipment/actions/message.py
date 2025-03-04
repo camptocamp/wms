@@ -168,3 +168,17 @@ class MessageAction(Component):
             "message_type": "info",
             "body": _("Shipment {} is validated.").format(shipment_advice.name),
         }
+
+    def package_partially_reserved_in_picking(self, package, picking):
+        body = _(
+            "Package %(package_name)s is partially reserved for "
+            "%(picking_type)s %(picking_name)s"
+        ) % {
+            "package_name": package.name,
+            "picking_type": picking.picking_type_id.name,
+            "picking_name": picking.name,
+        }
+        return {
+            "message_type": "error",
+            "body": body,
+        }

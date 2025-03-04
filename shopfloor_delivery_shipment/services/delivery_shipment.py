@@ -217,6 +217,24 @@ class DeliveryShipment(Component):
                     location=location,
                     message=message,
                 )
+            # Check that all move lines in package have a package level.
+            # This might happen if a sale order line is cancelled while
+            # transfers are being processed.
+            # Package is ready to ship, but some products in it have to go back in
+            # stock.
+            move_lines_without_package_level = move_lines.filtered(
+                lambda l: not l.package_level_id
+            )
+            if move_lines_without_package_level:
+                first_line = fields.first(move_lines_without_package_level)
+                message = self.msg_store.package_partially_reserved_in_picking(
+                    package, first_line.picking_id
+                )
+                return self._response_for_scan_document(
+                    shipment_advice,
+                    location=location,
+                    message=message,
+                )
             # Check that the product isn't already loaded
             package_level = move_lines.package_level_id
             if package_level._is_loaded_in_shipment():
