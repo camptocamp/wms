@@ -51,9 +51,9 @@ class TestSaleReleaseChannel(SaleReleaseChannelCase):
         self.assertFalse(order._get_release_channel_partner_date())
         picking_out = order.picking_ids
         self.assertFalse(picking_out.release_channel_id)
-        # Then delivery gets the default channel
+        # Then delivery does not fallback in any other channel
         self.env["stock.release.channel"].assign_release_channel(picking_out)
-        self.assertEqual(picking_out.release_channel_id, self.default_channel)
+        self.assertFalse(picking_out.release_channel_id)
 
     def test_sale_order_with_carrier_with_channel_date(self):
         delivery_date = fields.Datetime.now()
