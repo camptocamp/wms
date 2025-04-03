@@ -146,6 +146,8 @@ class DeliveryShipmentScanDocumentPackageCase(DeliveryShipmentCommonCase):
             self.service.data.package_levels(package_level),
         )
 
+    # def test_scan_document_package_partially_reserved(self):
+
     def test_scan_document_shipment_not_planned_package_planned(self):
         """Scan an already planned package in the shipment not planned.
 
