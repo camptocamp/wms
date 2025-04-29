@@ -81,12 +81,12 @@ class TestStorageTypeCommon(TransactionCase):
         )
 
         cls.product_cardbox_product_packaging = ref(
-            "stock_storage_type." "product_product_9_packaging_4_cardbox"
+            "stock_storage_type.product_product_9_packaging_4_cardbox"
         )
         cls.product_pallet_product_packaging = ref(
-            "stock_storage_type." "product_product_9_packaging_48_pallet"
+            "stock_storage_type.product_product_9_packaging_48_pallet"
         )
-        cls.pallet_pack_type = ref("stock_storage_type." "package_storage_type_pallets")
+        cls.pallet_pack_type = ref("stock_storage_type.package_storage_type_pallets")
         cls.product_lot_cardbox_product_packaging = cls.env["product.packaging"].create(
             {
                 "name": "5 units cardbox",

@@ -20,13 +20,14 @@ class StockQuant(models.Model):
             if not quant.package_id or not package_type or not storage_capacities:
                 continue
             allowed_capacities = storage_capacities.filtered(
-                lambda capacity: package_type == capacity.package_type_id
+                lambda capacity, package_type=package_type: (
+                    package_type == capacity.package_type_id
+                )
             )
             if not allowed_capacities:
                 raise ValidationError(
                     _(
-                        "Package type {storage} is not allowed into "
-                        "Location {location}"
+                        "Package type {storage} is not allowed into Location {location}"
                     ).format(storage=package_type.name, location=location.name)
                 )
             package_weight_kg = (

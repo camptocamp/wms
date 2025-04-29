@@ -136,7 +136,7 @@ class TestStorageTypeMove(TestStorageTypeCommon):
             self.pallets_bin_1_location | self.pallets_bin_2_location,
         )
         package_type_locations = int_picking.package_level_ids.mapped(
-            "package_id.package_type_id." "storage_location_sequence_ids.location_id"
+            "package_id.package_type_id.storage_location_sequence_ids.location_id"
         )
         possible_locations = self.env["stock.location"].search(
             [
@@ -152,7 +152,7 @@ class TestStorageTypeMove(TestStorageTypeCommon):
             ]
         )
         only_empty_possible_locations = possible_locations.filtered(
-            lambda l: not l.quant_ids
+            lambda loc: not loc.quant_ids
         )
 
         for level in int_picking.package_level_ids:
@@ -171,7 +171,7 @@ class TestStorageTypeMove(TestStorageTypeCommon):
             self.product, self.pallets_bin_3_location, 1.0
         )
         only_empty_possible_locations_2 = possible_locations.filtered(
-            lambda l: not l.quant_ids
+            lambda loc: not loc.quant_ids
         )
         self.assertEqual(
             only_empty_possible_locations,
