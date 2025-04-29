@@ -323,15 +323,15 @@ class StockLocation(models.Model):
         location_domain = [("location_id", "in", records.ids)]
         out_qty_by_location = {}
         qty_by_location = {}
-        for group in self.env["stock.move.line"].read_group(
+        for group in self.env["stock.move.line"]._read_group(
             OUT_MOVE_LINE_DOMAIN + location_domain,
-            fields=["qty_done:sum"],
-            groupby=["location_id"],
+            groupby=['location_id'],
+            aggregates=['qty_done:sum'],
         ):
             location_id = group["location_id"][0]
             out_qty_by_location[location_id] = group["qty_done"]
-        for group in self.env["stock.quant"].read_group(
-            location_domain, fields=["quantity:sum"], groupby=["location_id"]
+        for group in self.env["stock.quant"]._read_group(
+            location_domain, groupby=['location_id'], aggregates=['quantity:sum']
         ):
             location_id = group["location_id"][0]
             qty_by_location[location_id] = group["quantity"]
@@ -638,11 +638,11 @@ class StockLocation(models.Model):
             domain_quant = [("location_id", "in", valid_no_mix.ids)]
             loc_ordered_by_qty = [
                 item["location_id"][0]
-                for item in StockQuant.read_group(
+                for item in StockQuant._read_group(
                     domain_quant,
-                    ["location_id", "quantity"],
-                    ["location_id"],
-                    orderby="quantity",
+                    ['location_id'],
+                    ['quantity:sum'],
+                    order='quantity',
                 )
                 if (float_compare(item["quantity"], 0, precision_digits=2) > 0)
             ]

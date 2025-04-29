@@ -47,9 +47,9 @@
         >stock.storage.location.sequence.cond.tree (in stock_storage_type)</field>
         <field name="model">stock.storage.location.sequence.cond</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name" />
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -59,7 +59,7 @@
     >
         <field name="name">Stock Storage Location Sequence Conditions</field>
         <field name="res_model">stock.storage.location.sequence.cond</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[]</field>
         <field name="context">{}</field>
     </record>
