@@ -1,7 +1,12 @@
 # Copyright 2024 Camptocamp SA
+# Copyright 2025 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
 
+from datetime import datetime, timedelta
+
 from odoo import api, fields, models
+
+from odoo.addons.stock_release_channel import delivery_date_generator
 
 
 class StockReleaseChannel(models.Model):
@@ -52,3 +57,36 @@ class StockReleaseChannel(models.Model):
             channel.preparation_weekday_ids = self.env["time.weekday"].search(
                 [("name", "in", weekday_names)]
             )
+
+    @delivery_date_generator(step="preparation")
+    def _next_delivery_date_plan_weekdays(self, delivery_date, partner=None):
+        """Get the next valid delivery date respecting plan weekdays.
+
+        The preparation date must be a plan preparation weekday.
+        We do not consider the delivery weekday as it could be postponed with
+        leaves.
+
+        A delivery date generator needs to provide the earliest valid date
+        starting from the received date. It can be called multiple times with a
+        new date to validate.
+        """
+        self.ensure_one()
+        if not self.preparation_weekday_ids:
+            while True:
+                delivery_date = yield delivery_date
+        while True:
+            delivery_date_tz = self._localize(delivery_date)
+            weekday = delivery_date_tz.weekday()
+            for inc in range(8):
+                inc_weekday = (inc + weekday) % 6
+                if str(inc_weekday) in self.preparation_weekday_ids.mapped("name"):
+                    break
+            else:
+                raise Exception("delivery date plan weekdays internal error")
+            delivery_date_tz = datetime.combine(
+                (delivery_date_tz + timedelta(days=inc)).date(),
+                delivery_date_tz.time() if not inc else datetime.min.time(),
+                tzinfo=delivery_date_tz.tzinfo,
+            )
+            delivery_date = self._naive(delivery_date_tz)
+            delivery_date = yield delivery_date
