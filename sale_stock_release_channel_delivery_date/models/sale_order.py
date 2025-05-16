@@ -40,10 +40,10 @@ class SaleOrder(models.Model):
         return expected_dt
 
     @ormcache(
-        "self.company_id",
-        "self.partner_shipping_id",
-        "self.warehouse_id",
-        "carrier",
+        "self.company_id.id",
+        "self.partner_shipping_id.id",
+        "self.warehouse_id.id",
+        "carrier.id",
         "order_dt",
     )
     def _cached_release_channel_expected_date(self, carrier, order_dt):
