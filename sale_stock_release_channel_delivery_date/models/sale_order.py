@@ -5,6 +5,7 @@
 import logging
 
 from odoo import api, fields, models
+from odoo.osv import expression
 from odoo.tools import ormcache
 
 _logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class SaleOrder(models.Model):
         ]
         return min(dates)
 
-    def _domain_partner_release_channels(self, carrier):
+    def _get_release_channel_possible_candidate_domain(self, carrier):
         domain = [
             ("company_id", "=", self.company_id.id),
             ("warehouse_id", "=", self.warehouse_id.id),
@@ -68,16 +69,15 @@ class SaleOrder(models.Model):
             domain += [
                 "|",
                 ("carrier_ids", "=", False),
-                ("carrier_ids", "in", carrier),
+                ("carrier_ids", "in", carrier.id),
             ]
         return domain
 
     @api.model
     def _get_partner_release_channels(self, carrier):
-        return (
-            self.env["stock.release.channel"]
-            .search(self._domain_partner_release_channels(carrier))
-            .filtered(
-                lambda channel: channel._is_valid_for_partner(self.partner_shipping_id)
-            )
+        domain_order = self._get_release_channel_possible_candidate_domain(carrier)
+        domain_partner = (
+            self.partner_shipping_id._release_channel_possible_candidate_domain
         )
+        domain = expression.AND([domain_order, domain_partner])
+        return self.env["stock.release.channel"].search(domain)

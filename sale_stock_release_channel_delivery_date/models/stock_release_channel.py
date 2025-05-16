@@ -45,8 +45,3 @@ class StockReleaseChannel(models.Model):
             for gen in generators:
                 gen.close()
         return best_dt
-
-    def _is_valid_for_partner(self, partner):
-        # FIXME: add support for geoengine
-        self.ensure_one()
-        return not self.partner_ids or partner in self.partner_ids
