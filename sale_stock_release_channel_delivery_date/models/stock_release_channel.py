@@ -14,6 +14,16 @@ class StockReleaseChannel(models.Model):
     _inherit = "stock.release.channel"
 
     def _get_best_delivery_date(self, partner, order_dt):
+        """Compute the earliest delivery date for this channel
+
+        Go through each steps. All generators of a step must agree on a date.
+        Initialize them with the provided start date for the first step and
+        then with the agreed date from the previous step. If a generator
+        provides a later date, send that date to the other generators to
+        request agreement or a new later date.
+        This algorithm performs a quick convergence to a date.
+        """
+        self.ensure_one()
         best_dt = order_dt
         for step in decorators.delivery_date_steps:
             funcs = decorators.delivery_date_generators.get(step)
