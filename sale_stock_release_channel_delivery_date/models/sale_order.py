@@ -28,12 +28,15 @@ class SaleOrder(models.Model):
                 order_dt = order.date_order
             else:
                 order_dt = fields.Datetime.now()
+
             order.expected_date = order._get_release_channel_expected_date(order_dt)
         return res
 
     def _get_release_channel_expected_date(self, order_dt):
         self.ensure_one()
         carrier = self._release_channel_carrier_id
+        # We don't need that precision for the computation & cache
+        order_dt = order_dt.replace(second=0, microsecond=0)
         expected_dt = self._cached_release_channel_expected_date(carrier, order_dt)
         return expected_dt
 
@@ -63,5 +66,6 @@ class SaleOrder(models.Model):
         domain_partner = (
             self.partner_shipping_id._release_channel_possible_candidate_domain
         )
-        domain = expression.AND([domain_order, domain_partner])
+        domain_channel = [("is_manual_assignment", "=", False)]
+        domain = expression.AND([domain_order, domain_partner, domain_channel])
         return self.env["stock.release.channel"].search(domain)

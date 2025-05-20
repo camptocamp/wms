@@ -9,6 +9,7 @@ from odoo import fields
 from odoo.fields import Command
 
 from odoo.addons.sale.tests.common import SaleCommon
+from odoo.addons.stock_release_channel.tests.models import generator_test  # noqa
 
 
 class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
@@ -20,6 +21,7 @@ class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
         )
         cls.warehouse = cls.env.ref("stock.warehouse0")
         cls.default_channel.warehouse_id = cls.warehouse
+        cls.default_channel.is_manual_assignment = False
 
     @freeze_time("2025-01-02 10:00:00")
     def test_empty(self):
@@ -28,6 +30,8 @@ class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
         Expected date is computed as if there will be stock lines"""
         so = self.empty_order
         dt = fields.Datetime.now() + timedelta(days=2)
+        # the order was created in setup outside freezegun
+        so.invalidate_recordset(["expected_date"])
         self.assertEqual(so.expected_date, dt)
 
     @freeze_time("2025-01-02 10:01:00")
@@ -47,6 +51,8 @@ class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
             }
         )
         dt = fields.Datetime.now()
+        # the order was created in setup outside freezegun
+        so.invalidate_recordset(["expected_date"])
         self.assertEqual(so.expected_date, dt)
 
     @freeze_time("2025-01-02 10:02:00")
@@ -72,6 +78,8 @@ class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
             }
         )
         dt = fields.Datetime.now() + timedelta(days=2)
+        # the order was created in setup outside freezegun
+        so.invalidate_recordset(["expected_date"])
         self.assertEqual(so.expected_date, dt)
 
     @freeze_time("2025-01-02 10:03:00")
@@ -92,4 +100,6 @@ class TestSaleStockReleaseChannelDeliveryDate(SaleCommon):
             }
         )
         dt = fields.Datetime.now() + timedelta(days=7)
+        # the order was created in setup outside freezegun
+        so.invalidate_recordset(["expected_date"])
         self.assertEqual(so.expected_date, dt)
