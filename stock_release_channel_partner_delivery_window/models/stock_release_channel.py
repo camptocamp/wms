@@ -1,8 +1,9 @@
 # Copyright 2025 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
 from datetime import datetime, timedelta
+
+from odoo import api, fields, models
 
 from odoo.addons.stock_release_channel import delivery_date_generator
 
@@ -42,6 +43,12 @@ class StockReleaseChannel(models.Model):
         """Get the next valid delivery date respecting customer delivery window.
 
         The delivery date must be when the customer is open.
+        From the initial delivery_date, if the customer is not open on that
+        date and time, postpone to the start of the next open window.
+
+        A delivery date generator needs to provide the earliest valid date
+        starting from the received date. It can be called multiple times with a
+        new date to validate.
         """
         self.ensure_one()
         partner.ensure_one()
@@ -50,30 +57,36 @@ class StockReleaseChannel(models.Model):
                 delivery_date = yield delivery_date
 
         if partner.delivery_time_preference == "anytime":
+            # no constrain, any date is valid
             while True:
                 delivery_date = yield delivery_date
 
         tz = partner.tz
         if partner.delivery_time_preference == "workdays":
+            # postpone to Monday when date is on a week-end
             while True:
                 delivery_date_tz = self._localize(delivery_date, tz=tz)
                 # postpone on Monday if Sat or Sun
-                if delivery_date_tz.isoweekday() < 6:  # Mon-Fri
+                if delivery_date_tz.weekday() < 5:  # Mon-Fri
                     delivery_date = yield delivery_date
                     continue
                 days = 0
-                if delivery_date_tz.isoweekday() == 6:  # Sat
+                if delivery_date_tz.weekday() == 5:  # Sat
                     days = 1
-                elif delivery_date_tz.isoweekday() == 7:  # Sun
+                elif delivery_date_tz.weekday() == 6:  # Sun
                     days = 2
                 delivery_date_tz += timedelta(days=days)
                 delivery_date = self._naive(delivery_date_tz, reset_time=days)
                 delivery_date = yield delivery_date
 
         while True:
+            # yield first delivery window
             delivery_date_tz = self._localize(delivery_date, tz=tz)
             weekday = delivery_date_tz.weekday()
             for inc in range(8):
+                # Each weekday is tested to find a window.
+                # On the first day, we need a window that ends after current
+                # delivery time. Afterwards, we just need a window.
                 windows = partner.delivery_time_window_ids.filtered(
                     lambda w: str(weekday + inc)
                     in w.time_window_weekday_ids.mapped("name")
@@ -86,6 +99,7 @@ class StockReleaseChannel(models.Model):
                 # There is no time window, we consider any date valid
                 while True:
                     delivery_date = yield delivery_date
+            # Postpone the delivery date to that found window
             delivery_date_tz = datetime.combine(
                 (delivery_date_tz + timedelta(days=inc)).date(),
                 max(w.get_time_window_start_time(), delivery_date_tz.time())
