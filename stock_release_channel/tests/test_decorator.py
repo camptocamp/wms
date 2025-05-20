@@ -7,6 +7,8 @@ from odoo.tests.common import TransactionCase
 
 from odoo.addons.stock_release_channel import decorators
 
+from .models import generator_test  # noqa
+
 
 class TestStockReleaseChannelDecorator(TransactionCase):
     @classmethod
