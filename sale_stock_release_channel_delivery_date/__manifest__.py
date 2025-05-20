@@ -11,7 +11,6 @@
     "maintainers": ["jbaudoux"],
     "website": "https://github.com/OCA/wms",
     "depends": [
-        "sale",
-        "stock_release_channel_delivery",
+        "sale_stock_release_channel_delivery",
     ],
 }

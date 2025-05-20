@@ -33,10 +33,7 @@ class SaleOrder(models.Model):
 
     def _get_release_channel_expected_date(self, order_dt):
         self.ensure_one()
-        carrier = self.carrier_id
-        if not carrier:
-            # FIXME: collect from default applied on confirm
-            pass
+        carrier = self._release_channel_carrier_id
         expected_dt = self._cached_release_channel_expected_date(carrier, order_dt)
         return expected_dt
 
@@ -60,22 +57,9 @@ class SaleOrder(models.Model):
         ]
         return min(dates)
 
-    def _get_release_channel_possible_candidate_domain(self, carrier):
-        domain = [
-            ("company_id", "=", self.company_id.id),
-            ("warehouse_id", "=", self.warehouse_id.id),
-        ]
-        if carrier:
-            domain += [
-                "|",
-                ("carrier_ids", "=", False),
-                ("carrier_ids", "in", carrier.id),
-            ]
-        return domain
-
     @api.model
     def _get_partner_release_channels(self, carrier):
-        domain_order = self._get_release_channel_possible_candidate_domain(carrier)
+        domain_order = self._release_channel_possible_candidate_domain_base
         domain_partner = (
             self.partner_shipping_id._release_channel_possible_candidate_domain
         )
