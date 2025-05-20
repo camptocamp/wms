@@ -14,7 +14,14 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    @api.depends("partner_shipping_id", "carrier_id")
+    @api.depends(
+        "order_line.customer_lead",
+        "date_order",
+        "partner_shipping_id",
+        "carrier_id",
+        "warehouse_id",
+        "picking_policy",
+    )
     def _compute_expected_date(self):
         res = super()._compute_expected_date()
         for order in self:
