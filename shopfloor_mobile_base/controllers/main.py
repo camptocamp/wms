@@ -42,7 +42,7 @@ class ShopfloorMobileAppMixin(object):
         app_version = shopfloor_app.app_version
         all_icons = []
         url_pattern = url_pattern or (
-            "/shopfloor_mobile_base/static/wms/src/assets/icons/"
+            "/shopfloor_mobile_base/static/src/assets/icons/"
             "{fname}-{size}.png?v={app_version}"
         )
         for size in sizes:
