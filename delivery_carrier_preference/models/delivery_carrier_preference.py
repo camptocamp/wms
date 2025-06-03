@@ -1,6 +1,6 @@
 # Copyright 2020 Camptocamp SA
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
@@ -49,7 +49,7 @@ class DeliveryCarrierPreference(models.Model):
         for pref in self:
             if pref.preference == "carrier" and not pref.carrier_id:
                 raise ValidationError(
-                    _(
+                    self.env._(
                         "Preferred Shipping Methods with 'Carrier' preference "
                         "must define a Delivery carrier."
                     )
@@ -59,7 +59,7 @@ class DeliveryCarrierPreference(models.Model):
         )
         if partner_pref_cnt > 1:
             raise ValidationError(
-                _(
+                self.env._(
                     "Only one Preferred Shipping Method can be set with "
                     "'Partner carrier' preference."
                 )
@@ -77,7 +77,7 @@ class DeliveryCarrierPreference(models.Model):
                 < 0
             ):
                 raise ValidationError(
-                    _("Max weight must have a positive or null value.")
+                    self.env._("Max weight must have a positive or null value.")
                 )
 
     @api.onchange("preference")
@@ -94,9 +94,9 @@ class DeliveryCarrierPreference(models.Model):
         for pref in self:
             name = pref_descr.get(pref.preference)
             if pref.carrier_id:
-                name = _("%s: %s") % (name, pref.carrier_id.name)
+                name = self.env._("%s: %s") % (name, pref.carrier_id.name)
             if pref.max_weight:
-                name = _("%s (Max weight %s %s)") % (
+                name = self.env._("%s (Max weight %s %s)") % (
                     name,
                     pref.max_weight,
                     pref.max_weight_uom_id.display_name,

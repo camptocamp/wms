@@ -4,7 +4,7 @@
         <field name="name">delivery.carrier.preference.tree.view</field>
         <field name="model">delivery.carrier.preference</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="sequence" widget="handle" />
                 <field name="name" />
                 <field name="preference" />
@@ -14,7 +14,7 @@
                 />
                 <field name="max_weight" />
                 <field name="company_id" groups="base.group_multi_company" />
-            </tree>
+            </list>
         </field>
     </record>
     <record id="delivery_carrier_preference_form_view" model="ir.ui.view">

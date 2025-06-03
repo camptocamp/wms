@@ -1,6 +1,6 @@
 # Copyright 2020 Camptocamp SA
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.osv.expression import AND
 from odoo.tools.safe_eval import const_eval
 
@@ -29,8 +29,8 @@ class StockPicking(models.Model):
         if not carrier:
             return {
                 "warning": {
-                    "title": _("Cannot find preferred carrier"),
-                    "message": _(
+                    "title": self.env._("Cannot find preferred carrier"),
+                    "message": self.env._(
                         "No preferred carrier could be found "
                         "automatically for this delivery order. Please"
                         "select one manually."
