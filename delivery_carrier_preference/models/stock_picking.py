@@ -6,7 +6,6 @@ from odoo.tools.safe_eval import const_eval
 
 
 class StockPicking(models.Model):
-
     _inherit = "stock.picking"
 
     estimated_shipping_weight = fields.Float(

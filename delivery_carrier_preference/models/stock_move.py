@@ -6,7 +6,6 @@ from odoo import api, fields, models, tools
 
 
 class StockMove(models.Model):
-
     _inherit = "stock.move"
 
     estimated_shipping_weight = fields.Float(
@@ -82,7 +81,7 @@ class StockMove(models.Model):
                 # the old group will be reassigned to the backorders if any,
                 # otherwise it will stay empty in the depths of nothingness
                 new_group = group.copy(
-                    default={"name": "{} ({})".format(group.name, new_carrier.name)}
+                    default={"name": f"{group.name} ({new_carrier.name})"}
                 )
                 pickings.move_lines.group_id = new_group
 

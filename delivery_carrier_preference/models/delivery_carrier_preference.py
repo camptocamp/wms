@@ -11,7 +11,6 @@ from odoo.tools import float_compare
 # in "delivery.carrier" (which already has a sequence) and activate
 # the "automatic carrier" by a boolean on the carrier.
 class DeliveryCarrierPreference(models.Model):
-
     _name = "delivery.carrier.preference"
     _description = "Preferred Shipping Methods"
     _order = "sequence, id"
