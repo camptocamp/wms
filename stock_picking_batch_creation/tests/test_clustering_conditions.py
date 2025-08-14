@@ -8,7 +8,7 @@ from .common import ClusterPickingCommonFeatures
 class TestClusteringConditions(ClusterPickingCommonFeatures):
     @classmethod
     def setUpClass(cls):
-        super(TestClusteringConditions, cls).setUpClass()
+        super().setUpClass()
         cls.p5 = cls._create_product("Unittest P5", 1, 4, 1, 1)
 
     def test_device_with_one_bin(self):
@@ -320,7 +320,6 @@ class TestClusteringConditions(ClusterPickingCommonFeatures):
         self.assertEqual(batch.batch_nbr_bins, 2)
 
     def test_several_pickings_one_partner_volume_outreached_on_one_picking(self):
-
         self.p1.write(
             {
                 "product_length": 1,
@@ -454,8 +453,8 @@ class TestClusteringConditions(ClusterPickingCommonFeatures):
     def test_picking_split_with_weight_exceed(self):
         # pick 3 has 2 lines
         # we will set a weight by line under the maximum weight of the device
-        # but the total weight of the picking will exceed the maximum weight of the device
-        # when the batch is created, the picking 3 should be split and the batch
+        # but the total weight of the picking will exceed the maximum weight of the
+        # device when the batch is created, the picking 3 should be split and the batch
         # should contain only pick3 with 1 line
 
         self.pick1.action_cancel()
@@ -491,8 +490,8 @@ class TestClusteringConditions(ClusterPickingCommonFeatures):
     def test_picking_split_with_volume_exceed(self):
         # pick 3 has 2 lines
         # we will set a volume by line under the maximum volume of the device
-        # but the total volume of the picking will exceed the maximum volume of the device
-        # when the batch is created, the picking 3 should be split and the batch
+        # but the total volume of the picking will exceed the maximum volume of the
+        # device when the batch is created, the picking 3 should be split and the batch
         # should contain only pick3 with 1 line
 
         self.pick1.action_cancel()

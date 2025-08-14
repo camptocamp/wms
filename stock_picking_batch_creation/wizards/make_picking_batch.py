@@ -20,7 +20,6 @@ _logger = logging.getLogger(__name__)
 
 
 class MakePickingBatch(models.TransientModel):
-
     _name = "make.picking.batch"
     _description = "Make a batch picking wizard"
 
@@ -56,7 +55,8 @@ class MakePickingBatch(models.TransientModel):
     restrict_to_same_priority = fields.Boolean(
         default=False,
         string="Restrict to the same priority",
-        help="Only the pickings with the same priority will be selected for this batch.",
+        help="Only the pickings with the same priority will be selected for this "
+        "batch.",
     )
     restrict_to_same_partner = fields.Boolean(
         default=False,
@@ -88,9 +88,9 @@ class MakePickingBatch(models.TransientModel):
         string="Split pickings exceeding limits",
         help="If checked, the pickings exceeding the maximum number of lines, "
         "volume or weight of available devices will be split into multiple pickings "
-        "to respect the limits. If unchecked, the pickings exceeding the limits will not "
-        "be added to the batch. The limits are defined by the limits of the last available "
-        "devices.",
+        "to respect the limits. If unchecked, the pickings exceeding the limits will "
+        "not be added to the batch. The limits are defined by the limits of the last "
+        "available devices.",
     )
 
     __slots__ = (
@@ -153,8 +153,8 @@ class MakePickingBatch(models.TransientModel):
         # https://www.postgresql.org/docs/current/queries-order.html
         # so we need to sort user_id asc to have NULLS LAST
         if self.group_pickings_by_partner:
-            return "user_id asc, priority desc, scheduled_date asc, partner_id desc, id asc"
-        return "user_id asc, priority desc, scheduled_date asc, id asc"
+            return "user_id asc, priority desc, scheduled_date asc, partner_id desc, id"
+        return "user_id asc, priority desc, scheduled_date asc, id"
 
     def _get_picking_domain_common(self):
         domain = [
