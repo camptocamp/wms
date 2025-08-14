@@ -11,7 +11,6 @@
     "website": "https://github.com/OCA/wms",
     "category": "Warehouse Management",
     "depends": [
-        "delivery",  # weight on picking
         "stock_picking_batch",
         "stock_picking_volume",  # OCA/stock-logistics-warehouse
         "stock_split_picking_dimension",  # OCA/stock-logistics-workflow

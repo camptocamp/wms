@@ -1,6 +1,6 @@
 # Copyright 2021 ACSONE SA/NV
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-import logging
+
 import math
 import threading
 from collections import defaultdict
@@ -15,8 +15,6 @@ from ..exceptions import (
     PickingCandidateNumberLineExceedError,
     PickingSplitNotPossibleError,
 )
-
-_logger = logging.getLogger(__name__)
 
 
 class MakePickingBatch(models.TransientModel):
@@ -269,6 +267,29 @@ class MakePickingBatch(models.TransientModel):
         weight = last_device.max_weight
         return nbr_lines, volume, weight
 
+    def _get_picking_weight(self, picking):
+        """Get the picking weight
+
+        In core, the `stock_delivery` module adds the computed weight to the picking.
+        However, this is a heavy dependency, as it pulls sales and accounting.
+
+        This method computes the weight in the same way as the `stock_delivery` module,
+        if it's not installed.
+        """
+        # If the `stock_delivery` module is installed, then simply reuse the weight
+        # as it's already computed and stored
+        if hasattr(picking, "weight"):  # pragma: no cover
+            return picking.weight
+        # Otherwise, compute it in the same way. This must be aligned with core's
+        # computation
+        # https://github.com/odoo/odoo/blob/d737e896/addons/stock_delivery/models/stock_move.py#L31-L38
+        # https://github.com/odoo/odoo/blob/9203b363/addons/stock_delivery/models/stock_picking.py#L59-L62
+        return sum(
+            move.product_qty * move.product_id.weight
+            for move in picking.move_ids
+            if move.state != "cancel"
+        )
+
     def _split_first_picking_for_limit(self, picking):
         nbr_lines, volume, weight = self._get_picking_max_dimensions()
         wizard = self.env["stock.split.picking"].with_context(active_ids=picking.ids)
@@ -291,7 +312,7 @@ class MakePickingBatch(models.TransientModel):
         return (
             picking.nbr_picking_lines > nbr_lines
             or picking.volume > volume
-            or picking.weight > weight
+            or self._get_picking_weight(picking) > weight
         )
 
     def _get_first_picking(self, raise_if_not_found=False):
@@ -368,7 +389,7 @@ class MakePickingBatch(models.TransientModel):
                 )
                 and tools.float_compare(
                     device.max_weight,
-                    picking.weight,
+                    self._get_picking_weight(picking),
                     precision_digits=self._precision_volume(),
                 )
                 > 0
@@ -450,7 +471,9 @@ class MakePickingBatch(models.TransientModel):
         :param device: the device to use to prepare the batch
         """
         self._device = device
-        self._remaining_weight = device.max_weight - first_picking.weight
+        self._remaining_weight = device.max_weight - self._get_picking_weight(
+            first_picking
+        )
         self._remaining_nbr_picking_lines = (
             self.maximum_number_of_preparation_lines - first_picking.nbr_picking_lines
         )
@@ -498,7 +521,7 @@ class MakePickingBatch(models.TransientModel):
         :param picking: picking to add to the batch
         """
         self._selected_picking_ids.append(picking.id)
-        self._remaining_weight -= picking.weight
+        self._remaining_weight -= self._get_picking_weight(picking)
         self._remaining_nbr_picking_lines -= picking.nbr_picking_lines
         nbr_bins = self._get_nbr_bins_for_picking(picking)
         self._remaining_nbr_bins -= nbr_bins
