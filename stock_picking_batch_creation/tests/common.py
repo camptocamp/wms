@@ -1,14 +1,16 @@
 # Copyright 2021 ACSONE SA/NV
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo.tests.common import TransactionCase
+from odoo.tests import TransactionCase
+
+from odoo.addons.base.tests.common import DISABLE_MAIL_CONTEXT
 
 
 class ClusterPickingCommonFeatures(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        cls.env = cls.env(context=dict(cls.env.context, **DISABLE_MAIL_CONTEXT))
         cls.partner1 = cls._create_partner("Unittest partner", "12344566777878")
         cls.stock_location = cls.env.ref("stock.stock_location_stock")
         cls.location_out = cls.env.ref("stock.stock_location_output")

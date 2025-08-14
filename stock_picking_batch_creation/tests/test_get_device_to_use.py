@@ -5,10 +5,6 @@ from .common import ClusterPickingCommonFeatures
 
 
 class TestGetDeviceToUse(ClusterPickingCommonFeatures):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
     def test_get_device_to_use_00(self):
         """
         Data: 3 picks of type 1, total of 4 products for a volume of 60m3

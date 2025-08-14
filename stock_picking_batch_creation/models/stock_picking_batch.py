@@ -6,6 +6,7 @@ from odoo import fields, models
 
 class StockPickingBatch(models.Model):
     _inherit = "stock.picking.batch"
+
     picking_device_id = fields.Many2one("stock.device.type", string="Device")
     batch_weight = fields.Float(
         string="Total weight",
@@ -26,11 +27,10 @@ class StockPickingBatch(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        for rec in self:
-            if "user_id" in vals.keys() and not vals["user_id"]:
-                # We want to  unassign the batch from the operator
-                # and the pickings in the batch too. We must force the method
-                # write on the picking since the base class propagate the
-                # user_id only if it's set (not if it's unset)
-                rec.picking_ids.write({"user_id": vals["user_id"]})
+        if "user_id" in vals and not vals["user_id"]:
+            # We want to  unassign the batch from the operator
+            # and the pickings in the batch too. We must force the method
+            # write on the picking since the base class propagate the
+            # user_id only if it's set (not if it's unset)
+            self.picking_ids.write({"user_id": vals["user_id"]})
         return res
