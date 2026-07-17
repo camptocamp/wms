@@ -3,6 +3,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 from odoo import fields, models
+from odoo.osv import expression
 
 
 class StockReleaseChannel(models.Model):
@@ -15,10 +16,17 @@ class StockReleaseChannel(models.Model):
     )
 
     def action_sleep(self):
+        shipment_date = self.shipment_date
         res = super().action_sleep()
-        channel_dates = self.env["stock.release.channel.partner.date"].search(
-            self._get_release_channel_partner_date_domain()
-        )
+        domain = self._get_release_channel_partner_date_domain()
+        if shipment_date:
+            domain = expression.AND(
+                [
+                    domain,
+                    [("date", "<", shipment_date)],
+                ]
+            )
+        channel_dates = self.env["stock.release.channel.partner.date"].search(domain)
         channel_dates.write({"active": False})
         return res
 
