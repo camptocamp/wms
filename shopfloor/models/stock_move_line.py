@@ -2,6 +2,7 @@
 # Copyright 2022 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import logging
+import warnings
 
 from odoo import _, exceptions, fields, models
 from odoo.exceptions import UserError
@@ -15,9 +16,11 @@ class StockMoveLine(models.Model):
     _inherit = ["stock.move.line", "shopfloor.priority.postpone.mixin"]
 
     # TODO use a serialized field
-    shopfloor_unloaded = fields.Boolean(default=False)
-    shopfloor_checkout_done = fields.Boolean(default=False)
-    shopfloor_user_id = fields.Many2one(comodel_name="res.users", index=True)
+    shopfloor_unloaded = fields.Boolean(default=False, copy=False)
+    shopfloor_checkout_done = fields.Boolean(default=False, copy=False)
+    shopfloor_user_id = fields.Many2one(
+        comodel_name="res.users", index=True, copy=False
+    )
 
     date_planned = fields.Datetime(related="move_id.date", store=True, index=True)
 
@@ -29,32 +32,51 @@ class StockMoveLine(models.Model):
     # allow domain on picking_id.xxx without too much perf penalty
     picking_id = fields.Many2one(auto_join=True)
 
+    @property
+    def qty_picked(self):
+        return self.qty_done
+
+    @qty_picked.setter
+    def qty_picked(self, value):
+        self.ensure_one()
+        self.qty_done = value
+
+    @property
+    def picked(self):
+        """:return: True if there is a quantity picked."""
+        self.ensure_one()
+        return (
+            float_compare(
+                self.qty_done,
+                0,
+                precision_rounding=self.product_uom_id.rounding,
+            )
+            > 0
+        )
+
+    @property
+    def has_quantity_reserved(self):
+        self.ensure_one()
+        return not float_is_zero(
+            self.reserved_uom_qty, precision_rounding=self.product_uom_id.rounding
+        )
+
+    @property
+    def quantity(self):
+        self.ensure_one()
+        return self.reserved_uom_qty
+
     def _split_partial_quantity(self):
         """Create new move line for the quantity remaining to do
 
         :return: the new move line if created else empty recordset
         """
         self.ensure_one()
-        rounding = self.product_uom_id.rounding
-        if float_is_zero(self.qty_done, precision_rounding=rounding):
+        if not self.picked or not self.has_quantity_reserved:
             return self.browse()
-        compare = float_compare(
-            self.qty_done, self.reserved_uom_qty, precision_rounding=rounding
+        return self._split_partial_quantity_to_be_done(
+            self.qty_picked, {"result_package_id": False}
         )
-        qty_lesser = compare == -1
-        qty_greater = compare == 1
-        assert not qty_greater, "Quantity done cannot exceed quantity to do"
-        if qty_lesser:
-            remaining = self.reserved_uom_qty - self.qty_done
-            new_line = self.copy({"reserved_uom_qty": remaining, "qty_done": 0})
-            # if we didn't bypass reservation update, the quant reservation
-            # would be reduced as much as the deduced quantity, which is wrong
-            # as we only moved the quantity to a new move line
-            self.with_context(
-                bypass_reservation_update=True
-            ).reserved_uom_qty = self.qty_done
-            return new_line
-        return self.browse()
 
     def _extract_in_split_order(self, default=None):
         """Have pickings fully reserved with only those move lines.
@@ -95,6 +117,7 @@ class StockMoveLine(models.Model):
                     default=default, backorder=True
                 )
 
+    # MIGRATION NOTE: deprecated method to delete
     def _split_pickings_from_source_location(self):
         """Ensure that the related pickings will have the same source location.
 
@@ -125,9 +148,11 @@ class StockMoveLine(models.Model):
 
         Return the pickings containing the given move lines.
         """
-        _logger.warning(
+        warnings.warn(
             "`_split_pickings_from_source_location` is deprecated "
-            "and replaced by `_extract_in_split_order`"
+            "and replaced by `_extract_in_split_order`",
+            DeprecationWarning,
+            stacklevel=2,
         )
         location_src_to_process = self.location_id
         if location_src_to_process and len(location_src_to_process) != 1:
@@ -147,6 +172,7 @@ class StockMoveLine(models.Model):
             )
         return self.picking_id
 
+    # MIGRATION NOTE: deprecated method to delete
     def _split_qty_to_be_done(self, qty_done, split_partial=True, **split_default_vals):
         """Check qty to be done for current move line. Split it if needed.
 
@@ -154,6 +180,12 @@ class StockMoveLine(models.Model):
         :param split_partial: split if qty is less than expected
             otherwise rely on a backorder.
         """
+        warnings.warn(
+            "`_split_qty_to_be_done` is deprecated "
+            "and replaced by `_split_partial_quantity_to_be_done`",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.reserved_uom_qty < 0:
             raise UserError(_("The demand cannot be negative"))
         # store a new line if we have split our line (not enough qty)
@@ -175,14 +207,22 @@ class StockMoveLine(models.Model):
             return (new_line, "lesser")
         return (new_line, "full")
 
-    def _split_partial_quantity_to_be_done(self, quantity_done, split_default_vals):
-        """Create a new move line with the remaining quantity to process."""
+    def _split_partial_quantity_to_be_done(
+        self, quantity_done, split_default_vals=None
+    ):
+        """Create a new move line with the remaining quantity to process
+
+        :return: the new move line if created else empty recordset
+        """
         # split the move line which will be processed later (maybe the user
         # has to pick some goods from another place because the location
         # contained less items than expected)
-        remaining = self.reserved_uom_qty - quantity_done
+        remaining = max(0, self.reserved_uom_qty - quantity_done)
+        if not remaining:
+            return self.browse()
         vals = {"reserved_uom_qty": remaining, "qty_done": 0}
-        vals.update(split_default_vals)
+        if split_default_vals:
+            vals.update(split_default_vals)
         new_line = self.copy(vals)
         # if we didn't bypass reservation update, the quant reservation
         # would be reduced as much as the deduced quantity, which is wrong

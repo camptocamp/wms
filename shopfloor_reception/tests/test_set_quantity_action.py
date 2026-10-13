@@ -56,6 +56,7 @@ class TestSetQuantityAction(CommonCase):
             data={
                 "picking": data,
                 "selected_move_line": self.data.move_lines(self.selected_move_line),
+                "confirmation": None,
             },
         )
         self.assertTrue(self.selected_move_line.result_package_id)
@@ -76,14 +77,15 @@ class TestSetQuantityAction(CommonCase):
             data={
                 "picking": data,
                 "selected_move_line": self.data.move_lines(self.selected_move_line),
+                "confirmation": None,
             },
         )
         self.assertFalse(self.selected_move_line.result_package_id)
 
-    def test_cancel_action(self):
-        picking = self._create_picking()
+    def test_cancel_action_concurrent(self):
+        picking = self.picking
         move_product_a = picking.move_ids.filtered(
-            lambda l: l.product_id == self.product_a
+            lambda m: m.product_id == self.product_a
         )
         # User 1 and 2 selects the same picking
         service_user_1 = self.service
@@ -122,11 +124,6 @@ class TestSetQuantityAction(CommonCase):
             },
         )
         # Users are blocked, product_uom_qty is 10, but both users have qty_done=10
-        # on their move line, therefore, none of them can confirm
-        expected_message = {
-            "body": "You cannot process that much units.",
-            "message_type": "error",
-        }
         response = service_user_1.dispatch(
             "process_with_new_pack",
             params={
@@ -135,7 +132,7 @@ class TestSetQuantityAction(CommonCase):
                 "quantity": 10.0,
             },
         )
-        self.assertMessage(response, expected_message)
+        self.assertMessage(response, self.msg_store.unable_to_pick_qty())
         response = service_user_2.dispatch(
             "process_with_new_pack",
             params={
@@ -144,7 +141,7 @@ class TestSetQuantityAction(CommonCase):
                 "quantity": 10.0,
             },
         )
-        self.assertMessage(response, expected_message)
+        self.assertMessage(response, self.msg_store.unable_to_pick_qty())
         # make user1 cancel
         service_user_1.dispatch(
             "set_quantity__cancel_action",
@@ -169,3 +166,77 @@ class TestSetQuantityAction(CommonCase):
         )
         # This line has been created by shopfloor, therefore, we unlinked it
         self.assertFalse(move_line_user_2.exists())
+
+    def test_cancel_action_no_backorder(self):
+        picking = self.picking
+        move_line = self.selected_move_line
+        move = self.selected_move_line.move_id
+
+        self.service.dispatch(
+            "process_without_pack",
+            params={
+                "picking_id": picking.id,
+                "selected_line_id": move_line.id,
+                "quantity": 2,
+            },
+        )
+        self.assertEqual(move.quantity_done, 2)
+        self.assertEqual(len(move.move_line_ids), 2)
+
+        new_move_line = move.move_line_ids - move_line
+        self.assertEqual(new_move_line.reserved_qty, 8)
+
+        # Make some modifications on the new move line
+        self.service.dispatch(
+            "set_quantity",
+            params={
+                "picking_id": picking.id,
+                "selected_line_id": new_move_line.id,
+                "quantity": 3,
+            },
+        )
+        new_move_line.lot_id = self._create_lot()
+        self.assertTrue(new_move_line.lot_id)
+        self.assertTrue(new_move_line.qty_done)
+
+        # cancel modifications on new move line
+        self.service.dispatch(
+            "set_quantity__cancel_action",
+            params={
+                "picking_id": picking.id,
+                "selected_line_id": new_move_line.id,
+            },
+        )
+        self.assertTrue(new_move_line.exists())
+        self.assertEqual(new_move_line.reserved_qty, 8)
+        self.assertFalse(new_move_line.lot_id)
+        self.assertEqual(
+            new_move_line.picking_id,
+            move_line.picking_id,
+            "Cancelling the move line should not move it into a backorder",
+        )
+
+    def test_set_quantity_actions_prevent_null_quantity(self):
+        for action in [
+            "process_with_new_pack",
+            "process_without_pack",
+            "process_with_existing_pack",
+        ]:
+            response = self.service.dispatch(
+                action,
+                params={
+                    "picking_id": self.picking.id,
+                    "selected_line_id": self.selected_move_line.id,
+                    "quantity": 0.0,
+                },
+            )
+            self.assert_response(
+                response,
+                next_state="set_quantity",
+                data={
+                    "confirmation_required": None,
+                    "picking": self.data.picking(self.picking),
+                    "selected_move_line": self.data.move_lines(self.selected_move_line),
+                },
+                message=self.msg_store.invalid_quantity(0.0),
+            )

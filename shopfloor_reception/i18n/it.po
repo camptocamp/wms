@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-08-27 15:25+0000\n"
+"PO-Revision-Date: 2026-07-21 07:46+0000\n"
 "Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
 "Language-Team: none\n"
 "Language: it\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.10.4\n"
+"X-Generator: Weblate 5.15.2\n"
 
 #. module: shopfloor_reception
 #: model:ir.model.fields,help:shopfloor_reception.field_shopfloor_menu__filter_today_scheduled_pickings
@@ -45,14 +45,16 @@ msgid "Filter Today Scheduled Pickings Is Possible"
 msgstr "Filtro Possibili prelievi schedulati oggi"
 
 #. module: shopfloor_reception
+#. odoo-python
+#: code:addons/shopfloor_reception/actions/message.py:0
+#, python-format
+msgid "Invalid quantity: '%(qty)s'."
+msgstr "Quantità errata: '%(qty)s'."
+
+#. module: shopfloor_reception
 #: model:ir.model,name:shopfloor_reception.model_shopfloor_menu
 msgid "Menu displayed in the scanner application"
 msgstr "Menu visualizzato nell'applicazione di scansione"
-
-#. module: shopfloor_reception
-#: model:ir.model,name:shopfloor_reception.model_stock_move_line
-msgid "Product Moves (Stock Move Line)"
-msgstr "Movimenti prodotto (riga movimento di magazzino)"
 
 #. module: shopfloor_reception
 #: model:shopfloor.menu,name:shopfloor_reception.shopfloor_menu_demo_reception
@@ -60,6 +62,82 @@ msgstr "Movimenti prodotto (riga movimento di magazzino)"
 #: model:stock.picking.type,name:shopfloor_reception.picking_type_reception_demo
 msgid "Reception"
 msgstr "Ricezione"
+
+#. module: shopfloor_reception
+#. odoo-python
+#: code:addons/shopfloor_reception/actions/message.py:0
+#, python-format
+msgid ""
+"The operation type '%(picking_type)s' does not allow to create new lots."
+msgstr ""
+"L'operazione di tipo '%(picking_type)s' non consente di creare nuovi lotti."
+
+#. module: shopfloor_reception
+#. odoo-python
+#: code:addons/shopfloor_reception/actions/message.py:0
+#, python-format
+msgid ""
+"The scanned lot contains the product barcode '%(product_barcode)s' but you "
+"have no product with this barcode in Odoo."
+msgstr ""
+"Il lotto scansionato contiene il codice a barre del prodotto '%"
+"(product_barcode)s', ma in Odoo non è presente alcun prodotto con questo "
+"codice a barre."
+
+#. module: shopfloor_reception
+#. odoo-python
+#: code:addons/shopfloor_reception/actions/message.py:0
+#, python-format
+msgid ""
+"The scanned lot does not match the selected product. Current product is "
+"'%(current_product)s' but the scanned lot is for '%(lot_product)s'."
+msgstr ""
+"Il lotto scansionato non corrisponde al prodotto selezionato. Il prodotto "
+"corrente è '%(current_product)s', ma il lotto scansionato è per '%"
+"(lot_product)s'."
+
+#. module: shopfloor_reception
+#. odoo-python
+#: code:addons/shopfloor_reception/actions/message.py:0
+#, python-format
+msgid ""
+"This lot already exists with expiration date '%(lot_expiration_date)s'. You "
+"cannot change its date."
+msgstr ""
+"Questo lotto esiste già con data scadenza '%(lot_expiration_date)s'. Non si "
+"può modificare questa data."
+
+#, python-format
+#~ msgid "The scanned lot does not match the selected product"
+#~ msgstr "Il lotto letto non corrisponde al prodotto selezionato"
+
+#~ msgid "Product Moves (Stock Move Line)"
+#~ msgstr "Movimenti prodotto (riga movimento di magazzino)"
+
+#~ msgid "Allow Over Reception"
+#~ msgstr "Consenti sovra ricezione"
+
+#~ msgid ""
+#~ "Allows operators to receive more goods than originally planned on the "
+#~ "incoming pickings (displays a confirmation prompt)."
+#~ msgstr ""
+#~ "Consente agli operatori di ricevere una quantità di merce superiore a "
+#~ "quella originariamente prevista al momento del prelievo (visualizza una "
+#~ "richiesta di conferma)."
+
+#, python-format
+#~ msgid ""
+#~ "This lot already exists with a different expiration date.\n"
+#~ "\n"
+#~ "Lot: '%(lot_name)s'\n"
+#~ "Stored expiration date: %(current)s\n"
+#~ "Provided expiration date: %(provided)s"
+#~ msgstr ""
+#~ "Questo lotto esiste già con una data di scadenza diversa.\n"
+#~ "\n"
+#~ "Lotto: '%(lot_name)s'\n"
+#~ "Data di scadenza memorizzata: %(current)s\n"
+#~ "Data di scadenza fornita: %(provided)s"
 
 #~ msgid "Is Shopfloor Created"
 #~ msgstr "Il reparto è crato"

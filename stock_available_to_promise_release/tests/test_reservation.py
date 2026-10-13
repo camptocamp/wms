@@ -94,6 +94,12 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
         self.assertEqual(picking4.move_ids.ordered_available_to_promise_uom_qty, 0)
         self.assertEqual(picking5.move_ids.previous_promised_qty, 48)
         self.assertEqual(picking5.move_ids.ordered_available_to_promise_uom_qty, 0)
+        # Check that splitting a move doesn't affect allocation
+        move_vals = picking.move_ids._split(1)
+        move = self.env["stock.move"].create(move_vals)
+        move._action_confirm(merge=False)
+        self.env["stock.move"].invalidate_model(fnames=["previous_promised_qty"])
+        self.assertEqual(picking2.move_ids.previous_promised_qty, 5)
 
     def test_ordered_available_to_promise_value_consider_already_released(self):
         self.wh.delivery_route_id.write({"available_to_promise_defer_pull": True})
@@ -284,6 +290,15 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
                 fnames=["previous_promised_qty", "ordered_available_to_promise_uom_qty"]
             )
             self.assertEqual(picking4.move_ids.previous_promised_qty, 5)
+            # split picking1 move and check that has no impact
+            move_vals = picking.move_ids._split(1)
+            move = self.env["stock.move"].create(move_vals)
+            move._action_confirm(merge=False)
+            self.env["stock.move"].invalidate_model(
+                fnames=["previous_promised_qty", "ordered_available_to_promise_uom_qty"]
+            )
+            self.assertEqual(picking4.move_ids.previous_promised_qty, 5)
+            move._action_confirm(merge=True)
 
             # set a higher priority for picking 5
             # (restoring previous date_expected values for other pickings before)
@@ -1231,6 +1246,110 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
         self.assertEqual(picking_wh1_2.move_ids.previous_promised_qty, 4)
         self.assertEqual(picking_wh2_2.move_ids.ordered_available_to_promise_qty, 0)
         self.assertEqual(picking_wh2_2.move_ids.previous_promised_qty, 4)
+
+    def test_inter_warehouse_route_release_outgoing(self):
+        """Regression for _run_pull deferred pull handling on inter-warehouse flow.
+
+        Build a route with:
+        - WH1 Output -> Inter-warehouse transit (outgoing)
+        - Inter-warehouse transit -> WH2 Stock (incoming)
+
+        A replenishment to WH2 stock must generate an outgoing picking from
+        WH1 Output. Releasing this outgoing picking must result in an incoming
+        picking on WH2 Stock for the same chain.
+        """
+
+        wh2 = self.wh.create({"name": "Warehouse 2", "code": "WH2"})
+        self._create_procurement_group()
+        inter_wh_transit_loc = self.env["stock.location"].create(
+            {
+                "name": "Inter-warehouse transit",
+                "location_id": self.wh.view_location_id.id,
+            }
+        )
+        route = self.env["stock.route"].create(
+            {
+                "name": "Test Warehouse -> Warehouse 2",
+                "company_id": self.wh.company_id.id,
+                "available_to_promise_defer_pull": True,
+            }
+        )
+
+        self.env["stock.rule"].create(
+            {
+                "name": "WH1 Output -> Inter-warehouse transit",
+                "route_id": route.id,
+                "company_id": self.wh.company_id.id,
+                "location_src_id": self.wh.wh_output_stock_loc_id.id,
+                "location_dest_id": inter_wh_transit_loc.id,
+                "picking_type_id": self.wh.out_type_id.id,
+                "warehouse_id": self.wh.id,
+                "group_id": self.group.id,
+                "action": "pull",
+                "procure_method": "make_to_order",
+                "group_propagation_option": "fixed",
+            }
+        )
+        self.env["stock.rule"].create(
+            {
+                "name": "Inter-warehouse transit -> WH2 Stock",
+                "route_id": route.id,
+                "company_id": self.wh.company_id.id,
+                "location_src_id": inter_wh_transit_loc.id,
+                "location_dest_id": wh2.lot_stock_id.id,
+                "picking_type_id": wh2.in_type_id.id,
+                "warehouse_id": wh2.id,
+                "propagate_warehouse_id": self.wh.id,
+                "group_id": self.group.id,
+                "action": "pull",
+                "procure_method": "make_to_order",
+                "group_propagation_option": "fixed",
+            }
+        )
+
+        values = {
+            "company_id": wh2.company_id,
+            "group_id": self.group,
+            "date_planned": datetime.now(),
+            "warehouse_id": wh2,
+            "route_ids": route,
+        }
+        self.env["procurement.group"].run(
+            [
+                self.env["procurement.group"].Procurement(
+                    self.product1,
+                    1,
+                    self.product1.uom_id,
+                    wh2.lot_stock_id,
+                    "TEST",
+                    "TEST",
+                    wh2.company_id,
+                    values,
+                )
+            ]
+        )
+
+        pickings = self._pickings_in_group(self.group)
+        outgoing = self._out_picking(pickings).filtered(
+            lambda p: p.location_id == self.wh.wh_output_stock_loc_id
+            and p.location_dest_id == inter_wh_transit_loc
+        )
+        self.assertTrue(outgoing)
+        self.assertEqual(outgoing.picking_type_code, "outgoing")
+
+        self._update_qty_in_location(self.wh.wh_output_stock_loc_id, self.product1, 5.0)
+        outgoing.move_ids.need_release = True
+        outgoing.release_available_to_promise()
+
+        incoming = self._pickings_in_group(self.group).filtered(
+            lambda p: p.picking_type_code == "incoming"
+            and p.location_id == inter_wh_transit_loc
+            and p.location_dest_id == wh2.lot_stock_id
+        )
+        self.assertTrue(incoming)
+        self.assertEqual(incoming.picking_type_code, "incoming")
+        self.assertFalse(incoming.need_release)
+        self.assertFalse(any(incoming.move_ids.mapped("need_release")))
 
     def test_release_policy(self):
         self.wh.delivery_route_id.write(

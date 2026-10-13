@@ -101,7 +101,7 @@ class LocationContentTransferSetDestinationXCase(LocationContentTransferCommonCa
         self.assert_response_scan_destination(
             response,
             package_level,
-            message=self.service.msg_store.no_location_found(),
+            message=self.service.msg_store.barcode_not_found(),
         )
         # Destination location not allowed
         customer_location = self.env.ref("stock.stock_location_customers")
@@ -292,7 +292,7 @@ class LocationContentTransferSetDestinationXCase(LocationContentTransferCommonCa
         self.assert_response_scan_destination(
             response,
             move_line,
-            message=self.service.msg_store.no_location_found(),
+            message=self.service.msg_store.barcode_not_found(),
         )
         # Destination location not allowed
         customer_location = self.env.ref("stock.stock_location_customers")
@@ -589,6 +589,7 @@ class LocationContentTransferSetDestinationXCase(LocationContentTransferCommonCa
         picking = self._create_picking(
             lines=[(self.product_a, 10), (self.product_b, 10)]
         )
+        picking.is_shopfloor_created = True
         picking.picking_type_id.sudo().create_backorder = "never"
         self._update_qty_in_location(picking.location_id, self.product_a, 20)
         self._update_qty_in_location(picking.location_id, self.product_b, 20)
@@ -647,6 +648,25 @@ class LocationContentTransferSetDestinationXCase(LocationContentTransferCommonCa
 
         # no remaining move should exist
         self.assertEqual(picking.backorder_ids, first_done_picking)
+
+    def test_set_destination_line_exceeding_quantity(self):
+        move_line = self.picking2.move_line_ids[0]
+        self._simulate_selected_move_line(move_line)
+        # Process more than expected
+        response = self.service.dispatch(
+            "set_destination_line",
+            params={
+                "location_id": self.content_loc.id,
+                "move_line_id": move_line.id,
+                "quantity": move_line.reserved_uom_qty + 2,
+                "barcode": self.dest_location.barcode,
+            },
+        )
+        self.assert_response_scan_destination(
+            response,
+            move_line,
+            message=self.service.msg_store.unable_to_pick_more(move_line.qty_done),
+        )
 
 
 class LocationContentTransferSetDestinationXSpecialCase(

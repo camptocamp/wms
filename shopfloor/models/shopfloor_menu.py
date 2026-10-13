@@ -103,6 +103,15 @@ class ShopfloorMenu(models.Model):
             "triggering a backorder creation with the remaining lines."
         ),
     )
+    allow_quantity_exceeding_demand = fields.Boolean(
+        help="If True, prevents shopfloor error in case you process more qty than "
+        "planned."
+    )
+
+    allow_quantity_exceeding_demand_is_possible = fields.Boolean(
+        compute="_compute_allow_quantity_exceeding_demand_is_possible"
+    )
+
     # TODO: refactor handling of these options.
     # Possible solution:
     # * field should stay on the scenario and get stored in options
@@ -157,8 +166,7 @@ class ShopfloorMenu(models.Model):
         string="Show Get Work on start",
         default=False,
         help=(
-            "When enabled the user will have the option to ask "
-            "for a task to work on."
+            "When enabled the user will have the option to ask for a task to work on."
         ),
     )
     allow_get_work_is_possible = fields.Boolean(
@@ -259,6 +267,20 @@ class ShopfloorMenu(models.Model):
 
     require_destination_package_is_possible = fields.Boolean(
         compute="_compute_require_destination_package_is_possible"
+    )
+
+    force_detailed_scan = fields.Boolean(
+        help="Force the operator to explicitly scan the product, lot/serial number, "
+        "or package barcode to confirm a move line instead of relying on location "
+        "or system deductions.\n\n"
+        "Without this, Shopfloor may automatically validate unique products, lots, or packages "
+        "as soon as the location is scanned. In practice, the physical inventory at "
+        "the location might differ from what the system expects "
+        "leading to silent stock drift and broken traceability.",
+    )
+
+    force_detailed_scan_is_possible = fields.Boolean(
+        compute="_compute_force_detailed_scan_is_possible"
     )
 
     @api.onchange("unload_package_at_destination")
@@ -428,7 +450,7 @@ class ShopfloorMenu(models.Model):
             ):
                 raise exceptions.ValidationError(
                     _(
-                        "Processing reserved quantities is" " not allowed for menu {}."
+                        "Processing reserved quantities is not allowed for menu {}."
                     ).format(menu.name)
                 )
 
@@ -536,6 +558,20 @@ class ShopfloorMenu(models.Model):
         for menu in self:
             menu.require_destination_package_is_possible = menu.scenario_id.has_option(
                 "require_destination_package"
+            )
+
+    @api.depends("scenario_id")
+    def _compute_allow_quantity_exceeding_demand_is_possible(self):
+        for menu in self:
+            menu.allow_quantity_exceeding_demand_is_possible = (
+                menu.scenario_id.has_option("allow_quantity_exceeding_demand")
+            )
+
+    @api.depends("scenario_id")
+    def _compute_force_detailed_scan_is_possible(self):
+        for menu in self:
+            menu.force_detailed_scan_is_possible = menu.scenario_id.has_option(
+                "force_detailed_scan"
             )
 
     @api.constrains(

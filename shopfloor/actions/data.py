@@ -271,7 +271,7 @@ class DataAction(Component):
                 "location_id:location_src",
                 lambda rec, fname: self.location(
                     fields.first(rec.move_line_ids).location_id
-                    or fields.first(rec.move_lines).location_id
+                    or fields.first(rec.move_ids).location_id
                     or rec.picking_id.location_id
                 ),
             ),
@@ -332,7 +332,13 @@ class DataAction(Component):
 
     @property
     def _picking_batch_parser(self):
-        return ["id", "name", "picking_count", "move_line_count", "total_weight:weight"]
+        return [
+            "id",
+            "display_name:name",
+            "picking_count",
+            "move_line_count",
+            "total_weight:weight",
+        ]
 
     @ensure_model("stock.picking.type")
     def picking_type(self, record, **kw):

@@ -40,6 +40,52 @@ class TestSelectDocument(CommonCase):
             data=self._data_for_select_move(picking),
         )
 
+    def test_scan_picking_sorted_moves(self):
+        custom_sort_code = (
+            "key = get_sort_key_assigned_to_current_user(line) "
+            "+ ( (line.product_id.name or '').lower(), line.id,)"
+        )
+        self.menu.sudo().write(
+            {
+                "move_line_search_sort_order": "custom_code",
+                "move_line_search_sort_order_custom_code": custom_sort_code,
+            }
+        )
+        products_sudo = self.env["product.product"].sudo()
+        product_names = [
+            "Dehydrated Water (Just Add Water)",
+            "Invisibility Cloak (Batteries Not Included)",
+            "Emergency Sarcasm Generator",
+            "Self-Lacing Socks",
+        ]
+        picking = self._create_picking(
+            lines=[
+                (
+                    products_sudo.create(
+                        {
+                            "name": name,
+                            "type": "product",
+                            "default_code": name,
+                            "barcode": name,
+                            "weight": 42,
+                        }
+                    ),
+                    10,
+                )
+                for name in product_names
+            ]
+        )
+
+        response = self.service.dispatch(
+            "scan_document", params={"barcode": picking.name}
+        )
+
+        response_moves_product_names = [
+            m["product"]["name"]
+            for m in response["data"]["select_move"]["picking"]["moves"]
+        ]
+        self.assertEqual(response_moves_product_names, sorted(product_names))
+
     def test_scan_picking_origin_multiple_pickings(self):
         # Multiple pickings with this origin are found.
         # Return the filtered list of pickings.
@@ -197,4 +243,34 @@ class TestSelectDocument(CommonCase):
             next_state="select_document",
             data={"pickings": self._data_for_pickings(picking)},
             message=message,
+        )
+
+    def test_scan_lot_1(self):
+        picking = self._create_picking()
+        lot = self._create_lot()
+        line_product_a = picking.move_ids.move_line_ids.filtered(
+            lambda line: line.product_id == self.product_a
+        )
+        line_product_a.lot_id = lot
+        response = self.service.dispatch("scan_document", params={"barcode": lot.name})
+        self.assert_response(
+            response,
+            next_state="select_document",
+            data={"pickings": self._data_for_pickings(picking)},
+            message=self.msg_store.multiple_picks_found_select_manually(),
+        )
+
+    def test_scan_lot_2(self):
+        picking = self._create_picking()
+        lot = self._create_lot()
+        line_product_a = picking.move_ids.move_line_ids.filtered(
+            lambda line: line.product_id == self.product_a
+        )
+        line_product_a.lot_name = lot.name
+        response = self.service.dispatch("scan_document", params={"barcode": lot.name})
+        self.assert_response(
+            response,
+            next_state="select_document",
+            data={"pickings": self._data_for_pickings(picking)},
+            message=self.msg_store.multiple_picks_found_select_manually(),
         )

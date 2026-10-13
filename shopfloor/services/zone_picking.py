@@ -321,7 +321,7 @@ class ZonePicking(Component):
 
     def _picking_type_zone_lines(self, zone_location, picking_type):
         return self.search_move_line.search_move_lines(
-            zone_location, picking_type=picking_type
+            locations=zone_location, picking_types=picking_type
         )
 
     def _data_for_move_line(
@@ -437,12 +437,12 @@ class ZonePicking(Component):
     ):
         """Find lines that potentially need work in given locations."""
         return self.search_move_line.search_move_lines(
-            locations or self.zone_location,
-            picking_type=picking_type or self.picking_type,
+            locations=locations or self.zone_location,
+            picking_types=picking_type or self.picking_type,
             order=self.lines_order,
-            package=package,
-            product=product,
-            lot=lot,
+            packages=package,
+            products=product,
+            lots=lot,
             match_user=match_user,
             enforce_empty_package=enforce_empty_package,
         )
@@ -749,7 +749,7 @@ class ZonePicking(Component):
             )
         elif move_lines:
             move_line = first(move_lines)
-            qty_done = self._get_prefill_qty(move_line, qty=(packaging.qty or 1.0))
+            qty_done = self.get_qty_picked(move_line, packaging)
             response = self._response_for_set_line_destination(
                 move_line, qty_done=qty_done
             )
@@ -803,7 +803,7 @@ class ZonePicking(Component):
                 response = self.list_move_lines()
             else:
                 move_line = first(move_lines)
-                qty_done = self._get_prefill_qty(move_line, qty=1.0)
+                qty_done = self.get_qty_picked(move_line)
                 response = self._response_for_set_line_destination(
                     move_line, qty_done=qty_done
                 )
@@ -954,18 +954,16 @@ class ZonePicking(Component):
                     continue
                 _move_line.qty_done = move_line.reserved_uom_qty
                 move_lines |= _move_line
+        if quantity:
+            move_line._split_partial_quantity_to_be_done(quantity)
         self._write_destination_on_lines(move_lines, location)
-
         try:
-            stock.mark_move_line_as_picked(move_lines, quantity, check_user=True)
-        except ConcurentWorkOnTransfer as error:
+            stock.mark_move_line_as_picked(move_lines, quantity)
+        except ConcurentWorkOnTransfer:
             values = {"qty_done": quantity} if quantity is not None else {}
             response = self._response_for_set_line_destination(
                 move_line,
-                message={
-                    "message_type": "error",
-                    "body": str(error),
-                },
+                message=self.msg_store.concurrent_work(),
                 **values,
             )
             return (location_changed, response)
@@ -1033,28 +1031,15 @@ class ZonePicking(Component):
             return (package_changed, response)
         # the quantity done is set to the passed quantity
         # but if we move a partial qty, we need to split the move line
-        compare = self._move_line_compare_qty(move_line, quantity)
-        qty_greater = compare == 1
-        if qty_greater:
-            response = self._response_for_set_line_destination(
-                move_line,
-                message=self.msg_store.unable_to_pick_more(move_line.reserved_uom_qty),
-                qty_done=quantity,
-            )
-            return (package_changed, response)
+        if quantity:
+            move_line._split_partial_quantity_to_be_done(quantity)
         stock = self._actions_for("stock")
-        stock._lock_lines(move_line)
         try:
-            stock.mark_move_line_as_picked(
-                move_line, quantity, package, check_user=True
-            )
-        except ConcurentWorkOnTransfer as error:
+            stock.mark_move_line_as_picked(move_line, quantity, package)
+        except ConcurentWorkOnTransfer:
             response = self._response_for_set_line_destination(
                 move_line,
-                message={
-                    "message_type": "error",
-                    "body": str(error),
-                },
+                message=self.msg_store.concurrent_work(),
                 qty_done=quantity,
             )
             return (package_changed, response)

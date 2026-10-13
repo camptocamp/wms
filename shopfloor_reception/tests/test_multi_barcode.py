@@ -1,5 +1,7 @@
 # Copyright 2025 ACSONE SA/NV
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
+from datetime import date
+
 import mock
 
 from odoo import fields
@@ -24,19 +26,20 @@ class TestStructuredBarcode(CommonCase):
         """
         picking = self._create_picking()
         lot = self._create_lot()
+        lot.expiration_date = None
         selected_move_line = picking.move_line_ids.filtered(
             lambda l: l.product_id == self.product_a
         )
         # selected_move_line.lot_id = lot
         with mock.patch.object(BarcodeParser, "parse") as mock_parse:
-            mock_parse.return_value = [
-                BarcodeResult(type="lot", value=lot.name, raw=lot.name),
-                BarcodeResult(
+            mock_parse.return_value = {
+                "lot": BarcodeResult(type="lot", value=lot.name, raw=lot.name),
+                "expiration_date": BarcodeResult(
                     type="expiration_date",
-                    value=fields.Date.to_date("2025-04-15"),
+                    value=date(2025, 4, 15),
                     raw="250415",
                 ),
-            ]
+            }
             response = self.service.dispatch(
                 "scan_line",
                 params={
@@ -47,10 +50,11 @@ class TestStructuredBarcode(CommonCase):
         data = self.data.picking(picking)
         self.assert_response(
             response,
-            next_state="set_lot",
+            next_state="set_quantity",
             data={
                 "picking": data,
                 "selected_move_line": self.data.move_lines(selected_move_line),
+                "confirmation_required": None,
             },
         )
         self.assertEqual(

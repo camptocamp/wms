@@ -59,6 +59,7 @@ from . import test_location_content_transfer_get_work
 from . import test_location_content_transfer_set_destination_all
 from . import test_location_content_transfer_scan_location
 from . import test_location_content_transfer_single
+from . import test_location_content_transfer_set_destination_as_package
 from . import test_location_content_transfer_set_destination_package_or_line
 from . import test_location_content_transfer_putaway
 from . import test_location_content_transfer_mix
@@ -83,6 +84,7 @@ from . import test_zone_picking_require_destination_package
 from . import test_misc
 from . import test_move_action_assign
 from . import test_scan_anything
+from . import test_stock_move
 from . import test_stock_split
 from . import test_picking_form
 from . import test_user

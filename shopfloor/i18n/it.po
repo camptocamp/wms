@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2026-01-08 17:42+0000\n"
+"PO-Revision-Date: 2026-09-16 13:02+0000\n"
 "Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
 "Language-Team: none\n"
 "Language: it\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.10.4\n"
+"X-Generator: Weblate 5.15.2\n"
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__pick_pack_same_time
@@ -282,6 +282,16 @@ msgid "Allow Move Creation"
 msgstr "Consente creazione movimento"
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand
+msgid "Allow Quantity Exceeding Demand"
+msgstr "Consentire quantità superiore alla richiesta"
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand_is_possible
+msgid "Allow Quantity Exceeding Demand Is Possible"
+msgstr "È possibile consentire una quantità superiore alla domanda"
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_return_is_possible
 msgid "Allow Return Is Possible"
 msgstr "Consente possibilità reso"
@@ -419,7 +429,8 @@ msgstr "Conferma modifica ubicazione da %(location_from)s a %(location_to)s?"
 #, python-format
 msgid ""
 "Content line transferred from %(location_name)s to %(location_dest_name)s"
-msgstr "Riga contenuto trasferita da %(location_name)s a %(location_dest_name)s"
+msgstr ""
+"Riga contenuto trasferita da %(location_name)s a %(location_dest_name)s"
 
 #. module: shopfloor
 #. odoo-python
@@ -541,9 +552,42 @@ msgstr ""
 "quando una ubicazione si svuota dopo un movimento."
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__force_detailed_scan
+msgid "Force Detailed Scan"
+msgstr "Forza lettura dettagliata"
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__force_detailed_scan_is_possible
+msgid "Force Detailed Scan Is Possible"
+msgstr "È possibile forzare la lettura dettagliata"
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_force_reservation
 msgid "Force stock reservation"
 msgstr "Forza prenotazione qantità"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__force_detailed_scan
+msgid ""
+"Force the operator to explicitly scan the product, lot/serial number, or "
+"package barcode to confirm a move line instead of relying on location or "
+"system deductions.\n"
+"\n"
+"Without this, Shopfloor may automatically validate unique products, lots, or "
+"packages as soon as the location is scanned. In practice, the physical "
+"inventory at the location might differ from what the system expects leading "
+"to silent stock drift and broken traceability."
+msgstr ""
+"Impone all'operatore di leggere esplicitamente il prodotto, il numero di "
+"lotto/serie o il codice a barre dell'unità di imballaggio per confermare una "
+"riga di movimentazione, anziché affidarsi alla posizione o a deduzioni del "
+"sistema.\n"
+"\n"
+"In assenza di questo vincolo, il reparto di produzione potrebbe convalidare "
+"automaticamente prodotti, lotti o unità di imballaggio univoci non appena "
+"viene letta la posizione. Di fatto, l'inventario fisico nella posizione "
+"potrebbe differire da quanto previsto dal sistema, causando discrepanze di "
+"giacenza non rilevate e l'interruzione della tracciabilità."
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_move_line__location_id
@@ -556,6 +600,14 @@ msgstr "Da"
 #, python-format
 msgid "Goods packed into {0.name}"
 msgstr "Merce caricata in {0.name}"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand
+msgid ""
+"If True, prevents shopfloor error in case you process more qty than planned."
+msgstr ""
+"Se vero, previene l'errore del reparto nel caso si lavori più quantità della "
+"pianificata."
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__result_package_id
@@ -608,6 +660,13 @@ msgstr "Ignora trasferimenti quando non è disponibile l'inoltro"
 #, python-format
 msgid "Ignoring not found putaway is not allowed for menu {}."
 msgstr "Ignorare inoltro non trovato non è consentito per il menu {}."
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/services/cluster_picking.py:0
+#, python-format
+msgid "Internal Error: Batch not properly done."
+msgstr "Errore interno: lotto non completato correttamente."
 
 #. module: shopfloor
 #: model:ir.model,name:shopfloor.model_stock_location
@@ -805,13 +864,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__multiple_move_single_pack_is_possible
 msgid "Multiple Move Single Pack Is Possible"
 msgstr "È possibile avere movimenti multipli per singolo pacco"
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/services/checkout.py:0
-#, python-format
-msgid "Negative quantity not allowed."
-msgstr "Quantità negativa non consentita."
 
 #. module: shopfloor
 #. odoo-python
@@ -1121,6 +1173,20 @@ msgstr ""
 "%(picking_name)s"
 
 #. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Package %s is empty, scan a location."
+msgstr "Il collo %s è vuoto, leggere una ubicazione."
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Package %s is not empty anymore."
+msgstr "Il collo %s non è più vuoto."
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_picking__package_level_count
 msgid "Package Level Count"
 msgstr "Conteggio livello collo"
@@ -1210,13 +1276,6 @@ msgstr "Imballo modificato per il collo {}"
 #, python-format
 msgid "Packaging not found in the current transfer."
 msgstr "Imballo non trovato nel trasferimento attuale."
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
-msgid "Packaging {} dimension updated."
-msgstr "Dimensione imballo {} aggiornata."
 
 #. module: shopfloor
 #. odoo-python
@@ -1692,10 +1751,10 @@ msgstr ""
 
 #. module: shopfloor
 #. odoo-python
-#: code:addons/shopfloor/actions/stock.py:0
+#: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Someone is already working on these transfers"
-msgstr "Qualcuno sta già lavorando su questi trasferimenti"
+msgid "Someone is already working on it"
+msgstr "Qualcuno ci sta già lavorando"
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__move_line_search_sort_order
@@ -1780,17 +1839,6 @@ msgstr "Campo tecnico. Righe movimento che muovono questo collo."
 msgid "Technical field. Overrides operation priority in barcode scenario."
 msgstr ""
 "Campo tecnico. Forza la priorità operazione nello scenaio codice a barre."
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/models/stock_picking.py:0
-#, python-format
-msgid ""
-"The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
-"id=\"%(new_picking_id)d\">%(new_picking_name)s</a> has been created."
-msgstr ""
-"È stato creato l'ordine residuo <a href=\"#\" data-oe-model=\"stock."
-"picking\" data-oe-id=\"%(new_picking_id)d\">%(new_picking_name)s</a>."
 
 #. module: shopfloor
 #. odoo-python
@@ -1900,8 +1948,8 @@ msgstr "Il record su cui si stava lavorando non esiste più."
 #. odoo-python
 #: code:addons/shopfloor/models/stock_move.py:0
 #, python-format
-msgid "The split order {} has been created."
-msgstr "L'ordine suddiviso {} è stato creato."
+msgid "The split order %s has been created."
+msgstr "L'ordine suddiviso %s è stato creato."
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__picking_id
@@ -2137,6 +2185,13 @@ msgstr "Scarico colli alla destinazione"
 
 #. module: shopfloor
 #. odoo-python
+#: code:addons/shopfloor/services/cluster_picking.py:0
+#, python-format
+msgid "Unprocessed transfer removed from batch"
+msgstr "Trasferimento non completato rimosso dal lotto"
+
+#. module: shopfloor
+#. odoo-python
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Unrecoverable error, please restart."
@@ -2294,6 +2349,13 @@ msgstr "Questo non si può movimentare con questo menu."
 #. odoo-python
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "You cannot pick a negative quantity."
+msgstr "Non si può prelevare una quantità negativa."
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "You cannot place it here"
 msgstr "Questo non può essere messo qui"
 
@@ -2364,6 +2426,36 @@ msgstr "Prelievo per area"
 #, python-format
 msgid "{} is not a valid destination package."
 msgstr "{} non è un collo destinazione valido."
+
+#, python-format
+#~ msgid "Negative quantity not allowed."
+#~ msgstr "Quantità negativa non consentita."
+
+#, python-format
+#~ msgid "Someone is already working on these transfers"
+#~ msgstr "Qualcuno sta già lavorando su questi trasferimenti"
+
+#, python-format
+#~ msgid ""
+#~ "The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
+#~ "id=\"%(new_picking_id)d\">%(new_picking_name)s</a> has been created."
+#~ msgstr ""
+#~ "È stato creato l'ordine residuo <a href=\"#\" data-oe-"
+#~ "model=\"stock.picking\" data-oe-"
+#~ "id=\"%(new_picking_id)d\">%(new_picking_name)s</a>."
+
+#, python-format
+#~ msgid "The split order {} has been created."
+#~ msgstr "L'ordine suddiviso {} è stato creato."
+
+#, python-format
+#~ msgid "Internal Error: The move line %s is not fully picked"
+#~ msgstr ""
+#~ "Errore interno: la riga di movimento %s non è completamente prelevata"
+
+#, python-format
+#~ msgid "Packaging {} dimension updated."
+#~ msgstr "Dimensione imballo {} aggiornata."
 
 #, python-format
 #~ msgid "Content transfer to {} completed"
@@ -2505,8 +2597,8 @@ msgstr "{} non è un collo destinazione valido."
 #~ "The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
 #~ "id=\"%d\">%s</a> has been created."
 #~ msgstr ""
-#~ "È stato creato l'ordine residuo <a href=\"#\" data-oe-model=\"stock."
-#~ "picking\" data-oe-id=\"%d\">%s</a> ."
+#~ "È stato creato l'ordine residuo <a href=\"#\" data-oe-"
+#~ "model=\"stock.picking\" data-oe-id=\"%d\">%s</a> ."
 
 #, python-format
 #~ msgid "You cannot work on a package (%s) outside of locations: %s"

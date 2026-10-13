@@ -1,8 +1,12 @@
 # Copyright 2020-2021 Camptocamp SA (http://www.camptocamp.com)
-# Copyright 2020-2022 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
+# Copyright 2020 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
 # Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+
+from markupsafe import Markup
+
 from odoo import _, fields
+from odoo.exceptions import UserError
 from odoo.osv import expression
 
 from odoo.addons.base_rest.components.service import to_bool, to_int
@@ -62,9 +66,9 @@ class ClusterPicking(Component):
     * Declare stock out: if a good is in fact not in stock or only partially. Note
       the move lines will become unavailable or partially unavailable and will
       generate a back-order.
-    * Full bin: declaring a full bin allows to move directly to the first phase
-      (picking) to the second one (unload). The scenario will go
-      back to the first phase if some lines remain in the queue of lines to pick.
+    * Full bin: declaring a full bin allows to move directly from the first phase
+      (picking) to the second one (unload). Then the batch will be closed and
+      the scenario will go the start for the user to work on a new batch.
 
     You will find a sequence diagram describing states and endpoints
     relationships [here](../docs/cluster_picking_diag_seq.png).
@@ -582,7 +586,7 @@ class ClusterPicking(Component):
                 move_line,
                 message=self.msg_store.product_multiple_packages_scan_package(),
             )
-        quantity = self._get_prefill_qty(move_line, qty=1)
+        quantity = self.get_qty_picked(move_line)
         return self._response_for_scan_destination(move_line, qty_done=quantity)
 
     def _scan_line_by_packaging(self, picking, move_line, packaging, sublocation):
@@ -613,7 +617,7 @@ class ClusterPicking(Component):
                 move_line,
                 message=self.msg_store.product_multiple_packages_scan_package(),
             )
-        quantity = self._get_prefill_qty(move_line, packaging.qty)
+        quantity = self.get_qty_picked(move_line, packaging)
         return self._response_for_scan_destination(move_line, qty_done=quantity)
 
     def _scan_line_by_lot(self, picking, move_line, lot, sublocation):
@@ -639,7 +643,7 @@ class ClusterPicking(Component):
             return self._response_for_start_line(
                 move_line, message=self.msg_store.lot_multiple_packages_scan_package()
             )
-        quantity = self._get_prefill_qty(move_line, 1.0)
+        quantity = self.get_qty_picked(move_line)
         return self._response_for_scan_destination(move_line, qty_done=quantity)
 
     def _scan_line_by_location(self, picking, move_line, location):
@@ -686,6 +690,13 @@ class ClusterPicking(Component):
                     ),
                     sublocation=location,
                 )
+
+        # Prevent auto select of the move line in case detailed scan is ON
+        if self.work.menu.force_detailed_scan:
+            return self._response_for_start_line(
+                move_line,
+                sublocation=location,
+            )
         quantity = self._get_prefill_qty(move_line)
         return self._response_for_scan_destination(move_line, qty_done=quantity)
 
@@ -764,13 +775,13 @@ class ClusterPicking(Component):
         if response:
             return response
 
-        new_line, qty_check = move_line._split_qty_to_be_done(quantity)
-        if qty_check == "greater":
+        if message := self._check_move_line_qty_picked(move_line, quantity):
             return self._response_for_scan_destination(
                 move_line,
-                message=self.msg_store.unable_to_pick_more(move_line.reserved_uom_qty),
+                message=message,
                 qty_done=quantity,
             )
+        new_line = move_line._split_partial_quantity_to_be_done(quantity)
 
         search = self._actions_for("search")
         bin_package = search.package_from_scan(barcode)
@@ -1154,62 +1165,68 @@ class ClusterPicking(Component):
     def _unload_write_destination_on_lines(self, lines, location):
         stock = self._actions_for("stock")
         stock.set_destination_on_lines(lines, location)
+        if self.work.menu.unload_package_at_destination:
+            stock.unload_package(lines)
         lines.write({"shopfloor_unloaded": True})
-        for picking in lines.batch_id.picking_ids:
-            picking_lines = lines.filtered(lambda x, p=picking: x.picking_id == p)
-            self._unload_set_picking_to_done(picking, picking_lines)
+        for picking in lines.picking_id:
+            self._unload_set_picking_to_done(picking)
 
-    def _unload_set_picking_to_done(self, picking, picking_lines):
-        if picking.state == "done":
-            return
-        # We set the picking to done only when the last line is
-        # unloaded to avoid backorders.
-        all_lines_unloaded = all(
-            line.shopfloor_unloaded for line in picking.move_line_ids
-        )
-        if self.work.menu.unload_package_at_destination and all_lines_unloaded:
-            picking_lines.result_package_id = False
-        if all_lines_unloaded:
-            picking._action_done()
+    def _clear_batch_and_assignment(self, pickings):
+        pickings.write({"batch_id": False, "user_id": False, "printed": False})
+
+    def _unload_set_picking_to_done(self, picking):
+        """Set picking to done when all picked move lines have been unloaded"""
+        if self._unload_is_picking_done(picking):
+            return True
+        for ml in picking.move_line_ids:
+            if ml.picked and not ml.shopfloor_unloaded:
+                # A picked move line is not unloaded, exit
+                return False
+        stock = self._actions_for("stock")
+        stock.validate_moves(picking.move_ids)
+        if picking.state not in ("cancel", "done"):
+            # A split order has been created, remove picking from batch
+            self._clear_batch_and_assignment(picking)
+        return True
 
     def _unload_end(self, batch, completion_info_popup=None):
-        """Try to close the batch if all transfers are done.
+        """Remove unprocessed pickings from batch to close it.
 
-        Returns to `start_line` transition if some lines could still be processed,
-        otherwise try to validate all the transfers of the batch.
+        Returns to `start` transition.
         """
-        all_pickings = batch.picking_ids
-        if all(picking.state == "done" for picking in all_pickings):
-            # do not use the 'done()' method because it does many things we
-            # don't care about
-            batch.state = "done"
-            return self._response_for_start(
-                message=self.msg_store.batch_transfer_complete(),
-                popup=completion_info_popup,
-            )
 
-        next_line = self._next_line_for_pick(batch)
-        if next_line:
-            return self._response_for_start_line(
-                next_line,
-                message=self.msg_store.batch_transfer_line_done(),
-                popup=completion_info_popup,
+        empty_pickings = batch.picking_ids.filtered(
+            lambda picking: picking.state in ("waiting", "confirmed", "assigned")
+            and all(
+                not m.picked or not m.has_quantity_reserved
+                for m in picking.move_ids
+                if m.state not in ("done", "cancel")
             )
-        else:
-            # TODO add tests for this (for instance a picking is not 'done'
-            # because a move was unassigned, we want to validate the batch to
-            # produce backorders)
-            all_pickings.filtered(lambda x: x.state == "assigned")._action_done()
-            batch.state = "done"
-            # Unassign not validated pickings from the batch, they will be
-            # processed in another batch automatically later on
-            all_pickings.invalidate_recordset(["state"])
-            pickings_not_done = all_pickings.filtered(lambda p: p.state != "done")
-            pickings_not_done.batch_id = False
-            return self._response_for_start(
-                message=self.msg_store.batch_transfer_complete(),
-                popup=completion_info_popup,
+        )
+        if empty_pickings:
+            batch.message_post(
+                body=Markup("<b>%s:</b> %s")
+                % (
+                    _("Unprocessed transfer removed from batch"),
+                    Markup(", ").join(p._get_html_link() for p in empty_pickings),
+                )
             )
+            self._clear_batch_and_assignment(empty_pickings)
+
+        if not self._unload_is_batch_done(batch):
+            # As processed pickings are already done, the batch should now be done
+            raise UserError(_("Internal Error: Batch not properly done."))
+
+        return self._response_for_start(
+            message=self.msg_store.batch_transfer_complete(),
+            popup=completion_info_popup,
+        )
+
+    def _unload_is_picking_done(self, picking):
+        return picking.state == "done"
+
+    def _unload_is_batch_done(self, batch):
+        return batch.state == "done"
 
     def unload_split(self, picking_batch_id):
         """Indicates that now the batch must be treated line per line

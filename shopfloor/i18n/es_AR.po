@@ -252,6 +252,16 @@ msgid "Allow Move Creation"
 msgstr "Permitir Creación de Movimiento"
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand
+msgid "Allow Quantity Exceeding Demand"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand_is_possible
+msgid "Allow Quantity Exceeding Demand Is Possible"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_return_is_possible
 msgid "Allow Return Is Possible"
 msgstr ""
@@ -508,9 +518,32 @@ msgstr ""
 "cero se activará cuando una ubicación quede vacía después de un movimiento."
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__force_detailed_scan
+msgid "Force Detailed Scan"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__force_detailed_scan_is_possible
+msgid "Force Detailed Scan Is Possible"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_force_reservation
 msgid "Force stock reservation"
 msgstr "Forzar reserva de inventario"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__force_detailed_scan
+msgid ""
+"Force the operator to explicitly scan the product, lot/serial number, or "
+"package barcode to confirm a move line instead of relying on location or "
+"system deductions.\n"
+"\n"
+"Without this, Shopfloor may automatically validate unique products, lots, or "
+"packages as soon as the location is scanned. In practice, the physical "
+"inventory at the location might differ from what the system expects leading "
+"to silent stock drift and broken traceability."
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_move_line__location_id
@@ -523,6 +556,12 @@ msgstr "Desde"
 #, python-format
 msgid "Goods packed into {0.name}"
 msgstr "Mercadería empaquetada en {0.name}"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__allow_quantity_exceeding_demand
+msgid ""
+"If True, prevents shopfloor error in case you process more qty than planned."
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__result_package_id
@@ -572,6 +611,13 @@ msgstr "Ignora las transferencias cuando no haya disponibilidad de ubicación"
 #, python-format
 msgid "Ignoring not found putaway is not allowed for menu {}."
 msgstr "No se permite ignorar el almacenamiento no encontrado para el menú {}."
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/services/cluster_picking.py:0
+#, python-format
+msgid "Internal Error: Batch not properly done."
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model,name:shopfloor.model_stock_location
@@ -767,13 +813,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__multiple_move_single_pack_is_possible
 msgid "Multiple Move Single Pack Is Possible"
 msgstr "Paquete Individual de Movimiento Múltiple Es Posible"
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/services/checkout.py:0
-#, python-format
-msgid "Negative quantity not allowed."
-msgstr "Cantidad negativa no permitida."
 
 #. module: shopfloor
 #. odoo-python
@@ -1079,6 +1118,20 @@ msgid "Package %(package_name)s not found in transfer %(picking_name)s"
 msgstr ""
 
 #. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Package %s is empty, scan a location."
+msgstr ""
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Package %s is not empty anymore."
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_picking__package_level_count
 msgid "Package Level Count"
 msgstr "Cuental del Nivel de Paquete"
@@ -1166,13 +1219,6 @@ msgstr "El Empaquetado cambió en el paquete {}"
 #, python-format
 msgid "Packaging not found in the current transfer."
 msgstr "Paquete no encontrado en la transferencia actual."
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/actions/message.py:0
-#, python-format
-msgid "Packaging {} dimension updated."
-msgstr ""
 
 #. module: shopfloor
 #. odoo-python
@@ -1653,9 +1699,9 @@ msgstr ""
 
 #. module: shopfloor
 #. odoo-python
-#: code:addons/shopfloor/actions/stock.py:0
+#: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Someone is already working on these transfers"
+msgid "Someone is already working on it"
 msgstr ""
 
 #. module: shopfloor
@@ -1741,15 +1787,6 @@ msgid "Technical field. Overrides operation priority in barcode scenario."
 msgstr ""
 "Campo técnico. Anula la prioridad de operación en el escenario del código de "
 "barras."
-
-#. module: shopfloor
-#. odoo-python
-#: code:addons/shopfloor/models/stock_picking.py:0
-#, python-format
-msgid ""
-"The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
-"id=\"%(new_picking_id)d\">%(new_picking_name)s</a> has been created."
-msgstr ""
 
 #. module: shopfloor
 #. odoo-python
@@ -1856,8 +1893,8 @@ msgstr "El registro en el que estaba trabajando ya no existe."
 #. odoo-python
 #: code:addons/shopfloor/models/stock_move.py:0
 #, python-format
-msgid "The split order {} has been created."
-msgstr "Se ha creado el pedido dividido {}."
+msgid "The split order %s has been created."
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__picking_id
@@ -2085,6 +2122,13 @@ msgstr "Descargar paquete en destino"
 
 #. module: shopfloor
 #. odoo-python
+#: code:addons/shopfloor/services/cluster_picking.py:0
+#, python-format
+msgid "Unprocessed transfer removed from batch"
+msgstr ""
+
+#. module: shopfloor
+#. odoo-python
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Unrecoverable error, please restart."
@@ -2233,6 +2277,13 @@ msgstr "No puede mover esto usando este menú."
 #. odoo-python
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "You cannot pick a negative quantity."
+msgstr ""
+
+#. module: shopfloor
+#. odoo-python
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "You cannot place it here"
 msgstr "No puede colocarlo aquí"
 
@@ -2299,6 +2350,14 @@ msgstr "Zona de Entreda"
 #, python-format
 msgid "{} is not a valid destination package."
 msgstr "{} no es un paquete de destino válido."
+
+#, python-format
+#~ msgid "Negative quantity not allowed."
+#~ msgstr "Cantidad negativa no permitida."
+
+#, python-format
+#~ msgid "The split order {} has been created."
+#~ msgstr "Se ha creado el pedido dividido {}."
 
 #, python-format
 #~ msgid "Content transfer to {} completed"
@@ -2380,8 +2439,8 @@ msgstr "{} no es un paquete de destino válido."
 #~ "The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
 #~ "id=\"%d\">%s</a> has been created."
 #~ msgstr ""
-#~ "Se ha creado el pedido pendiente <a href=\"#\" data-oe-model=\"stock."
-#~ "picking\" data-oe-id=\"%d\">%s</a>."
+#~ "Se ha creado el pedido pendiente <a href=\"#\" data-oe-"
+#~ "model=\"stock.picking\" data-oe-id=\"%d\">%s</a>."
 
 #, python-format
 #~ msgid "You cannot work on a package (%s) outside of locations: %s"
